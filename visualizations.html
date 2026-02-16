@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lack Lineage — Thirteen Ways to See a Family</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 18px;
+    line-height: 1.72;
+    color: #2c2c2c;
+    background: #faf8f5;
+  }
+
+  .header {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 80px 32px 40px;
+  }
+
+  .header h1 {
+    font-size: 2.6em;
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    color: #1a1a1a;
+    margin-bottom: 0.15em;
+  }
+
+  .header .subtitle {
+    font-size: 1.15em;
+    font-weight: 300;
+    color: #777;
+    font-style: italic;
+    margin-bottom: 1.5em;
+  }
+
+  .header .intro {
+    font-size: 1.05em;
+    color: #444;
+    max-width: 640px;
+  }
+
+  .header .intro p { margin-bottom: 1em; }
+
+  .stat-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin: 2em 0 1em;
+    padding: 20px 0;
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .stat-item {
+    text-align: center;
+    min-width: 100px;
+  }
+
+  .stat-item .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.6em;
+    font-weight: 400;
+    color: #5a3e1b;
+    display: block;
+    letter-spacing: -0.03em;
+  }
+
+  .stat-item .label {
+    font-size: 0.8em;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ---- Pieces Grid ---- */
+  .pieces { max-width: 800px; margin: 0 auto; padding: 0 32px 60px; }
+
+  .phase-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72em;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #b09060;
+    margin-top: 3em;
+    margin-bottom: 0.5em;
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid #e8e0d4;
+  }
+
+  .piece {
+    margin-bottom: 2.5em;
+    padding-bottom: 2.5em;
+    border-bottom: 1px solid #f0ece6;
+  }
+
+  .piece:last-child { border-bottom: none; }
+
+  .piece-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75em;
+    color: #c4a270;
+    display: block;
+    margin-bottom: 0.15em;
+    letter-spacing: 0.05em;
+  }
+
+  .piece h2 {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 0.1em;
+    letter-spacing: -0.01em;
+  }
+
+  .piece .one-liner {
+    font-style: italic;
+    color: #777;
+    font-size: 0.95em;
+    margin-bottom: 0.8em;
+  }
+
+  .piece .description {
+    color: #3a3a3a;
+    margin-bottom: 0.8em;
+  }
+
+  .piece .data-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78em;
+    color: #8a7a60;
+    background: #f5f0e8;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-top: 0.6em;
+  }
+
+  .piece .moment {
+    font-style: italic;
+    color: #555;
+    margin-top: 0.6em;
+    padding-left: 16px;
+    border-left: 2px solid #ddd;
+  }
+
+  .piece .visual-hint {
+    display: inline-block;
+    margin-right: 6px;
+    font-size: 1.1em;
+  }
+
+  /* ---- Timeline section ---- */
+  .timeline-section {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px 32px 60px;
+  }
+
+  .timeline-section h2 {
+    font-size: 1.4em;
+    font-weight: 600;
+    margin-bottom: 1em;
+    color: #1a1a1a;
+  }
+
+  .build-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92em;
+    margin-bottom: 2em;
+  }
+
+  .build-table th {
+    text-align: left;
+    font-weight: 400;
+    color: #999;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82em;
+    padding: 6px 10px;
+    border-bottom: 1px solid #ddd;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .build-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f0ece6;
+    vertical-align: top;
+  }
+
+  .build-table .phase-name {
+    font-weight: 600;
+    color: #5a3e1b;
+    white-space: nowrap;
+  }
+
+  .build-table .prereq {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85em;
+    color: #999;
+  }
+
+  /* ---- Footer ---- */
+  .closing-section {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 32px 80px;
+  }
+
+  .closing-section p {
+    color: #555;
+    margin-bottom: 1em;
+  }
+
+  .closing-section .sign-off {
+    margin-top: 2em;
+    font-style: italic;
+    color: #999;
+    font-size: 0.9em;
+  }
+
+  blockquote {
+    margin: 1.5em 0;
+    padding: 16px 20px;
+    background: #f5f0e8;
+    border-left: 3px solid #c4a270;
+    font-style: italic;
+    color: #555;
+  }
+
+  @media print {
+    body { font-size: 10.5pt; }
+    .header { padding-top: 40px; }
+    .piece { page-break-inside: avoid; }
+    .phase-label { page-break-after: avoid; }
+  }
+
+  @media (max-width: 600px) {
+    body { font-size: 16px; }
+    .header { padding: 40px 20px 24px; }
+    .header h1 { font-size: 2em; }
+    .pieces { padding: 0 20px 40px; }
+    .stat-bar { gap: 16px; }
+    .stat-item .num { font-size: 1.3em; }
+    .timeline-section, .closing-section { padding-left: 20px; padding-right: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Thirteen Ways to See a Family</h1>
+  <div class="subtitle">Planned visualizations for the Lack family tree</div>
+
+  <div class="intro">
+    <p>George's genealogy research produced a database of nearly 3,000 people spanning 
+    five and a half centuries. Names, dates, places, relationships — the raw material 
+    of a family's history.</p>
+    <p>The question now is: what do you <em>do</em> with it?</p>
+    <p>We're building thirteen interactive visualizations — each one a different lens 
+    on the same data. Together they reveal the shapes hiding inside the family tree: 
+    time, distance, absence, and connection. Each will be a web page you can open in 
+    any browser, explore, and share.</p>
+  </div>
+
+  <div class="stat-bar">
+    <div class="stat-item"><span class="num">2,856</span><span class="label">People</span></div>
+    <div class="stat-item"><span class="num">566</span><span class="label">Years</span></div>
+    <div class="stat-item"><span class="num">767</span><span class="label">Surnames</span></div>
+    <div class="stat-item"><span class="num">1,143</span><span class="label">Relationships</span></div>
+    <div class="stat-item"><span class="num">1,450</span><span class="label">Photos</span></div>
+    <div class="stat-item"><span class="num">883</span><span class="label">Places</span></div>
+  </div>
+</div>
+
+<div class="pieces">
+
+  <!-- ============ PHASE 1 ============ -->
+  <div class="phase-label">Phase 1 — Ready to Build Now</div>
+
+  <div class="piece">
+    <span class="piece-number">Piece 3</span>
+    <h2><span class="visual-hint">💓</span> The Heartbeat Chart</h2>
+    <div class="one-liner">Births pulse upward. Deaths dip downward. The family has a heartbeat.</div>
+    <p class="description">
+      A cardiogram of the family across five centuries. Time runs left to right (1500–2026). 
+      Every birth pushes the line up. Every death pulls it down. Good decades have a strong 
+      pulse — births outnumber deaths. Bad decades flatline. You can <em>see</em> the Irish Famine, 
+      the World Wars, the baby booms. The family almost dying and recovering, readable as a 
+      vital sign.
+    </p>
+    <p class="description">
+      The most recent decades show births only — living people have no death date yet. 
+      The pulse is still going.
+    </p>
+    <div class="data-note">2,169 birth dates · 1,595 death dates · binned by decade</div>
+  </div>
+
+  <div class="piece">
+    <span class="piece-number">Piece 12</span>
+    <h2><span class="visual-hint">✦</span> The Orphan Constellation</h2>
+    <div class="one-liner">2,112 disconnected people, rendered as a night sky.</div>
+    <p class="description">
+      Over two thousand people in the database have no relationships connected yet — no parents, 
+      no children, no spouse in the data. They aren't empty records; they have names, dates, 
+      places. They had families. The data just doesn't say who. This piece renders them as 
+      a star field against a dark background. Each orphan is a point of light. Brightness 
+      shows how much we know about them. Hover over a star to see a name. That might be all 
+      that survives.
+    </p>
+    <p class="moment">The negative space of the project. The other pieces show connection. 
+    This one shows what's left when connection is absent.</p>
+    <div class="data-note">2,112 orphan nodes · brightness = data completeness</div>
+  </div>
+
+  <div class="piece">
+    <span class="piece-number">Piece 6</span>
+    <h2><span class="visual-hint">🌊</span> The Name River</h2>
+    <div class="one-liner">First names flowing through centuries like rivers of tradition.</div>
+    <p class="description">
+      A flowing chart where each first name is a colored stream. The stream rises when the 
+      name is popular and thins when it fades. "Mary" runs strong for 200 years — 73 people — 
+      then recedes. "John" (58) and "William" (44) flow through generation after generation. 
+      New names enter when new families marry in. Old names vanish when a branch ends.
+    </p>
+    <p class="description">
+      "George" appears 20 times across the family — a stream that keeps coming back. Someone 
+      keeps choosing it.
+    </p>
+    <p class="moment">When a name vanishes from the river, something was forgotten. When it 
+    returns, someone remembered.</p>
+    <div class="data-note">2,856 people · top 30 names tracked · decade bins</div>
+  </div>
+
+  <div class="piece">
+    <span class="piece-number">Piece 7</span>
+    <h2><span class="visual-hint">📊</span> The Sibling Stack</h2>
+    <div class="one-liner">Every family unit — how many children born vs. how many survived.</div>
+    <p class="description">
+      Each family is a vertical stack of bars. Each bar is one child — filled if they survived 
+      to adulthood, faded if they died young or we don't know. A family of nine children with 
+      four surviving looks very different from a modern family of two. Line them up 
+      chronologically and you can see the demographic revolution happening inside your 
+      own family: tall, hollow stacks before 1900 giving way to shorter, solid stacks after.
+    </p>
+    <p class="moment">The tallest stack is the family that bet on volume. Some of those 
+    children are your direct ancestors. The ones who didn't survive are the siblings of 
+    your bloodline — the near-misses of your existence.</p>
+    <div class="data-note">818 parent-child relationships · grouped by parent pair</div>
+  </div>
+
+  <!-- ============ PHASE 2 ============ -->
+  <div class="phase-label">Phase 2 — After Data Cleanup</div>
+
+  <div class="piece">
+    <span class="piece-number">Piece 1</span>
+    <h2><span class="visual-hint">🚇</span> TimeNets</h2>
+    <div class="one-liner">The family as a subway map — lives converging and diverging.</div>
+    <p class="description">
+      Every person is a horizontal line from birth to death. Marriages merge two lines 
+      together. Children split them apart. The result looks like a transit map — tracks 
+      running parallel, converging at stations (marriages), diverging at junctions (births). 
+      The 1500s are sparse — lone tracks. By the 1800s it's a full system. Orphan nodes 
+      appear as disconnected segments floating in the right time period but touching nothing.
+    </p>
+    <p class="moment">Find two tracks that converge and trace them backward. They were 
+    separate for generations — different countries, different surnames. Then they touch. 
+    Everyone downstream exists because of that moment.</p>
+    <div class="data-note">1,143 relationships · 14 generations · 325 marriage convergences</div>
+  </div>
+
+  <div class="piece">
+    <span class="piece-number">Piece 2</span>
+    <h2><span class="visual-hint">🧵</span> GeneaQuilts</h2>
+    <div class="one-liner">A patchwork matrix — family structure as textile pattern.</div>
+    <p class="description">
+      People arranged on two axes of a grid. Relationships appear as colored cells at 
+      intersections. Families form diagonal bands. The result literally looks like a quilt — 
+      a patchwork of blocks where dense bands are large families and gaps are where branches 
+      ended or immigration broke the pattern.
+    </p>
+    <p class="description">
+      Color by surname: the Browns (156 people) form the widest bands. Cadigan (122) 
+      and Murphy (80) create their own strong diagonals. Print it — it's a family artifact 
+      that looks like a domestic textile.
+    </p>
+    <div class="data-note">2,856 × family-unit matrix · color = surname</div>
+  </div>
+
+  <div class="piece">
+    <span class="piece-number">Piece 11</span>
+    <h2><span class="visual-hint">⌛</span> The Dual Tree</h2>
+    <div class="one-liner">Pick a person. Ancestors fan upward. Descendants fan downward.</div>
+    <p class="description">
+      An hourglass with a person at the center. Above: every ancestor the research uncovered, 
+      fanning back through the generations. Below: their children, grandchildren, onward. 
+      The chosen person is the pinch point — everything inherited above, everything created 
+      below. Do this for George: 14 generations of research above him, the family he made below.
+    </p>
+    <p class="moment">The upward fan is asymmetric — some branches deep, others ending after 
+    two generations in "unknown." The contrast between the researched past and the known 
+    present <em>is</em> the content.</p>
+    <div class="data-note">14 generations · selectable focal person</div>
+  </div>
+
+  <div class="piece">
+    <span class="piece-number">Piece 4</span>
+    <h2><span class="visual-hint">🕯️</span> The Widow's Window</h2>
+    <div class="one-liner">How long did the survivor live after their spouse died?</div>
+    <p class="description">
+      A scatter plot where each dot is someone who outlived their partner. The horizontal 
+      axis is the year the spouse died. The vertical axis is how many years the survivor 
+      lived alone. Dots near the bottom: died within a year. Dots high up: thirty more 
+      years alone. Color by gender. Size by number of children. 
+    </p>
+    <p class="moment">The highest dots are three decades of absence. The lowest are genuine 
+    broken hearts. Every dot has two names — the one who died, and the one who was left.</p>
+    <div class="data-note">325 spouse pairs · grief measured in years</div>
+  </div>
+
+  <div class="piece">
+    <span class="piece-number">Piece 8</span>
+    <h2><span class="visual-hint">⚖️</span> Parallel Lives</h2>
+    <div class="one-liner">Pick any two people. Show their lives side by side.</div>
+    <p class="description">
+      Two vertical timelines running next to each other. Where the lives overlap in time, 
+      they share the same vertical space. Where one has died and the other hasn't been born 
+      yet, one column goes empty. Compare the earliest known ancestor (born ~1500, almost 
+      no records) with the most recently born (2019, everything documented). 500 years of 
+      separation. The asymmetry of documentation <em>is</em> the content.
+    </p>
+    <div class="data-note">764 events · searchable person picker · suggested interesting pairs</div>
+  </div>
+
+  <!-- ============ PHASE 3 ============ -->
+  <div class="phase-label">Phase 3 — After Places Are Mapped</div>
+
+  <div class="piece">
+    <span class="piece-number">Piece 5</span>
+    <h2><span class="visual-hint">📍</span> Marriage Distance Over Time</h2>
+    <div class="one-liner">How far apart was each couple born? Globalization through your bloodline.</div>
+    <p class="description">
+      For every marriage where both birthplaces are known, compute the distance between 
+      them. In the 1700s: 5 miles, 10 miles — married the neighbor. Then a dot explodes 
+      upward: someone married across an ocean. 3,000 miles. The scatter plot tells the 
+      story of the family's expanding world.
+    </p>
+    <p class="description">
+      Every dot above 1,000 miles is an immigration story. Every dot near zero is a 
+      community story. The slope of the trend line = the rate at which the family's 
+      world expanded.
+    </p>
+    <p class="moment">Flat for centuries, then exponential. Transportation, immigration, 
+    modernity — visible in the angle of that line.</p>
+    <div class="data-note">272 spouse pairs with both birthplaces known</div>
+  </div>
+
+  <div class="piece">
+    <span class="piece-number">Piece 9</span>
+    <h2><span class="visual-hint">🔀</span> The Fork Points</h2>
+    <div class="one-liner">Every marriage is a moment of contingency. Remove one and you don't exist.</div>
+    <p class="description">
+      325 marriages in the database. Each one is a fork where two separate family lines 
+      converged. Score each by "downstream impact" — how many living people exist because 
+      of this marriage. High-scoring fork points are the marriages that mattered most. 
+      One marriage in 1780 might have 200+ living descendants. Remove it and the tree 
+      collapses.
+    </p>
+    <p class="description">
+      Color by the geographic distance between spouses' birthplaces. Blue = married locally. 
+      Red = continents apart. The thickest, reddest nodes are the most improbable, most 
+      consequential moments in the family's history.
+    </p>
+    <div class="data-note">325 marriages · scored by descendant count · colored by distance</div>
+  </div>
+
+  <!-- ============ PHASE 4 ============ -->
+  <div class="phase-label">Phase 4 — Event Data</div>
+
+  <div class="piece">
+    <span class="piece-number">Piece 13</span>
+    <h2><span class="visual-hint">📋</span> Census Moment</h2>
+    <div class="one-liner">One household, one night — the family as the census taker saw them.</div>
+    <p class="description">
+      Styled like actual census cards: names, ages, occupations, relationships to head of 
+      household. Browse family by family, decade by decade. Same household ten years later: 
+      children are taller, new ones appeared, eldest has left, grandparent gone. Flip between 
+      census years — 1850, 1860, 1870 — and watch a family age in decade-long jumps.
+    </p>
+    <p class="moment">The gaps between snapshots are where life happened.</p>
+    <div class="data-note">688 residence events · 23 census events · grouped by household</div>
+  </div>
+
+  <!-- ============ PHASE 5 ============ -->
+  <div class="phase-label">Phase 5 — Print / Physical</div>
+
+  <div class="piece">
+    <span class="piece-number">Piece 10</span>
+    <h2><span class="visual-hint">🌿</span> H-Tree — The Fractal Poster</h2>
+    <div class="one-liner">A fractal where geometry and genealogy are the same thing.</div>
+    <p class="description">
+      You at the center. Parents branch left and right. Their parents branch up and down. 
+      Each generation halves the segment length. The result is an H-Tree fractal — a 
+      self-similar pattern that <em>is</em> the family tree. 14 generations deep means the 
+      fractal recurses 14 times. Well-documented branches go deep. Poorly-documented lines 
+      terminate early. The asymmetry of the fractal is the asymmetry of the research.
+    </p>
+    <p class="description">
+      This is a <strong>print piece</strong>. Generated as a high-resolution SVG, printed at 
+      poster size (24×36 inches or larger), and framed. Color-coded by surname. Each node 
+      labeled with a name and year. You have to lean in to read it. The act of leaning in 
+      <em>is</em> the act of researching.
+    </p>
+    <div class="data-note">14 generations · SVG → poster PDF · color = surname</div>
+  </div>
+
+</div>
+
+
+<div class="timeline-section">
+  <h2>Build Sequence</h2>
+
+  <table class="build-table">
+    <tr>
+      <th>Phase</th>
+      <th>Pieces</th>
+      <th>What's Needed</th>
+      <th>Time</th>
+    </tr>
+    <tr>
+      <td class="phase-name">1</td>
+      <td>Heartbeat Chart, Orphan Constellation, Name River, Sibling Stack</td>
+      <td class="prereq">Nothing — data is ready</td>
+      <td>~4 days</td>
+    </tr>
+    <tr>
+      <td class="phase-name">2</td>
+      <td>TimeNets, GeneaQuilts, Dual Tree, Widow's Window, Parallel Lives</td>
+      <td class="prereq">Merge 602+ duplicate records</td>
+      <td>~8 days</td>
+    </tr>
+    <tr>
+      <td class="phase-name">3</td>
+      <td>Marriage Distance, Fork Points</td>
+      <td class="prereq">Map ~500 place names to coordinates</td>
+      <td>~3 days</td>
+    </tr>
+    <tr>
+      <td class="phase-name">4</td>
+      <td>Census Moment</td>
+      <td class="prereq">Clean residence/census event data</td>
+      <td>~2 days</td>
+    </tr>
+    <tr>
+      <td class="phase-name">5</td>
+      <td>H-Tree (poster)</td>
+      <td class="prereq">Print pipeline</td>
+      <td>~2 days</td>
+    </tr>
+  </table>
+
+  <blockquote>
+    "The thread through all thirteen: they make the invisible structure of family 
+    visible. Time as topology. Distance as love story. Absence as presence. 
+    Contingency as the ground we stand on."
+  </blockquote>
+</div>
+
+<div class="closing-section">
+  <h2 style="font-size:1.3em; font-weight:600; margin-bottom:0.8em;">Beyond the Thirteen</h2>
+  <p>
+    The plan also includes ideas for geographic visualizations — animated migration trails 
+    showing the family moving across the globe over 500 years, heat maps of ancestral 
+    homelands shifting continent to continent, and portrait maps placing faces on the earth 
+    where they were born.
+  </p>
+  <p>
+    There are sound pieces (each person as a note — pitch by birth year, duration by lifespan, 
+    the family played as a composition). 3D explorations: a root system growing downward into 
+    the earth, a galaxy where each ancestor is a star. A VR corridor you walk through, 
+    portraits on the walls giving way to silhouettes giving way to empty frames as you move 
+    deeper into the past.
+  </p>
+  <p>
+    And physical objects: an artist's book where each person gets a page (blank pages for 
+    unknowns), a password-protected family website for sharing at reunions, and the possibility 
+    of making ceramic covers for the book at NCECA.
+  </p>
+  <p>
+    The thirteen pieces are the core. Everything else is where the project can grow.
+  </p>
+
+  <p class="sign-off">
+    All data from George Lack's genealogy research.
+    Built by Ryan Lack, February 2026.
+    <br>Everything runs on a single database. No cloud. No accounts. Just a web page you can open.
+  </p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dear George</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 19px;
+    line-height: 1.7;
+    color: #2c2c2c;
+    background: #faf8f5;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 60px 32px 80px;
+  }
+
+  h1 {
+    font-size: 2.4em;
+    font-weight: 300;
+    margin-bottom: 0.3em;
+    letter-spacing: -0.02em;
+    color: #1a1a1a;
+  }
+
+  h2 {
+    font-size: 1.3em;
+    font-weight: 600;
+    margin-top: 2.5em;
+    margin-bottom: 0.6em;
+    color: #3a3a3a;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 0.3em;
+  }
+
+  p { margin-bottom: 1em; }
+
+  .stat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88em;
+    font-weight: 400;
+    color: #5a3e1b;
+    background: #f3ede4;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  .big-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2em;
+    font-weight: 400;
+    color: #5a3e1b;
+    display: block;
+    margin: 0.4em 0 0.1em;
+    letter-spacing: -0.03em;
+  }
+
+  .caption {
+    font-size: 0.9em;
+    color: #777;
+    margin-bottom: 1.6em;
+  }
+
+  strong { font-weight: 600; color: #1a1a1a; }
+
+  .person {
+    color: #2a5a2a;
+    font-weight: 600;
+  }
+
+  .place {
+    color: #3a4a7a;
+    font-style: italic;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 2.5em 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82em;
+    margin: 1.2em 0 1.6em;
+  }
+
+  th {
+    text-align: left;
+    font-weight: 400;
+    color: #999;
+    padding: 4px 8px;
+    border-bottom: 1px solid #ddd;
+  }
+
+  td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #f0ece6;
+  }
+
+  td:nth-child(2) {
+    text-align: right;
+    font-weight: 400;
+    color: #5a3e1b;
+  }
+
+  .bar-cell {
+    padding-left: 12px;
+    color: #c4a270;
+    letter-spacing: -1px;
+    font-size: 0.9em;
+  }
+
+  .closing {
+    margin-top: 3em;
+    padding-top: 2em;
+    border-top: 1px solid #ddd;
+    font-style: italic;
+    color: #555;
+  }
+
+  .signature {
+    margin-top: 1.5em;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 1.1em;
+    color: #2c2c2c;
+  }
+
+  .date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85em;
+    color: #999;
+    margin-top: 0.5em;
+  }
+
+  @media print {
+    body { font-size: 11pt; padding: 0; max-width: 100%; }
+    h1 { font-size: 24pt; }
+    h2 { font-size: 14pt; break-after: avoid; }
+    .stat { background: none; border: 1px solid #ccc; }
+  }
+
+  @media (max-width: 600px) {
+    body { font-size: 17px; padding: 32px 20px 60px; }
+    h1 { font-size: 1.8em; }
+    .big-number { font-size: 1.6em; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Dear George,</h1>
+
+<p>You gave me 2,105 names. I turned them into 2,856 &mdash; cross-referencing
+your research with the Ancestry API and a GEDCOM file, matching people
+across sources, pulling in connections you'd already mapped out but that
+lived in different formats. Three data sources, one family.</p>
+
+<p>Here's what your work contains.</p>
+
+<hr>
+
+<h2>The Numbers</h2>
+
+<span class="big-number">2,856</span>
+<p class="caption">people, spanning 566 years</p>
+
+<p>From a man recorded only as &ldquo;Father of Valentine of Wolfhagen Gottschalk,&rdquo;
+born around 1500 in <span class="place">Wolfhagen, Hesse, Germany</span>, to children
+born in 2019. Five and a half centuries of your family, encoded in names and dates.</p>
+
+<span class="big-number">767</span>
+<p class="caption">surnames</p>
+
+<p>Not 767 dead-end strangers &mdash; 767 families that married into yours, generation
+after generation, braiding together into the family that produced you. The
+<strong>Browns</strong> (156 people), the <strong>Cadigans</strong> (122), the
+<strong>Murphys</strong> (80), the <strong>Frys</strong> (53), the <strong>Orths</strong> (38),
+the Burbanks and Greens and Monyaks (36 each).</p>
+
+<p>And the <strong>Lacks</strong> &mdash; 28. The name on the door isn't the biggest
+family in the room. It's the one that held the room together.</p>
+
+<span class="big-number">1,143</span>
+<p class="caption">relationships documented</p>
+
+<p><span class="stat">818</span> parent-child links and <span class="stat">325</span>
+marriages. Every one of those marriages is a fork point where two separate family
+lines converged. If any single one hadn't happened, everyone downstream doesn't exist.</p>
+
+<span class="big-number">1,450</span>
+<p class="caption">photos archived</p>
+
+<hr>
+
+<h2>The Geography</h2>
+
+<p>Your family is a <strong>Pennsylvania family</strong>. 172 people born in
+Pennsylvania alone &mdash; plus hundreds more across the state's towns and hollows.
+The Fryes in <span class="place">Julian</span>. The Browns in
+<span class="place">Altoona</span>. The Reighards in
+<span class="place">Somerset County</span>.</p>
+
+<p>But before Pennsylvania, your family was somewhere else.</p>
+
+<p><span class="place">Ennismore, Ontario, Canada</span> &mdash; <span class="stat">88 people</span>.
+The second largest birthplace in the database. The Murphys, the Cadigans, the Floods
+came through there. <span class="person">Timothy Murphy</span>, born 1804 in
+<span class="place">County Kerry, Ireland</span>, is one of the two most connected
+people in your entire tree &mdash; 18 relationships. He and
+<span class="person">Catherine Shanahan</span> (born 1825 in Ennismore)
+built one of the biggest branches you have.</p>
+
+<p><span class="place">Germany</span> &mdash; the Gottschalks from Wolfhagen in Hesse,
+the Reighards from St&auml;dten in Sachsen-Anhalt.</p>
+
+<p><span class="place">Ireland</span> &mdash; County Kerry, County Tyrone, and the
+general entries that map to the era before detailed parish records.</p>
+
+<p><span class="place">Switzerland</span> &mdash; <span class="person">Ursula Sieber</span>,
+born around 1560 in Steffisburg, Bern. One of the earliest known ancestors. She connects
+you to a world older than Jamestown.</p>
+
+<p><span class="place">England</span> &mdash; <span class="person">Benjamin Maple</span>,
+born around 1663 in Ipswich, Suffolk.</p>
+
+<p><span class="place">Scotland</span> &mdash; <span class="person">Archibald Shaw
+McGilthighnich</span>, born around 1740 on the Isle of Islay, Argyll. That name
+carries the Gaelic world inside it.</p>
+
+<p><span class="place">Hungary, Czechoslovakia, Belgium</span> &mdash; the Monyaks
+from Bukavynka, the Lacks from &ldquo;Checoslovac,&rdquo; the Van Aaigem line
+from Oost-Vlaanderen.</p>
+
+<p>Your family came from everywhere and landed in Pennsylvania and Michigan.</p>
+
+<hr>
+
+<h2>The People</h2>
+
+<p>The most connected people in the tree &mdash; the hubs everything flows through:</p>
+
+<table>
+  <tr>
+    <th>Person</th>
+    <th>Links</th>
+  </tr>
+  <tr>
+    <td><span class="person">Timothy Murphy</span> <span style="color:#999">(1804, County Kerry, Ireland)</span></td>
+    <td>18</td>
+  </tr>
+  <tr>
+    <td><span class="person">Catherine Shanahan</span> <span style="color:#999">(1825, Ennismore, Ontario)</span></td>
+    <td>18</td>
+  </tr>
+  <tr>
+    <td><span class="person">Josephine Monyak</span> <span style="color:#999">(1902, Bukavynka)</span></td>
+    <td>13</td>
+  </tr>
+  <tr>
+    <td><span class="person">Charles Lack</span> <span style="color:#999">(1892, Czechoslovakia)</span></td>
+    <td>13</td>
+  </tr>
+  <tr>
+    <td><span class="person">Clair Everett Brown</span> <span style="color:#999">(1896, Cambria, PA)</span></td>
+    <td>13</td>
+  </tr>
+  <tr>
+    <td><span class="person">Martin Orth</span> <span style="color:#999">(1815, Campden, Ontario)</span></td>
+    <td>13</td>
+  </tr>
+</table>
+
+<hr>
+
+<h2>The Names</h2>
+
+<p><strong>Mary</strong> appears 73 times &mdash; the most popular name in your family
+by far. Then John (58), William (44), Elizabeth (41), Sarah (41), Margaret (39),
+Daniel (34), Catherine (33).</p>
+
+<p><strong>George</strong> appears 20 times. Twenty people in this tree shared your
+name. The name runs through generations &mdash; not the most popular, but persistent.
+It keeps coming back. Someone keeps choosing it.</p>
+
+<hr>
+
+<h2>The Long Lives</h2>
+
+<p>Average lifespan across 1,563 people: <span class="stat">69.4 years</span></p>
+
+<p><span class="person">Sister Gert</span> &mdash; Elizabeth Gertrude Murphy, born
+1888 in Peterborough, Ontario. Entered religious life. Died 1994. Lived
+<strong>106 years</strong>. Born before the automobile. Died after the internet.</p>
+
+<p><span class="person">Annie M. Fry Deaven</span> &mdash; 98 years (1899&ndash;1997, Pennsylvania).</p>
+
+<p><span class="person">John George Woodling</span> &mdash; 98 years (1761&ndash;1859,
+Frederick Township, Montgomery County, Pennsylvania). Born before the Revolution.
+Died before the Civil War.</p>
+
+<hr>
+
+<h2>The Centuries</h2>
+
+<table>
+  <tr><th>Century</th><th>People</th><th></th></tr>
+  <tr><td>1400s</td><td>3</td><td class="bar-cell">◆</td></tr>
+  <tr><td>1500s</td><td>18</td><td class="bar-cell">◆◆◆</td></tr>
+  <tr><td>1600s</td><td>171</td><td class="bar-cell">◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆</td></tr>
+  <tr><td>1700s</td><td>436</td><td class="bar-cell">◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆</td></tr>
+  <tr><td>1800s</td><td>944</td><td class="bar-cell">◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆</td></tr>
+  <tr><td>1900s</td><td>496</td><td class="bar-cell">◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆◆</td></tr>
+  <tr><td>2000s</td><td>3</td><td class="bar-cell">◆</td></tr>
+</table>
+
+<p>The 1800s are where the family explodes &mdash; nearly a thousand people born
+in a single century. Big families, immigration, expansion. Half the tree lives there.</p>
+
+<hr>
+
+<h2>What We Don't Know Yet</h2>
+
+<p><span class="stat">2,112</span> people have no relationships connected yet.
+They exist as names, dates, places. They had parents and children. The data
+just doesn't say who. These are the next frontier.</p>
+
+<p><span class="stat">602+</span> potential matches are ready to merge &mdash;
+names that appear in multiple import sources, probably the same people
+recorded separately.</p>
+
+<p><span class="stat">~500</span> unique birthplaces can be mapped to
+coordinates &mdash; turning text into points on the earth. Once we do that,
+we can watch the family move across the world, century by century.</p>
+
+<hr>
+
+<h2>What This Becomes</h2>
+
+<p>This isn't just a database. This is the raw material for something you
+can hold, hang on a wall, show at a reunion.</p>
+
+<p>The plan includes thirteen visualization pieces &mdash; a heartbeat chart
+showing the family's births and deaths pulsing across centuries. A name
+river tracking how &ldquo;Mary&rdquo; and &ldquo;George&rdquo; and
+&ldquo;Daniel&rdquo; flow through time. A marriage distance map showing how
+far apart each couple was born. An orphan constellation rendering those 2,112
+unconnected people as a star field.</p>
+
+<p>A printable H-Tree fractal &mdash; you at the center, ancestors branching
+outward. A poster for the wall.</p>
+
+<div class="closing">
+  <p>George, you built this. You spent years in Ancestry pulling names out
+  of census records and ship manifests and parish registers. You traced
+  lines from Wolfhagen to Ennismore to Pennsylvania to Michigan. You
+  didn't just find names &mdash; you found 2,856 of them, across 566 years,
+  from 883 places, carrying 767 surnames.</p>
+
+  <p>The tree has a heartbeat. We're building the tool to hear it.</p>
+
+  <div class="signature">&mdash;Ryan</div>
+  <div class="date">February 2026</div>
+</div>
+
+</body>
+</html>
