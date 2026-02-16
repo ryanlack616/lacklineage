@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lack Lineage — Graph</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8f6f1;
+  --bg2: #fff;
+  --fg: #2a2520;
+  --fg2: #6b6360;
+  --accent: #8b6914;
+  --accent2: #a07d2a;
+  --border: #d8d2c8;
+  --radius: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --font: 'Georgia', 'Times New Roman', serif;
+  --mono: 'Consolas', 'Monaco', monospace;
+}
+html, body { height: 100%; overflow: hidden; }
+body { font-family: var(--font); color: var(--fg); background: var(--bg); }
+
+/* ── Header ── */
+header {
+  background: var(--fg);
+  color: var(--bg);
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  z-index: 10;
+}
+header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
+header h1 span { font-weight: 300; opacity: 0.6; }
+header h1 a { color: inherit; text-decoration: none; }
+nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+nav a {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: var(--bg);
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+nav a:hover, nav a.active {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.4);
+}
+nav a.active { font-weight: bold; }
+
+/* ── Controls ── */
+.controls {
+  position: fixed;
+  top: 60px;
+  left: 1rem;
+  z-index: 5;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  box-shadow: var(--shadow);
+  font-size: 0.8rem;
+  max-width: 240px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+.controls h3 { font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--accent); }
+.controls label { display: block; margin: 0.4rem 0 0.15rem; color: var(--fg2); }
+.controls select, .controls input[type="range"] {
+  width: 100%;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+.controls .stat { margin-top: 0.6rem; color: var(--fg2); line-height: 1.4; }
+.controls .stat strong { color: var(--fg); }
+.controls button {
+  margin-top: 0.5rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  width: 100%;
+}
+.controls button:hover { background: var(--accent2); }
+
+/* ── Tooltip ── */
+.tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: var(--fg);
+  color: var(--bg);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  max-width: 280px;
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.tooltip .name { font-weight: bold; font-size: 0.9rem; }
+.tooltip .dates { opacity: 0.7; }
+.tooltip .place { opacity: 0.7; font-style: italic; }
+.tooltip .rel { margin-top: 0.3rem; opacity: 0.5; font-size: 0.75rem; }
+
+/* ── Canvas ── */
+canvas { display: block; cursor: grab; }
+canvas:active { cursor: grabbing; }
+
+/* ── Legend ── */
+.legend {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 5;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.7rem 1rem;
+  font-size: 0.75rem;
+  display: flex;
+  gap: 1.2rem;
+  box-shadow: var(--shadow);
+}
+.legend-item { display: flex; align-items: center; gap: 0.4rem; }
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.legend-line {
+  width: 20px;
+  height: 2px;
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Lack <span>Lineage</span></a></h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/graph.html" class="active">Graph</a>
+  </nav>
+</header>
+
+<div class="controls" id="controls">
+  <h3>Family Graph</h3>
+  
+  <label>View</label>
+  <select id="viewMode">
+    <option value="connected">Connected only</option>
+    <option value="all">All 2,152 people</option>
+    <option value="ryan">Ryan's family</option>
+  </select>
+
+  <label>Color by</label>
+  <select id="colorMode">
+    <option value="sex">Sex</option>
+    <option value="surname">Surname</option>
+    <option value="era">Birth era</option>
+  </select>
+
+  <label>Link strength <span id="strengthVal">0.3</span></label>
+  <input type="range" id="linkStrength" min="0.05" max="1" step="0.05" value="0.3">
+
+  <label>Charge <span id="chargeVal">-120</span></label>
+  <input type="range" id="charge" min="-400" max="-20" step="10" value="-120">
+
+  <button id="resetBtn">Reset positions</button>
+
+  <div class="stat" id="stats">Loading...</div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background: #8b6914"></div> Male</div>
+  <div class="legend-item"><div class="legend-dot" style="background: #b85450"></div> Female</div>
+  <div class="legend-item"><div class="legend-dot" style="background: #888"></div> Unknown</div>
+  <div class="legend-item"><div class="legend-line" style="background: #8b6914"></div> Parent→Child</div>
+  <div class="legend-item"><div class="legend-line" style="background: #b85450; height: 1px; border-top: 1px dashed #b85450; background: none;"></div> Spouse</div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+// ── State ──
+let nodes = [], links = [];
+let simulation;
+let transform = d3.zoomIdentity;
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+let hoveredNode = null;
+let draggedNode = null;
+let width, height;
+
+// ── Colors ──
+const sexColors = { M: '#8b6914', F: '#b85450', U: '#888' };
+const eraColors = [
+  [1500, '#5e4a1e'],
+  [1600, '#6b5a2e'],
+  [1700, '#7a6b3e'],
+  [1800, '#8b6914'],
+  [1850, '#a07d2a'],
+  [1900, '#b89040'],
+  [1950, '#c9a85a'],
+  [2000, '#d4b870'],
+];
+let surnameColorScale;
+
+function colorBySex(d) {
+  return sexColors[d.sex] || sexColors.U;
+}
+
+function colorByEra(d) {
+  if (!d.birth_year) return '#ccc';
+  for (let i = eraColors.length - 1; i >= 0; i--) {
+    if (d.birth_year >= eraColors[i][0]) return eraColors[i][1];
+  }
+  return eraColors[0][1];
+}
+
+function colorBySurname(d) {
+  if (!d.surname) return '#ccc';
+  return surnameColorScale(d.surname);
+}
+
+function getColor(d) {
+  const mode = document.getElementById('colorMode').value;
+  if (mode === 'surname') return colorBySurname(d);
+  if (mode === 'era') return colorByEra(d);
+  return colorBySex(d);
+}
+
+// ── Load data ──
+async function loadGraph() {
+  const viewMode = document.getElementById('viewMode').value;
+  let url = '/data/graph.json';
+  if (viewMode === 'all') url = '/data/graph-all.json';
+  else if (viewMode === 'ryan') url = '/data/graph-ryan.json';
+
+  const res = await fetch(url);
+  const data = await res.json();
+
+  // Build surname color scale
+  const surnames = [...new Set(data.nodes.map(n => n.surname).filter(Boolean))];
+  surnames.sort((a, b) => {
+    const ac = data.nodes.filter(n => n.surname === a).length;
+    const bc = data.nodes.filter(n => n.surname === b).length;
+    return bc - ac;
+  });
+  surnameColorScale = d3.scaleOrdinal(d3.schemeTableau10).domain(surnames);
+
+  // Convert link source/target to references
+  const nodeById = new Map(data.nodes.map(n => [n.id, n]));
+  
+  nodes = data.nodes.map(n => ({...n, x: width/2 + (Math.random()-0.5)*400, y: height/2 + (Math.random()-0.5)*400}));
+  links = data.links.filter(l => nodeById.has(l.source) && nodeById.has(l.target));
+
+  document.getElementById('stats').innerHTML = 
+    `<strong>${nodes.length}</strong> people<br>` +
+    `<strong>${links.filter(l=>l.type==='parent_child').length}</strong> parent-child<br>` +
+    `<strong>${links.filter(l=>l.type==='spouse').length}</strong> spouse`;
+
+  initSimulation();
+}
+
+// ── Simulation ──
+function initSimulation() {
+  const strength = parseFloat(document.getElementById('linkStrength').value);
+  const charge = parseFloat(document.getElementById('charge').value);
+
+  if (simulation) simulation.stop();
+
+  simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links)
+      .id(d => d.id)
+      .distance(d => d.type === 'spouse' ? 30 : 60)
+      .strength(d => d.type === 'spouse' ? strength * 2 : strength))
+    .force('charge', d3.forceManyBody().strength(charge))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('collision', d3.forceCollide(12))
+    .force('x', d3.forceX(width / 2).strength(0.03))
+    .force('y', d3.forceY(height / 2).strength(0.03))
+    .alphaDecay(0.01)
+    .on('tick', draw);
+}
+
+// ── Drawing ──
+function draw() {
+  ctx.save();
+  ctx.clearRect(0, 0, width, height);
+  ctx.translate(transform.x, transform.y);
+  ctx.scale(transform.k, transform.k);
+
+  // Links
+  for (const l of links) {
+    ctx.beginPath();
+    ctx.moveTo(l.source.x, l.source.y);
+    ctx.lineTo(l.target.x, l.target.y);
+    
+    if (l.type === 'spouse') {
+      ctx.setLineDash([3, 3]);
+      ctx.strokeStyle = 'rgba(184, 84, 80, 0.4)';
+      ctx.lineWidth = 1;
+    } else {
+      ctx.setLineDash([]);
+      ctx.strokeStyle = 'rgba(139, 105, 20, 0.25)';
+      ctx.lineWidth = 1;
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Hovered node connections (highlight)
+  if (hoveredNode) {
+    const connected = new Set();
+    for (const l of links) {
+      const sid = typeof l.source === 'object' ? l.source.id : l.source;
+      const tid = typeof l.target === 'object' ? l.target.id : l.target;
+      if (sid === hoveredNode.id || tid === hoveredNode.id) {
+        connected.add(sid);
+        connected.add(tid);
+        ctx.beginPath();
+        ctx.moveTo(l.source.x, l.source.y);
+        ctx.lineTo(l.target.x, l.target.y);
+        ctx.strokeStyle = l.type === 'spouse' ? 'rgba(184, 84, 80, 0.9)' : 'rgba(139, 105, 20, 0.8)';
+        ctx.lineWidth = 2;
+        if (l.type === 'spouse') ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+  }
+
+  // Nodes
+  for (const d of nodes) {
+    const r = (hoveredNode && hoveredNode.id === d.id) ? 7 : 5;
+    const color = getColor(d);
+
+    // Dim non-connected nodes when hovering
+    let alpha = 1;
+    if (hoveredNode && hoveredNode.id !== d.id) {
+      const isConnected = links.some(l => {
+        const s = typeof l.source === 'object' ? l.source.id : l.source;
+        const t = typeof l.target === 'object' ? l.target.id : l.target;
+        return (s === hoveredNode.id && t === d.id) || (t === hoveredNode.id && s === d.id);
+      });
+      alpha = isConnected ? 1 : 0.2;
+    }
+
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, r, 0, Math.PI * 2);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    // Border
+    ctx.strokeStyle = alpha < 1 ? 'rgba(0,0,0,0.05)' : 'rgba(0,0,0,0.2)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+
+    // Label for larger zoom or hovered
+    if (transform.k > 1.5 || (hoveredNode && hoveredNode.id === d.id)) {
+      ctx.fillStyle = `rgba(42, 37, 32, ${alpha})`;
+      ctx.font = `${11 / transform.k}px Georgia`;
+      ctx.textAlign = 'center';
+      ctx.fillText(d.name, d.x, d.y - r - 3);
+    }
+
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.restore();
+}
+
+// ── Resize ──
+function resize() {
+  width = window.innerWidth;
+  height = window.innerHeight;
+  canvas.width = width * devicePixelRatio;
+  canvas.height = height * devicePixelRatio;
+  canvas.style.width = width + 'px';
+  canvas.style.height = height + 'px';
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  if (simulation) {
+    simulation.force('center', d3.forceCenter(width / 2, height / 2));
+    simulation.alpha(0.1).restart();
+  }
+}
+window.addEventListener('resize', resize);
+
+// ── Zoom ──
+const zoom = d3.zoom()
+  .scaleExtent([0.1, 10])
+  .on('zoom', (event) => {
+    transform = event.transform;
+    draw();
+  });
+
+d3.select(canvas).call(zoom);
+
+// ── Mouse interaction ──
+function screenToSim(x, y) {
+  return [(x - transform.x) / transform.k, (y - transform.y) / transform.k];
+}
+
+function findNode(mx, my) {
+  const [sx, sy] = screenToSim(mx, my);
+  const r = 8 / transform.k; // hit radius
+  for (let i = nodes.length - 1; i >= 0; i--) {
+    const d = nodes[i];
+    const dx = d.x - sx, dy = d.y - sy;
+    if (dx * dx + dy * dy < r * r) return d;
+  }
+  return null;
+}
+
+canvas.addEventListener('mousemove', (e) => {
+  if (draggedNode) {
+    const [sx, sy] = screenToSim(e.clientX, e.clientY);
+    draggedNode.fx = sx;
+    draggedNode.fy = sy;
+    simulation.alpha(0.1).restart();
+    return;
+  }
+
+  const node = findNode(e.clientX, e.clientY);
+  if (node !== hoveredNode) {
+    hoveredNode = node;
+    draw();
+    
+    if (node) {
+      const dates = [];
+      if (node.birth_year) dates.push(`b. ${node.birth_year}`);
+      if (node.death_date) {
+        const m = node.death_date.match(/(\d{4})/);
+        if (m) dates.push(`d. ${m[1]}`);
+      }
+
+      // Count connections
+      let parents = 0, children = 0, spouses = 0;
+      for (const l of links) {
+        const s = typeof l.source === 'object' ? l.source.id : l.source;
+        const t = typeof l.target === 'object' ? l.target.id : l.target;
+        if (l.type === 'parent_child') {
+          if (s === node.id) children++;
+          if (t === node.id) parents++;
+        }
+        if (l.type === 'spouse' && (s === node.id || t === node.id)) spouses++;
+      }
+      const relParts = [];
+      if (parents) relParts.push(`${parents} parent${parents>1?'s':''}`);
+      if (spouses) relParts.push(`${spouses} spouse${spouses>1?'s':''}`);
+      if (children) relParts.push(`${children} child${children>1?'ren':''}`);
+
+      tooltip.innerHTML = `
+        <div class="name">${node.name}</div>
+        ${dates.length ? `<div class="dates">${dates.join(' — ')}</div>` : ''}
+        ${node.birth_place ? `<div class="place">${node.birth_place}</div>` : ''}
+        ${relParts.length ? `<div class="rel">${relParts.join(', ')}</div>` : ''}
+      `;
+      tooltip.style.opacity = 1;
+      tooltip.style.left = (e.clientX + 15) + 'px';
+      tooltip.style.top = (e.clientY - 10) + 'px';
+    } else {
+      tooltip.style.opacity = 0;
+    }
+  } else if (node) {
+    tooltip.style.left = (e.clientX + 15) + 'px';
+    tooltip.style.top = (e.clientY - 10) + 'px';
+  }
+});
+
+canvas.addEventListener('mousedown', (e) => {
+  const node = findNode(e.clientX, e.clientY);
+  if (node) {
+    draggedNode = node;
+    draggedNode.fx = draggedNode.x;
+    draggedNode.fy = draggedNode.y;
+    simulation.alphaTarget(0.3).restart();
+    // Prevent zoom while dragging a node
+    d3.select(canvas).on('.zoom', null);
+  }
+});
+
+canvas.addEventListener('mouseup', () => {
+  if (draggedNode) {
+    draggedNode.fx = null;
+    draggedNode.fy = null;
+    draggedNode = null;
+    simulation.alphaTarget(0);
+    // Re-enable zoom
+    d3.select(canvas).call(zoom);
+  }
+});
+
+canvas.addEventListener('mouseleave', () => {
+  hoveredNode = null;
+  tooltip.style.opacity = 0;
+  draw();
+});
+
+// ── Controls ──
+document.getElementById('viewMode').addEventListener('change', loadGraph);
+document.getElementById('colorMode').addEventListener('change', () => draw());
+
+document.getElementById('linkStrength').addEventListener('input', (e) => {
+  document.getElementById('strengthVal').textContent = e.target.value;
+  if (simulation) {
+    simulation.force('link').strength(d => {
+      const s = parseFloat(e.target.value);
+      return d.type === 'spouse' ? s * 2 : s;
+    });
+    simulation.alpha(0.5).restart();
+  }
+});
+
+document.getElementById('charge').addEventListener('input', (e) => {
+  document.getElementById('chargeVal').textContent = e.target.value;
+  if (simulation) {
+    simulation.force('charge').strength(parseFloat(e.target.value));
+    simulation.alpha(0.5).restart();
+  }
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  transform = d3.zoomIdentity;
+  d3.select(canvas).call(zoom.transform, d3.zoomIdentity);
+  for (const n of nodes) {
+    n.x = width/2 + (Math.random()-0.5)*400;
+    n.y = height/2 + (Math.random()-0.5)*400;
+    n.fx = null;
+    n.fy = null;
+  }
+  simulation.alpha(1).restart();
+});
+
+// ── Init ──
+resize();
+loadGraph();
+</script>
+</body>
+</html>

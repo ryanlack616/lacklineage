@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lack Lineage</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8f6f1;
+  --fg: #2a2520;
+  --fg2: #6b6360;
+  --accent: #8b6914;
+  --border: #d8d2c8;
+  --font: 'Georgia', 'Times New Roman', serif;
+  --mono: 'Consolas', 'Monaco', monospace;
+}
+html { font-size: 16px; }
+body {
+  font-family: var(--font);
+  color: var(--fg);
+  background: var(--bg);
+  line-height: 1.7;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+a { color: var(--accent); }
+
+/* ── Header ── */
+header {
+  background: var(--fg);
+  color: var(--bg);
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+header h1 { font-size: 1.1rem; letter-spacing: 0.05em; }
+header h1 span { font-weight: 300; opacity: 0.6; }
+nav { display: flex; gap: 0.5rem; }
+nav a {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: var(--bg);
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+nav a:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+
+/* ── Main ── */
+main {
+  flex: 1;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 4rem 2rem 3rem;
+}
+h2 {
+  font-size: 2rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  margin-bottom: 1.5rem;
+  color: var(--fg);
+}
+.subtitle {
+  font-size: 1.1rem;
+  color: var(--fg2);
+  margin-bottom: 2.5rem;
+  max-width: 500px;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+.stat {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.2rem;
+  text-align: center;
+}
+.stat .n {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  display: block;
+  font-family: var(--mono);
+}
+.stat .label {
+  font-size: 0.75rem;
+  color: var(--fg2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 0.3rem;
+  display: block;
+}
+
+.pieces {
+  margin-top: 2rem;
+}
+.pieces h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--fg2);
+  margin-bottom: 1rem;
+}
+.piece-list { list-style: none; }
+.piece-list li { margin-bottom: 0.5rem; }
+.piece-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--fg);
+  background: #fff;
+  transition: all 0.15s;
+  width: 100%;
+}
+.piece-list a:hover {
+  border-color: var(--accent);
+  background: #fefcf6;
+}
+.piece-list .icon { font-size: 1.2rem; width: 2rem; text-align: center; }
+.piece-list .title { font-weight: 600; }
+.piece-list .desc {
+  font-size: 0.8rem;
+  color: var(--fg2);
+  margin-left: auto;
+}
+
+footer {
+  text-align: center;
+  padding: 2rem;
+  font-size: 0.75rem;
+  color: var(--fg2);
+  border-top: 1px solid var(--border);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Lack <span>Lineage</span></h1>
+  <nav>
+    <a href="/graph.html">Graph</a>
+  </nav>
+</header>
+
+<main>
+  <h2>LACK</h2>
+  <p class="subtitle">
+    A family database. 2,152 people across five centuries.
+    What we know, what we don't, and the shape of forgetting.
+  </p>
+
+  <div class="stats" id="stats">
+    <div class="stat"><span class="n" id="s-people">—</span><span class="label">People</span></div>
+    <div class="stat"><span class="n" id="s-surnames">—</span><span class="label">Surnames</span></div>
+    <div class="stat"><span class="n" id="s-rels">—</span><span class="label">Relationships</span></div>
+  </div>
+
+  <div class="pieces">
+    <h3>Pieces</h3>
+    <ul class="piece-list">
+      <li>
+        <a href="/graph.html">
+          <span class="icon">◉</span>
+          <span class="title">Family Graph</span>
+          <span class="desc">Force-directed network</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <p style="margin-top: 3rem; font-size: 0.85rem; color: var(--fg2); line-height: 1.8;">
+    Built from a database started by George Lack. Extended by
+    <a href="https://monospacepoetry.com">Ryan Lack</a>.
+    This project lives at the intersection of genealogy and art practice —
+    measuring what survives, performing what doesn't, and refusing to let
+    people be forgotten.
+  </p>
+</main>
+
+<footer>
+  lacklineage.com · 2026
+</footer>
+
+<script>
+fetch('/data/stats.json')
+  .then(r => r.json())
+  .then(s => {
+    document.getElementById('s-people').textContent = s.total_people.toLocaleString();
+    document.getElementById('s-surnames').textContent = s.unique_surnames.toLocaleString();
+    document.getElementById('s-rels').textContent = s.total_relationships.toLocaleString();
+  })
+  .catch(() => {});
+</script>
+</body>
+</html>
