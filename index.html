@@ -31,7 +31,7 @@ body::before {
   position: fixed;
   inset: 0;
   background: url('img/back.svg') center center / 100% auto no-repeat;
-  opacity: 0.14;
+  opacity: 0.08;
   pointer-events: none;
   z-index: 0;
 }
@@ -248,6 +248,53 @@ footer {
   background: #e8f0fe; color: #1a56db;
   text-transform: uppercase; letter-spacing: 0.04em; margin-left: 0.4rem;
 }
+
+/* ── Recent Updates ── */
+.recent-section { margin-top: 2.5rem; }
+.recent-section h3 {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--fg2); margin-bottom: 0.8rem;
+  font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  font-weight: 700;
+}
+.recent-list { display: flex; flex-direction: column; gap: 0; }
+.recent-item {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.55rem 0.8rem; border-bottom: 1px solid #f0ede6;
+  text-decoration: none; color: var(--fg); transition: background 0.12s;
+  font-size: 0.85rem;
+}
+.recent-item:first-child { border-top: 1px solid #f0ede6; }
+.recent-item:hover { background: #fefcf6; text-decoration: none; }
+.ri-icon { font-size: 1rem; flex-shrink: 0; width: 1.4rem; text-align: center; }
+.ri-name { font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ri-dates { font-size: 0.75rem; color: var(--fg2); flex-shrink: 0; font-family: var(--mono); }
+.ri-tier {
+  font-size: 0.55rem; padding: 0.1rem 0.35rem; border-radius: 3px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  font-family: var(--mono); flex-shrink: 0;
+}
+.ri-docs { font-size: 0.7rem; color: var(--fg2); flex-shrink: 0; }
+.ri-meta { font-size: 0.7rem; color: var(--fg2); flex-shrink: 0; white-space: nowrap; }
+.ri-when { font-size: 0.65rem; color: var(--fg2); flex-shrink: 0; font-family: var(--mono); min-width: 3rem; text-align: right; }
+
+/* Activity feed specifics */
+.ri-type-badge {
+  font-size: 0.55rem; padding: 0.08rem 0.3rem; border-radius: 3px;
+  font-weight: 600; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0;
+}
+.ri-type-badge.vision { background: #e8f0fe; color: #1a56db; }
+.ri-type-badge.ocr { background: #fef3cd; color: #856404; }
+.ri-people {
+  font-size: 0.7rem; color: var(--accent); flex-shrink: 0;
+  max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+@media (max-width: 600px) {
+  .ri-dates, .ri-docs, .ri-when, .ri-people { display: none; }
+  .recent-item { padding: 0.45rem 0.5rem; font-size: 0.8rem; }
+}
 </style>
 </head>
 <body>
@@ -257,6 +304,7 @@ footer {
   <nav>
     <a href="/" class="active">Dashboard</a>
     <a href="/search.html">Search</a>
+    <a href="/research.html">Research</a>
     <a href="/graph.html">Graph</a>
     <a href="/tree.html">Tree</a>
   </nav>
@@ -301,6 +349,11 @@ footer {
         <span class="dash-icon">🔍</span>
         <span class="dash-title">Advanced Search</span>
         <span class="dash-desc">Query by name, date, place, confidence, document type, OCR text</span>
+      </a>
+      <a href="/research.html" class="dash-card accent">
+        <span class="dash-icon">🧩</span>
+        <span class="dash-title">Research Hub</span>
+        <span class="dash-desc">Duplicates, missing data, anomalies, unmatched docs — ranked leads</span>
       </a>
       <a href="/profile.html" class="dash-card">
         <span class="dash-icon">👤</span>
@@ -356,6 +409,18 @@ footer {
         <span class="dash-title">Thirteen Ways</span>
       </a>
     </div>
+  </div>
+
+  <!-- Recently Updated People -->
+  <div class="recent-section" id="recent-updated-section" style="display:none">
+    <h3>🕐 Recently Updated</h3>
+    <div class="recent-list" id="recent-updated"></div>
+  </div>
+
+  <!-- Recent Activity Feed -->
+  <div class="recent-section" id="recent-activity-section" style="display:none">
+    <h3>📥 Newest Additions</h3>
+    <div class="recent-list" id="recent-activity"></div>
   </div>
 
   <p style="margin-top: 3rem; font-size: 0.85rem; color: var(--fg2); line-height: 1.8;">
@@ -525,6 +590,53 @@ searchInput.addEventListener('input', () => {
 });
 searchInput.addEventListener('keydown', e => { if (e.key==='Escape') searchDD.classList.remove('open'); });
 document.addEventListener('click', e => { if (!e.target.closest('.search-wrap') && !e.target.closest('.search-controls')) searchDD.classList.remove('open'); });
+/* ════════ Recent Feeds ════════ */
+const TIER_ICONS = { high:'🟢', medium:'🟡', low:'🟠', speculative:'🔴' };
+
+fetch('/data/recent.json')
+  .then(r => r.json())
+  .then(data => {
+    // Recently Updated People
+    const updEl = document.getElementById('recent-updated');
+    const updSec = document.getElementById('recent-updated-section');
+    if (data.recently_updated && data.recently_updated.length) {
+      updSec.style.display = '';
+      updEl.innerHTML = data.recently_updated.map(p => {
+        const tc = TIER_COLORS[p.confidence_tier]||'#999';
+        const tb = TIER_BG[p.confidence_tier]||'#f0f0f0';
+        const icon = p.confidence_tier === 'high' ? '👤' : (p.confidence_tier === 'medium' ? '👤' : '👤');
+        return `<a href="/profile.html?id=${p.id}" class="recent-item">
+          <span class="ri-icon">${icon}</span>
+          <span class="ri-name">${esc(p.name)}</span>
+          <span class="ri-dates">${esc(p.dates)}</span>
+          <span class="ri-tier" style="background:${tb};color:${tc};">${p.confidence_tier||'?'}</span>
+          <span class="ri-docs">${p.doc_count ? p.doc_count + ' docs' : ''}</span>
+          <span class="ri-when">${esc(p.updated_label||'')}</span>
+        </a>`;
+      }).join('');
+    }
+
+    // Recent Activity
+    const actEl = document.getElementById('recent-activity');
+    const actSec = document.getElementById('recent-activity-section');
+    if (data.recent_activity && data.recent_activity.length) {
+      actSec.style.display = '';
+      const typeIcons = { photo:'📷', certificate:'📜', obituary:'✝️', military:'🎖️', census:'📋', newspaper:'📰', letter:'✉️', document:'📄', record:'📄' };
+      actEl.innerHTML = data.recent_activity.map(a => {
+        const icon = typeIcons[a.doc_type] || '📄';
+        const peopleStr = a.people.map(p => p.name).join(', ');
+        return `<a href="/documents.html?doc=${a.doc_id}" class="recent-item">
+          <span class="ri-icon">${icon}</span>
+          <span class="ri-name">${esc(a.label)}</span>
+          <span class="ri-type-badge ${a.type}">${a.type}</span>
+          <span class="ri-people" title="${esc(peopleStr)}">${esc(peopleStr)}</span>
+          <span class="ri-meta">${esc(a.doc_type||'')}</span>
+          <span class="ri-when">${esc(a.ts_label||'')}</span>
+        </a>`;
+      }).join('');
+    }
+  })
+  .catch(() => {});
 </script>
 <script src="/data/help-widget.js"></script>
 <script>

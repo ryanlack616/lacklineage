@@ -1,0 +1,549 @@
+{
+  "recently_updated": [
+    {
+      "id": 1,
+      "name": "George L. Lack",
+      "dates": "b. 1949",
+      "confidence_tier": "high",
+      "updated_at": "2026-02-01T00:00:00",
+      "updated_label": "Feb 1",
+      "doc_count": 7
+    },
+    {
+      "id": 2,
+      "name": "George Lack",
+      "dates": "1928–2014",
+      "confidence_tier": "high",
+      "updated_at": "2026-02-01T00:00:00",
+      "updated_label": "Feb 1",
+      "doc_count": 16
+    },
+    {
+      "id": 3,
+      "name": "Diane marie lack Cadigan",
+      "dates": "b. 1956",
+      "confidence_tier": "medium",
+      "updated_at": "2026-02-01T00:00:00",
+      "updated_label": "Feb 1",
+      "doc_count": 0
+    },
+    {
+      "id": 4,
+      "name": "Josephine Monyak",
+      "dates": "1902–1983",
+      "confidence_tier": "high",
+      "updated_at": "2026-02-01T00:00:00",
+      "updated_label": "Feb 1",
+      "doc_count": 2
+    },
+    {
+      "id": 5,
+      "name": "Charles Lack",
+      "dates": "1892–1974",
+      "confidence_tier": "high",
+      "updated_at": "2026-02-01T00:00:00",
+      "updated_label": "Feb 1",
+      "doc_count": 14
+    },
+    {
+      "id": 6,
+      "name": "Mike Lack",
+      "dates": "1924–1925",
+      "confidence_tier": "medium",
+      "updated_at": "2026-02-01T00:00:00",
+      "updated_label": "Feb 1",
+      "doc_count": 5
+    },
+    {
+      "id": 7,
+      "name": "John Lack",
+      "dates": "1919–1979",
+      "confidence_tier": "high",
+      "updated_at": "2026-02-01T00:00:00",
+      "updated_label": "Feb 1",
+      "doc_count": 2
+    },
+    {
+      "id": 8,
+      "name": "Charles Lack",
+      "dates": "1921–2000",
+      "confidence_tier": "high",
+      "updated_at": "2026-02-01T00:00:00",
+      "updated_label": "Feb 1",
+      "doc_count": 14
+    },
+    {
+      "id": 9,
+      "name": "Mary Ann Lack",
+      "dates": "1922–1981",
+      "confidence_tier": "medium",
+      "updated_at": "2026-02-01T00:00:00",
+      "updated_label": "Feb 1",
+      "doc_count": 5
+    },
+    {
+      "id": 10,
+      "name": "Peter Lack",
+      "dates": "1928–2020",
+      "confidence_tier": "high",
+      "updated_at": "2026-02-01T00:00:00",
+      "updated_label": "Feb 1",
+      "doc_count": 12
+    },
+    {
+      "id": 11,
+      "name": "Joseph Lack",
+      "dates": "1930–2018",
+      "confidence_tier": "high",
+      "updated_at": "2026-02-01T00:00:00",
+      "updated_label": "Feb 1",
+      "doc_count": 8
+    },
+    {
+      "id": 12,
+      "name": "Betty Jane Lack",
+      "dates": "1937–2006",
+      "confidence_tier": "medium",
+      "updated_at": "2026-02-01T00:00:00",
+      "updated_label": "Feb 1",
+      "doc_count": 6
+    }
+  ],
+  "recent_activity": [
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:59:24.134441",
+      "ts_label": "Feb 17",
+      "doc_id": 1130,
+      "doc_type": "photo",
+      "label": "Catherine Malott - Good Fortune 1755",
+      "people": [],
+      "thumb": "data/thumbs/1432_Catherine Malott - Good Fortune 1755_f5e8faf0.png"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:59:20.832903",
+      "ts_label": "Feb 17",
+      "doc_id": 1129,
+      "doc_type": "obituary",
+      "label": "Mabel K Funk b 1913 obit",
+      "people": [
+        {
+          "id": 314,
+          "name": "James Frye"
+        },
+        {
+          "id": 317,
+          "name": "Robert James Frye"
+        },
+        {
+          "id": 705,
+          "name": "Kathryn Fry"
+        }
+      ],
+      "thumb": "data/thumbs/1431_Mabel K Funk b 1913 obit_72b8ccd4.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:59:18.266140",
+      "ts_label": "Feb 17",
+      "doc_id": 1128,
+      "doc_type": "obituary",
+      "label": "Mabel K Funk b 1913 obit 1",
+      "people": [
+        {
+          "id": 314,
+          "name": "James Frye"
+        }
+      ],
+      "thumb": "data/thumbs/1430_Mabel K Funk b 1913 obit 1_462c133a.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:59:15.484316",
+      "ts_label": "Feb 17",
+      "doc_id": 1127,
+      "doc_type": "photo",
+      "label": "June I & Dennis C Devlin",
+      "people": [],
+      "thumb": "data/thumbs/1429_June I & Dennis C Devlin_af0969b6.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:59:12.044457",
+      "ts_label": "Feb 17",
+      "doc_id": 1126,
+      "doc_type": "photo",
+      "label": "HermanDWoodling",
+      "people": [],
+      "thumb": "data/thumbs/1426_HermanDWoodling_99f4cab1.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:59:07.163015",
+      "ts_label": "Feb 17",
+      "doc_id": 1125,
+      "doc_type": "certificate",
+      "label": "death certificate Ralph S. Leidy",
+      "people": [
+        {
+          "id": 1017,
+          "name": "Ralph S Leidy"
+        }
+      ],
+      "thumb": "data/thumbs/1425_death certificate Ralph S. Leidy_24971892.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:59:02.062278",
+      "ts_label": "Feb 17",
+      "doc_id": 1124,
+      "doc_type": "photo",
+      "label": "Ralph S Leidy",
+      "people": [
+        {
+          "id": 1017,
+          "name": "Ralph S Leidy"
+        }
+      ],
+      "thumb": "data/thumbs/1424_Ralph S Leidy_70100462.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:58.307675",
+      "ts_label": "Feb 17",
+      "doc_id": 1123,
+      "doc_type": "photo",
+      "label": "Margaret Ann Wolfe Leidy",
+      "people": [],
+      "thumb": "data/thumbs/1423_Margaret Ann Wolfe Leidy_275c8649.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:56.342311",
+      "ts_label": "Feb 17",
+      "doc_id": 1122,
+      "doc_type": "photo",
+      "label": "VAN WASSEHNOVA, Frank",
+      "people": [],
+      "thumb": "data/thumbs/1422_VAN WASSEHNOVA, Frank_58a75eca.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:54.354813",
+      "ts_label": "Feb 17",
+      "doc_id": 1121,
+      "doc_type": "photo",
+      "label": "VAN WASSEHNOVA, Frank 2",
+      "people": [],
+      "thumb": "data/thumbs/1421_VAN WASSEHNOVA, Frank 2_53fbdd1d.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:51.722649",
+      "ts_label": "Feb 17",
+      "doc_id": 1120,
+      "doc_type": "certificate",
+      "label": "Daniel W Brown and Roseanna Murphy marriage licenes application",
+      "people": [
+        {
+          "id": 731,
+          "name": "Mary Catherine Dale"
+        },
+        {
+          "id": 1078,
+          "name": "Mary Catherine Dale"
+        }
+      ],
+      "thumb": "data/thumbs/1420_Daniel W Brown and Roseanna Murphy marriage licenes application_19ee24c3.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:46.345599",
+      "ts_label": "Feb 17",
+      "doc_id": 1119,
+      "doc_type": "newspaper",
+      "label": "Newspapers.com - Altoona Tribune - 22 Dec 1933 - Page 14",
+      "people": [
+        {
+          "id": 312,
+          "name": "Daniel Glen Brown"
+        },
+        {
+          "id": 330,
+          "name": "Sarah Ann Brown"
+        },
+        {
+          "id": 331,
+          "name": "Daniel L Brown"
+        }
+      ],
+      "thumb": "data/thumbs/1419_Newspapers.com - Altoona Tribune - 22 Dec 1933 - Page 14_1065d589.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:43.731978",
+      "ts_label": "Feb 17",
+      "doc_id": 1118,
+      "doc_type": "photo",
+      "label": "Winkle Martha divorces Wymard Brown 2 Nov 1909",
+      "people": [],
+      "thumb": "data/thumbs/1418_Winkle Martha divorces Wymard Brown 2 Nov 1909_21f46c7d.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:41.392334",
+      "ts_label": "Feb 17",
+      "doc_id": 1117,
+      "doc_type": "census",
+      "label": "Census Record 1870 Wymard Brown",
+      "people": [],
+      "thumb": "data/thumbs/1417_Census Record 1870 Wymard Brown_cd22587c.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:37.646534",
+      "ts_label": "Feb 17",
+      "doc_id": 1116,
+      "doc_type": "photo",
+      "label": "Martha Luella Brown",
+      "people": [
+        {
+          "id": 342,
+          "name": "Martha Luella Winkle"
+        }
+      ],
+      "thumb": "data/thumbs/1416_Martha Luella Brown_baab895b.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:32.966557",
+      "ts_label": "Feb 17",
+      "doc_id": 1115,
+      "doc_type": "obituary",
+      "label": "Elfa Shuman Brown's Obituary",
+      "people": [
+        {
+          "id": 473,
+          "name": "Elfa D. Shuman"
+        },
+        {
+          "id": 871,
+          "name": "Elfa Shuman Brown"
+        }
+      ],
+      "thumb": "data/thumbs/1415_Elfa Shuman Brown's Obituary_74b43e48.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:30.189790",
+      "ts_label": "Feb 17",
+      "doc_id": 1114,
+      "doc_type": "photo",
+      "label": "Esther W. Brown",
+      "people": [
+        {
+          "id": 829,
+          "name": "Esther W. Brown"
+        }
+      ],
+      "thumb": "data/thumbs/1413_Esther W. Brown_b2817a51.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:27.797551",
+      "ts_label": "Feb 17",
+      "doc_id": 1113,
+      "doc_type": "photo",
+      "label": "Sones",
+      "people": [],
+      "thumb": "data/thumbs/1412_Sones_cd9f47c3.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:25.466518",
+      "ts_label": "Feb 17",
+      "doc_id": 1112,
+      "doc_type": "obituary",
+      "label": "Newspapers.com - Altoona Tribune - 30 Apr 1936 - Page 12 Obituary for GEORGE SONES",
+      "people": [
+        {
+          "id": 350,
+          "name": "George Sones"
+        },
+        {
+          "id": 542,
+          "name": "Mary Straw"
+        },
+        {
+          "id": 645,
+          "name": "George Neff"
+        }
+      ],
+      "thumb": "data/thumbs/1411_Newspapers.com - Altoona Tribune - 30 Apr 1936 - Page 12 Obituary for GEORGE SONES_ede69ba4.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:21.674166",
+      "ts_label": "Feb 17",
+      "doc_id": 1111,
+      "doc_type": "photo",
+      "label": "Findagrave Mary Sones",
+      "people": [
+        {
+          "id": 315,
+          "name": "Maude Verdilla Sones"
+        },
+        {
+          "id": 346,
+          "name": "Catherine Sones"
+        },
+        {
+          "id": 350,
+          "name": "George Sones"
+        }
+      ],
+      "thumb": "data/thumbs/1410_Findagrave Mary Sones_296d763a.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:19.653117",
+      "ts_label": "Feb 17",
+      "doc_id": 1110,
+      "doc_type": "certificate",
+      "label": "John Ramer and Caroline Smith marriage license",
+      "people": [
+        {
+          "id": 677,
+          "name": "William Smith"
+        },
+        {
+          "id": 1002,
+          "name": "Elizabeth Smith"
+        }
+      ],
+      "thumb": "data/thumbs/1409_John Ramer and Caroline Smith marriage license_20c1c273.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:14.942154",
+      "ts_label": "Feb 17",
+      "doc_id": 1109,
+      "doc_type": "photo",
+      "label": "Dunkelberger Europe to Americxa_017",
+      "people": [
+        {
+          "id": 511,
+          "name": "ANNA MARIA HAUER"
+        },
+        {
+          "id": 756,
+          "name": "Clementz Dunkelberger"
+        },
+        {
+          "id": 1021,
+          "name": "Clemens Dunkleberger"
+        }
+      ],
+      "thumb": "data/thumbs/1404_Dunkelberger Europe to Americxa_017_c4eddf2b.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:05.845736",
+      "ts_label": "Feb 17",
+      "doc_id": 1108,
+      "doc_type": "photo",
+      "label": "fashion1600-1650",
+      "people": [],
+      "thumb": "data/thumbs/1402_fashion1600-1650_7e3e3007.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:03.124703",
+      "ts_label": "Feb 17",
+      "doc_id": 1107,
+      "doc_type": "photo",
+      "label": "Godschalk COA",
+      "people": [],
+      "thumb": "data/thumbs/1401_Godschalk COA_72482fe6.png"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:58:00.325435",
+      "ts_label": "Feb 17",
+      "doc_id": 1106,
+      "doc_type": "obituary",
+      "label": "obit. Nicholas M. Altimus Jr.",
+      "people": [
+        {
+          "id": 392,
+          "name": "Nicholas Straw"
+        },
+        {
+          "id": 654,
+          "name": "Jennie May Brown"
+        },
+        {
+          "id": 655,
+          "name": "Nicholas Montel Altimus"
+        }
+      ],
+      "thumb": "data/thumbs/1397_obit. Nicholas M. Altimus Jr._bce7666e.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:57:56.039205",
+      "ts_label": "Feb 17",
+      "doc_id": 1105,
+      "doc_type": "photo",
+      "label": "Thomas d Risner",
+      "people": [],
+      "thumb": "data/thumbs/1395_Thomas d Risner_34d0f378.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:57:54.641282",
+      "ts_label": "Feb 17",
+      "doc_id": 1104,
+      "doc_type": "photo",
+      "label": "Findagrave Nellie “Nanny” Denny Risner",
+      "people": [],
+      "thumb": "data/thumbs/1394_Findagrave Nellie “Nanny” Denny Risner_673defee.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:57:53.371096",
+      "ts_label": "Feb 17",
+      "doc_id": 1103,
+      "doc_type": "photo",
+      "label": "James and Nellie Risner (grandparents)",
+      "people": [],
+      "thumb": "data/thumbs/1393_James and Nellie Risner (grandparents)_3afd46a7.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:57:50.215255",
+      "ts_label": "Feb 17",
+      "doc_id": 1102,
+      "doc_type": "photo",
+      "label": "James Clark “Bubby aka Papaw” Risner",
+      "people": [],
+      "thumb": "data/thumbs/1391_James Clark “Bubby aka Papaw” Risner_f2208011.jpg"
+    },
+    {
+      "type": "vision",
+      "ts": "2026-02-17T11:57:48.556368",
+      "ts_label": "Feb 17",
+      "doc_id": 1101,
+      "doc_type": "military",
+      "label": "Selective Service Registration Cards, World War II_ Multiple Registrations Page 1 - Selective Servic",
+      "people": [
+        {
+          "id": 293,
+          "name": "Margaret Janet Bell"
+        }
+      ],
+      "thumb": "data/thumbs/1390_Selective Service Registration Cards, World War II_ Multiple Registrations Page 1 - Selective Servic_91784942.jpg"
+    }
+  ]
+}
