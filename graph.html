@@ -384,6 +384,9 @@ canvas#canvas:active { cursor: grabbing; }
       <option value="surname">Surname</option>
       <option value="generation">Generation from Ryan</option>
       <option value="confidence">Confidence</option>
+      <option value="century">Birth Century</option>
+      <option value="region">Country / Region</option>
+      <option value="status">Living / Dead</option>
     </select>
   </div>
 
@@ -437,8 +440,8 @@ canvas#canvas:active { cursor: grabbing; }
 </div>
 
 <div class="legend" id="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> Male</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Female</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#4a7fb5"></div> Male</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#c45a8d"></div> Female</div>
   <div class="legend-item"><div class="legend-dot" style="background:#aaa"></div> Unknown</div>
   <div class="legend-item"><div class="legend-line" style="border-color:var(--accent);opacity:0.5"></div> Parent</div>
   <div class="legend-item"><div class="legend-line dashed" style="border-color:var(--red);opacity:0.5"></div> Spouse</div>
@@ -479,38 +482,69 @@ const focusBar = document.getElementById('focusBar');
 let width = window.innerWidth, height = window.innerHeight;
 
 // ── Colors ──
-const sexColors = { M: '#8b6914', F: '#b85450', U: '#999999' };
+const sexColors = { M: '#4a7fb5', F: '#c45a8d', U: '#999999' };
 let surnameColorScale = d3.scaleOrdinal(d3.schemeTableau10);
 
 const confColors = {
   high: '#4a8c5c',
   medium: '#c49a2a',
-  low: '#b85450'
+  low: '#b85450',
+  speculative: '#8855aa'
 };
 
-// 3D gradient helpers — blend color towards white or black
-function parseColor(c) {
-  if (c.startsWith('#')) {
-    let hex = c.slice(1);
-    if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
-    return [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)];
-  }
-  const m = c.match(/(\d+)/g);
-  return m ? [+m[0], +m[1], +m[2]] : [150, 150, 150];
-}
-function blendWhite(c, amt) {
-  const [r,g,b] = parseColor(c);
-  const mix = v => Math.round(v + (255 - v) * amt);
-  return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
-}
-function blendBlack(c, amt) {
-  const [r,g,b] = parseColor(c);
-  const mix = v => Math.round(v * (1 - amt));
-  return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
-}
+const statusColors = { living: '#4a8c5c', dead: '#8b7355' };
+
+// Century color palette
+const centuryColors = {
+  '1400s': '#7b4f8a',
+  '1500s': '#6a5acd',
+  '1600s': '#3a7ca5',
+  '1700s': '#2e8b57',
+  '1800s': '#c49a2a',
+  '1900s': '#c45a3c',
+  '2000s': '#e63946'
+};
+
+// Country/Region color palette
+const regionColors = {
+  'USA': '#4a7fb5',
+  'Pennsylvania': '#4a7fb5',
+  'PA': '#4a7fb5',
+  'United States': '#4a7fb5',
+  'United States of America': '#4a7fb5',
+  'Michigan': '#5a99cc',
+  'Canada': '#c45a3c',
+  'Germany': '#c49a2a',
+  'Deutschland': '#c49a2a',
+  'Ireland': '#4a8c5c',
+  'England': '#8b6914',
+  'Scotland': '#3a5a8c',
+  'Wales': '#7b4f8a',
+  'France': '#6a5acd',
+  'Switzerland': '#b85450',
+  'Italy': '#2e8b57',
+  'Hungary': '#8b4513',
+  'Czechoslovakia': '#5a7a5a',
+  'Belgium': '#c4783c'
+};
+const regionFallback = '#aaaaaa';
+let regionColorScale = d3.scaleOrdinal(d3.schemeSet3);
 
 // Generation from Ryan color scale
 const genScale = d3.scaleSequential(d3.interpolateViridis).domain([0, 10]);
+
+function getCountry(d) {
+  const bp = d.birth_place;
+  if (!bp) return null;
+  const parts = bp.split(',').map(s => s.trim()).filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : null;
+}
+
+function getCentury(d) {
+  if (!d.birth_year) return null;
+  const c = Math.floor(d.birth_year / 100) * 100;
+  return c + 's';
+}
 
 function getColor(d) {
   const mode = document.getElementById('colorMode').value;
@@ -524,6 +558,19 @@ function getColor(d) {
     const gen = generationMap.get(d.id);
     if (gen === undefined) return '#dddddd';
     return genScale(Math.min(gen, 10));
+  }
+  if (mode === 'century') {
+    const c = getCentury(d);
+    if (!c) return '#dddddd';
+    return centuryColors[c] || '#777777';
+  }
+  if (mode === 'region') {
+    const r = getCountry(d);
+    if (!r) return '#dddddd';
+    return regionColors[r] || regionColorScale(r);
+  }
+  if (mode === 'status') {
+    return d.death_date ? statusColors.dead : statusColors.living;
   }
   return sexColors[d.sex] || sexColors.U;
 }
@@ -984,20 +1031,8 @@ function draw() {
     ctx.beginPath();
     ctx.arc(d.x, d.y, drawR, 0, Math.PI * 2);
 
-    // ── 3D sphere rendering with radial gradient ──
-    {
-      const grad = ctx.createRadialGradient(
-        d.x - drawR * 0.35, d.y - drawR * 0.35, drawR * 0.1,
-        d.x, d.y, drawR
-      );
-      // Parse the hex color for highlight blending
-      const hc = color;
-      grad.addColorStop(0, blendWhite(hc, 0.55));   // bright highlight
-      grad.addColorStop(0.45, hc);                   // base color
-      grad.addColorStop(1, blendBlack(hc, 0.45));    // dark edge
-      ctx.fillStyle = grad;
-      ctx.fill();
-    }
+    ctx.fillStyle = color;
+    ctx.fill();
 
     // Living indicator: subtle green outer ring
     if (!d.death_date) {
@@ -1386,7 +1421,8 @@ function updateLegend() {
     el.innerHTML =
       '<div class="legend-item"><div class="legend-dot" style="background:#4a8c5c"></div> High</div>' +
       '<div class="legend-item"><div class="legend-dot" style="background:#c49a2a"></div> Medium</div>' +
-      '<div class="legend-item"><div class="legend-dot" style="background:#b85450"></div> Low</div>' + linkLeg;
+      '<div class="legend-item"><div class="legend-dot" style="background:#b85450"></div> Low</div>' +
+      '<div class="legend-item"><div class="legend-dot" style="background:#8855aa"></div> Speculative</div>' + linkLeg;
   } else if (mode === 'surname') {
     const top = surnameColorScale.domain().slice(0, 5);
     el.innerHTML = top.map(s =>
@@ -1402,10 +1438,26 @@ function updateLegend() {
       `<div class="legend-item"><div class="legend-dot" style="background:${genScale(10)}"></div> 10+ steps</div>` +
       '<div class="legend-item"><div class="legend-dot" style="background:#ddd"></div> Unconnected</div>' +
       linkLeg;
+  } else if (mode === 'century') {
+    el.innerHTML =
+      Object.entries(centuryColors).map(([k, c]) =>
+        `<div class="legend-item"><div class="legend-dot" style="background:${c}"></div> ${k}</div>`
+      ).join('') +
+      '<div class="legend-item"><div class="legend-dot" style="background:#ddd"></div> Unknown</div>' + linkLeg;
+  } else if (mode === 'region') {
+    const shown = ['USA', 'Canada', 'Germany', 'Ireland', 'England', 'France', 'Switzerland', 'Italy'];
+    el.innerHTML = shown.map(r =>
+      `<div class="legend-item"><div class="legend-dot" style="background:${regionColors[r]}"></div> ${r}</div>`
+    ).join('') +
+    '<div class="legend-item"><div class="legend-dot" style="background:#aaa"></div> Other</div>' + linkLeg;
+  } else if (mode === 'status') {
+    el.innerHTML =
+      `<div class="legend-item"><div class="legend-dot" style="background:${statusColors.living}"></div> Living</div>` +
+      `<div class="legend-item"><div class="legend-dot" style="background:${statusColors.dead}"></div> Deceased</div>` + linkLeg;
   } else {
     el.innerHTML =
-      '<div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> Male</div>' +
-      '<div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Female</div>' +
+      `<div class="legend-item"><div class="legend-dot" style="background:${sexColors.M}"></div> Male</div>` +
+      `<div class="legend-item"><div class="legend-dot" style="background:${sexColors.F}"></div> Female</div>` +
       '<div class="legend-item"><div class="legend-dot" style="background:#aaa"></div> Unknown</div>' +
       '<div class="legend-item" style="font-size:0.62rem;opacity:0.6"><span style="display:inline-block;width:8px;height:8px;border:1.5px solid #4a8c5c;border-radius:50%;margin-right:4px"></span> Living</div>' +
       linkLeg;
