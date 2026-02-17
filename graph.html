@@ -361,6 +361,7 @@ canvas#canvas:active { cursor: grabbing; }
     Family Graph
     <button id="resetBtn" title="Reset view">Reset</button>
     <button id="recenterBtn" title="Fit all nodes on screen">Recenter</button>
+    <button id="autoCenterBtn" title="Keep graph fitted to screen" style="opacity:0.5">Auto</button>
   </h3>
 
   <div class="ctrl-row search-wrap">
@@ -470,6 +471,7 @@ let userCollPad = 1;
 let generationMap = new Map(); // generation distance from Ryan
 let highlightedPath = null;     // array of node IDs for path display
 let pathStartNode = null;       // first node for right-click path finding
+let autoCenter = false;         // continuously fit-to-view on each tick
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -876,7 +878,10 @@ function initSimulation() {
     .force('x', d3.forceX(width / 2).strength(grav))
     .force('y', d3.forceY(height / 2).strength(grav))
     .alphaDecay(0.015)
-    .on('tick', () => { draw(); drawMinimap(); });
+    .on('tick', () => {
+      if (autoCenter) fitAllNodes();
+      draw(); drawMinimap();
+    });
 }
 
 // ── Drawing ──
@@ -1334,7 +1339,7 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   clearFocus();
 });
 
-document.getElementById('recenterBtn').addEventListener('click', () => {
+function fitAllNodes(animate) {
   if (!nodes.length) return;
   const pad = 40;
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -1350,8 +1355,23 @@ document.getElementById('recenterBtn').addEventListener('click', () => {
   const k = Math.min((width - pad * 2) / bw, (height - pad * 2) / bh, 10);
   const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
   const tx = width / 2 - cx * k, ty = height / 2 - cy * k;
-  d3.select(canvas).transition().duration(600)
-    .call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(k));
+  const t = d3.zoomIdentity.translate(tx, ty).scale(k);
+  if (animate) {
+    d3.select(canvas).transition().duration(600).call(zoomBehavior.transform, t);
+  } else {
+    transform = t;
+    d3.select(canvas).call(zoomBehavior.transform, t);
+  }
+}
+
+document.getElementById('recenterBtn').addEventListener('click', () => fitAllNodes(true));
+
+document.getElementById('autoCenterBtn').addEventListener('click', () => {
+  autoCenter = !autoCenter;
+  const btn = document.getElementById('autoCenterBtn');
+  btn.style.opacity = autoCenter ? '1' : '0.5';
+  btn.style.background = autoCenter ? 'rgba(255,255,255,0.25)' : '';
+  if (autoCenter) fitAllNodes(true);
 });
 
 document.getElementById('focusClear').addEventListener('click', clearFocus);
