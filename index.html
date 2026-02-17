@@ -170,6 +170,12 @@ footer {
     <div class="stat"><span class="n" id="s-rels">—</span><span class="label">Relationships</span></div>
   </div>
 
+  <div class="stats" id="confidence-stats" style="display:none">
+    <div class="stat"><span class="n" id="s-avg-conf" style="color:#2d9a2d">—</span><span class="label">Avg Confidence</span></div>
+    <div class="stat"><span class="n" id="s-high" style="color:#2d9a2d">—</span><span class="label">High ≥ 80</span></div>
+    <div class="stat"><span class="n" id="s-medium" style="color:#c9a100">—</span><span class="label">Medium 50-79</span></div>
+  </div>
+
   <div class="pieces">
     <h3>Pieces</h3>
     <ul class="piece-list">
@@ -231,6 +237,12 @@ fetch('/data/stats.json')
     document.getElementById('s-people').textContent = s.total_people.toLocaleString();
     document.getElementById('s-surnames').textContent = s.unique_surnames.toLocaleString();
     document.getElementById('s-rels').textContent = s.total_relationships.toLocaleString();
+    if (s.confidence) {
+      document.getElementById('confidence-stats').style.display = 'grid';
+      document.getElementById('s-avg-conf').textContent = s.confidence.average + '%';
+      document.getElementById('s-high').textContent = s.confidence.high.toLocaleString();
+      document.getElementById('s-medium').textContent = s.confidence.medium.toLocaleString();
+    }
   })
   .catch(() => {});
 </script>

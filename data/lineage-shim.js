@@ -86,7 +86,9 @@
       death: p.death_date,
       birth_place: p.birth_place,
       death_place: p.death_place,
-      spouses: spouseList(id)
+      spouses: spouseList(id),
+      confidence: p.confidence || 0,
+      confidence_tier: p.confidence_tier || 'speculative'
     };
   }
 
@@ -156,6 +158,9 @@
       birth_place: p.birth_place,
       death_date: p.death_date,
       death_place: p.death_place,
+      confidence: p.confidence || 0,
+      confidence_tier: p.confidence_tier || 'speculative',
+      source_count: p.source_count || 0,
       parents:  parentIds.map(brief).filter(Boolean),
       children: childIds.map(brief).filter(Boolean),
       spouses:  spouseIds.map(brief).filter(Boolean),

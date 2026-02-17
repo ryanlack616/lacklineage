@@ -338,6 +338,61 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
 }
 .modal-btn:hover { background: var(--accent-hover); }
 
+/* ── Confidence indicators ── */
+.confidence-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.confidence-dot.tier-high       { background: #2d9a2d; }
+.confidence-dot.tier-medium     { background: #c9a100; }
+.confidence-dot.tier-low        { background: #d47a1a; }
+.confidence-dot.tier-speculative { background: #c44; }
+
+.confidence-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.confidence-badge.tier-high {
+  background: #e8f5e9; color: #2d7a2d;
+}
+.confidence-badge.tier-medium {
+  background: #fff8e1; color: #8a6d00;
+}
+.confidence-badge.tier-low {
+  background: #fff3e0; color: #b5651d;
+}
+.confidence-badge.tier-speculative {
+  background: #ffebee; color: #c44;
+}
+.confidence-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: #e0ddd6;
+  width: 60px;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 0.3rem;
+}
+.confidence-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+.confidence-bar-fill.tier-high       { background: #2d9a2d; }
+.confidence-bar-fill.tier-medium     { background: #c9a100; }
+.confidence-bar-fill.tier-low        { background: #d47a1a; }
+.confidence-bar-fill.tier-speculative { background: #c44; }
+
 /* ── Zoom controls ── */
 .zoom-controls {
   position: fixed;
@@ -718,6 +773,7 @@ function render(data) {
         <div class="card-name" title="${node.name || 'Unknown'}">${node.name || 'Unknown'}</div>
         <div class="card-dates">${lifespan(node)}</div>
       </div>
+      <div class="confidence-dot tier-${node.confidence_tier || 'speculative'}" title="Confidence: ${node.confidence || 0}% (${(node.confidence_tier || 'speculative').toUpperCase()})"></div>
     `);
 
     // Click → navigate to this person as new root
@@ -818,7 +874,13 @@ async function showModal(personId) {
     const d = await resp.json();
 
     let html = `<h2>${d.given_name || ''} ${d.surname || ''}</h2>`;
-    html += `<div class="modal-subtitle">ID ${d.id}</div>`;
+    html += `<div class="modal-subtitle">ID ${d.id}`;
+    const tier = d.confidence_tier || 'speculative';
+    const conf = d.confidence || 0;
+    const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
+    html += ` <span class="confidence-badge tier-${tier}">${tierLabel} ${conf}%`;
+    html += `<span class="confidence-bar"><span class="confidence-bar-fill tier-${tier}" style="width:${conf}%"></span></span>`;
+    html += `</span></div>`;
 
     html += '<div class="modal-section"><h4>Vital Information</h4>';
     if (d.birth_date || d.birth_place) {

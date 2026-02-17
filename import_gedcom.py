@@ -55,6 +55,7 @@ def parse_gedcom(path):
                         "death_date": None, "death_place": None,
                         "famc": [],   # family xrefs where this person is a child
                         "fams": [],   # family xrefs where this person is a spouse
+                        "source_count": 0,  # number of SOUR citations on this person
                     }
                     individuals[xref] = current
                 elif xref and tag == "FAM":
@@ -88,6 +89,8 @@ def parse_gedcom(path):
                         current["famc"].append(value.strip())
                     elif tag == "FAMS":
                         current["fams"].append(value.strip())
+                    elif tag == "SOUR":
+                        current["source_count"] = current.get("source_count", 0) + 1
                     elif tag in ("BIRT", "DEAT", "NAME", "RESI", "EVEN"):
                         pass  # handled at level 2
                 elif current_type == "FAM":
@@ -224,7 +227,10 @@ CREATE TABLE IF NOT EXISTS person (
     birth_date  TEXT,
     birth_place TEXT,
     death_date  TEXT,
-    death_place TEXT
+    death_place TEXT,
+    source_count INTEGER DEFAULT 0,
+    confidence  INTEGER DEFAULT 0,
+    confidence_tier TEXT DEFAULT 'speculative'
 );
 
 CREATE TABLE IF NOT EXISTS family (
@@ -249,9 +255,32 @@ CREATE TABLE IF NOT EXISTS relationship (
     rel_type    TEXT   -- 'parent_child' or 'spouse'
 );
 
+CREATE TABLE IF NOT EXISTS document (
+    id          INTEGER PRIMARY KEY,
+    filename    TEXT,
+    filepath    TEXT UNIQUE,
+    doc_type    TEXT,          -- 'photo', 'certificate', 'census', 'obituary', 'letter', 'other'
+    ocr_text    TEXT,
+    ocr_date    TEXT,          -- when OCR was performed
+    file_hash   TEXT           -- SHA-256 to detect duplicates
+);
+
+CREATE TABLE IF NOT EXISTS document_match (
+    id          INTEGER PRIMARY KEY,
+    document_id INTEGER REFERENCES document(id),
+    person_id   INTEGER REFERENCES person(id),
+    match_type  TEXT,          -- 'name', 'date', 'manual', 'ocr_auto'
+    confidence  REAL,          -- 0.0-1.0 match confidence
+    snippet     TEXT,          -- the OCR text fragment that matched
+    verified    INTEGER DEFAULT 0,  -- 1 = human-verified
+    UNIQUE(document_id, person_id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_rel_p1 ON relationship(person1_id);
 CREATE INDEX IF NOT EXISTS idx_rel_p2 ON relationship(person2_id);
 CREATE INDEX IF NOT EXISTS idx_person_surname ON person(surname);
+CREATE INDEX IF NOT EXISTS idx_doc_match_person ON document_match(person_id);
+CREATE INDEX IF NOT EXISTS idx_doc_match_doc ON document_match(document_id);
 """
 
 
@@ -271,8 +300,8 @@ def build_db(db_path, individuals, families, sources):
         xref_to_id[xref] = pid
         conn.execute(
             "INSERT INTO person (id, xref, given_name, surname, suffix, sex, "
-            "birth_date, birth_place, death_date, death_place) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?)",
+            "birth_date, birth_place, death_date, death_place, source_count) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
             (
                 pid, xref,
                 indi["given_name"] or None,
@@ -283,6 +312,7 @@ def build_db(db_path, individuals, families, sources):
                 indi["birth_place"],
                 normalise_date(indi["death_date"]),
                 indi["death_place"],
+                indi.get("source_count", 0),
             ),
         )
 
@@ -350,8 +380,142 @@ def build_db(db_path, individuals, families, sources):
 
 
 # ---------------------------------------------------------------------------
-# 4.  EXPORT JSON FILES
+# 3b. CONFIDENCE SCORING
 # ---------------------------------------------------------------------------
+
+def compute_confidence(db_path):
+    """Compute per-person confidence scores (0-100) and update the DB.
+
+    Scoring rubric:
+      Name quality     (0-10):  has given name (+5), has surname (+5)
+      Birth evidence   (0-25):  exact date (+15) / approx or year (+6) / none (0)
+                                birth place (+10)
+      Death evidence   (0-15):  exact date (+10) / approx or year (+4) / none (0)
+                                death place (+5)
+      Family links     (0-20):  has parents (+8), has spouse (+6), has children (+6)
+      Source citations  (0-20):  1 source (+10), 2+ sources (+20)
+      Data consistency (0-10):  birth year exists (+5),
+                                born before died (+5)
+
+    Tiers:
+      80-100  HIGH          — well-documented, multiple sources
+      50-79   MEDIUM        — reasonable evidence
+      20-49   LOW           — a name and a date, not much else
+      0-19    SPECULATIVE   — basically just a hint
+    """
+    conn = sqlite3.connect(db_path)
+
+    people = conn.execute(
+        "SELECT id, given_name, surname, birth_date, birth_place, "
+        "death_date, death_place, source_count FROM person"
+    ).fetchall()
+
+    # Build family link lookups
+    # has_parents: person ids that appear as a child in some family
+    has_parents = set()
+    for row in conn.execute(
+        "SELECT child_id FROM family_child"
+    ).fetchall():
+        has_parents.add(row[0])
+
+    # has_spouse: person ids that appear as husb or wife
+    has_spouse = set()
+    for row in conn.execute(
+        "SELECT husb_id FROM family WHERE husb_id IS NOT NULL "
+        "UNION SELECT wife_id FROM family WHERE wife_id IS NOT NULL"
+    ).fetchall():
+        has_spouse.add(row[0])
+
+    # has_children: person ids that have children
+    has_children = set()
+    for row in conn.execute(
+        "SELECT DISTINCT husb_id FROM family f JOIN family_child fc ON f.id = fc.family_id WHERE husb_id IS NOT NULL "
+        "UNION "
+        "SELECT DISTINCT wife_id FROM family f JOIN family_child fc ON f.id = fc.family_id WHERE wife_id IS NOT NULL"
+    ).fetchall():
+        has_children.add(row[0])
+
+    updates = []
+    tier_counts = {"high": 0, "medium": 0, "low": 0, "speculative": 0}
+
+    for pid, given, surname, birth_date, birth_place, death_date, death_place, source_count in people:
+        score = 0
+
+        # --- Name quality (0-10) ---
+        if given:
+            score += 5
+        if surname:
+            score += 5
+
+        # --- Birth evidence (0-25) ---
+        if birth_date:
+            bd = str(birth_date)
+            # Exact date: has day+month+year (YYYY-MM-DD)
+            if re.match(r"^\d{4}-\d{2}-\d{2}$", bd):
+                score += 15
+            else:
+                # Approximate or year-only
+                score += 6
+        if birth_place:
+            score += 10
+
+        # --- Death evidence (0-15) ---
+        if death_date:
+            dd = str(death_date)
+            if re.match(r"^\d{4}-\d{2}-\d{2}$", dd):
+                score += 10
+            else:
+                score += 4
+        if death_place:
+            score += 5
+
+        # --- Family links (0-20) ---
+        if pid in has_parents:
+            score += 8
+        if pid in has_spouse:
+            score += 6
+        if pid in has_children:
+            score += 6
+
+        # --- Source citations (0-20) ---
+        sc = source_count or 0
+        if sc >= 2:
+            score += 20
+        elif sc == 1:
+            score += 10
+
+        # --- Data consistency (0-10) ---
+        birth_year = extract_year(birth_date) if birth_date else None
+        death_year = extract_year(death_date) if death_date else None
+        if birth_year:
+            score += 5
+        if birth_year and death_year and death_year >= birth_year:
+            score += 5
+
+        # Clamp
+        score = min(score, 100)
+
+        # Tier
+        if score >= 80:
+            tier = "high"
+        elif score >= 50:
+            tier = "medium"
+        elif score >= 20:
+            tier = "low"
+        else:
+            tier = "speculative"
+
+        tier_counts[tier] += 1
+        updates.append((score, tier, pid))
+
+    conn.executemany(
+        "UPDATE person SET confidence = ?, confidence_tier = ? WHERE id = ?",
+        updates
+    )
+    conn.commit()
+    conn.close()
+
+    return tier_counts
 
 def export_json(db_path, out_dir, key_ids):
     """Export all JSON data files from the database."""
@@ -364,7 +528,8 @@ def export_json(db_path, out_dir, key_ids):
 
     # --- people.json ---
     rows = conn.execute(
-        "SELECT id, given_name, surname, sex, birth_date, birth_place, death_date, death_place "
+        "SELECT id, given_name, surname, sex, birth_date, birth_place, "
+        "death_date, death_place, source_count, confidence, confidence_tier "
         "FROM person ORDER BY id"
     ).fetchall()
     people = []
@@ -378,6 +543,9 @@ def export_json(db_path, out_dir, key_ids):
             "birth_place": r["birth_place"],
             "death_date": r["death_date"],
             "death_place": r["death_place"],
+            "source_count": r["source_count"],
+            "confidence": r["confidence"],
+            "confidence_tier": r["confidence_tier"],
         })
     write_json(os.path.join(out_dir, "people.json"), people)
     print(f"  people.json: {len(people)} records")
@@ -402,6 +570,8 @@ def export_json(db_path, out_dir, key_ids):
             "birth_place": r["birth_place"],
             "death_date": r["death_date"],
             "surname": r["surname"],
+            "confidence": r["confidence"],
+            "confidence_tier": r["confidence_tier"],
         })
         node_ids.add(r["id"])
 
@@ -482,6 +652,16 @@ def export_json(db_path, out_dir, key_ids):
     ).fetchone()[0]
     with_rels = len(connected_ids)
 
+    # Confidence distribution
+    tier_dist = {}
+    for row in conn.execute(
+        "SELECT confidence_tier, COUNT(*) FROM person GROUP BY confidence_tier"
+    ).fetchall():
+        tier_dist[row[0]] = row[1]
+    avg_conf = conn.execute("SELECT AVG(confidence) FROM person").fetchone()[0] or 0
+    doc_count = conn.execute("SELECT COUNT(*) FROM document").fetchone()[0]
+    doc_matches = conn.execute("SELECT COUNT(*) FROM document_match").fetchone()[0]
+
     stats_obj = {
         "total_people": len(people),
         "total_relationships": len(links_all),
@@ -491,6 +671,15 @@ def export_json(db_path, out_dir, key_ids):
         "earliest_birth": earliest[0] if earliest else None,
         "latest_birth": latest[0] if latest else None,
         "with_relationships": with_rels,
+        "confidence": {
+            "average": round(avg_conf, 1),
+            "high": tier_dist.get("high", 0),
+            "medium": tier_dist.get("medium", 0),
+            "low": tier_dist.get("low", 0),
+            "speculative": tier_dist.get("speculative", 0),
+        },
+        "documents": doc_count,
+        "document_matches": doc_matches,
     }
     write_json(os.path.join(out_dir, "stats.json"), stats_obj)
     print(f"  stats.json: {stats_obj}")
@@ -565,6 +754,11 @@ def main():
     print(f"  {stats['total_people']} people, {stats['total_relationships']} relationships, {stats['total_families']} families")
     print(f"  George l Lack → id {stats['george_id']}  ({stats['george_name']})")
     print(f"  Ryan Lack     → id {stats['ryan_id']}  ({stats['ryan_name']})")
+
+    print(f"\nComputing confidence scores...")
+    tier_counts = compute_confidence(db_path)
+    print(f"  HIGH: {tier_counts['high']}  MEDIUM: {tier_counts['medium']}  "
+          f"LOW: {tier_counts['low']}  SPECULATIVE: {tier_counts['speculative']}")
 
     print(f"\nExporting JSON to: {out_dir}")
     key_ids = {
