@@ -1303,19 +1303,21 @@ loadAndRender();
 initHelp({
   title: 'Ancestry Chart',
   intro: 'A pedigree chart showing ancestors fanning out from a root person. Navigate through generations, select and rearrange cards, and switch between horizontal and vertical layouts.',
-  keys: [
-    { key: 'Click', action: 'Select a person card' },
-    { key: 'Ctrl + Click', action: 'Toggle card in/out of selection' },
-    { key: 'Shift + Click', action: 'Add card to selection' },
-    { key: 'Double-click', action: 'Navigate to that person as new root' },
-    { key: 'Right-click', action: 'Open detail modal for that person' },
+  keyboard: [
+    { key: 'Escape', action: 'Deselect all cards' },
+    { key: '?', action: 'Toggle this help panel' }
+  ],
+  mouse: [
+    { key: 'Left-click card', action: 'Select that person card' },
+    { key: 'Ctrl + Left-click', action: 'Toggle card in/out of selection' },
+    { key: 'Shift + Left-click', action: 'Add card to selection' },
+    { key: 'Double-click card', action: 'Navigate to that person as new root' },
+    { key: 'Right-click card', action: 'Open detail modal for that person' },
     { key: 'Drag card', action: 'Move selected card(s) — lines follow' },
     { key: 'Shift + Drag background', action: 'Draw rectangle to select multiple cards' },
     { key: 'Ctrl + Release marquee', action: 'Add marquee cards to existing selection' },
-    { key: 'Scroll wheel', action: 'Zoom in/out (when hovering canvas)' },
     { key: 'Drag background', action: 'Pan the canvas' },
-    { key: 'Escape', action: 'Deselect all cards' },
-    { key: '?', action: 'Toggle this help panel' }
+    { key: 'Scroll wheel', action: 'Zoom in/out' }
   ],
   sections: [
     { title: 'Navigation', icon: '🧭', html: `

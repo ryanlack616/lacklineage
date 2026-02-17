@@ -777,10 +777,14 @@ function encThumb(path) {
 initHelp({
   title: 'Documents Gallery',
   intro: 'Browse scanned family records — certificates, obituaries, census pages, photos, and more. Each document shows OCR-extracted text and matched people from the database.',
-  keys: [
+  keyboard: [
     { key: 'Escape', action: 'Close the document detail modal' },
-    { key: 'Click card', action: 'Open document detail modal' },
     { key: '?', action: 'Toggle this help panel' }
+  ],
+  mouse: [
+    { key: 'Left-click card', action: 'Open document detail modal' },
+    { key: 'Left-click person link', action: 'Open that person\'s tree page' },
+    { key: 'Scroll wheel', action: 'Scroll through document cards' }
   ],
   sections: [
     { title: 'Browsing', icon: '📄', html: `

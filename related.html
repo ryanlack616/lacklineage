@@ -572,10 +572,13 @@ loadData();
 initHelp({
   title: 'How Am I Related?',
   intro: 'Find the shortest relationship path between any two people in the family. Uses a breadth-first search through the family graph to compute cousin degrees, ancestor/descendant relationships, and marriage hops.',
-  keys: [
+  keyboard: [
     { key: 'Enter', action: 'Find relationship (when both people selected)' },
-    { key: 'Click path node', action: 'Open that person\'s tree in a new tab' },
     { key: '?', action: 'Toggle this help panel' }
+  ],
+  mouse: [
+    { key: 'Left-click path node', action: 'Open that person\'s tree in a new tab' },
+    { key: 'Left-click autocomplete', action: 'Select person A or B from dropdown' }
   ],
   sections: [
     { title: 'Finding Relationships', icon: '🔗', html: `

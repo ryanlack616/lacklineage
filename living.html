@@ -665,16 +665,19 @@ loadData();
 initHelp({
   title: 'The Living Moment',
   intro: 'An animated timeline showing who in the family was alive during any given year. Each dot represents a person — watch the family grow and fade across 500+ years of history.',
-  keys: [
+  keyboard: [
     { key: 'Space', action: 'Play / Pause the animation' },
     { key: 'K', action: 'Play / Pause (alternate key)' },
     { key: '→', action: 'Advance 1 year' },
     { key: 'Shift + →', action: 'Advance 10 years' },
     { key: '←', action: 'Go back 1 year' },
     { key: 'Shift + ←', action: 'Go back 10 years' },
-    { key: 'Hover dot', action: 'Show person tooltip (name, dates, age, birthplace)' },
-    { key: 'Click person in list', action: 'Open their tree in a new tab' },
     { key: '?', action: 'Toggle this help panel' }
+  ],
+  mouse: [
+    { key: 'Hover dot', action: 'Show person tooltip (name, dates, age, birthplace)' },
+    { key: 'Left-click person in list', action: 'Open their tree in a new tab' },
+    { key: 'Drag year slider', action: 'Scrub to any year' }
   ],
   sections: [
     { title: 'Timeline Controls', icon: '⏯', html: `

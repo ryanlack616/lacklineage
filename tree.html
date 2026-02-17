@@ -1324,17 +1324,19 @@ document.addEventListener('keydown', (e) => {
 initHelp({
   title: 'Tree Explorer',
   intro: 'An interactive collapsible tree view. Browse ancestors, descendants, or both directions from any person. Expand and collapse branches to explore the family structure.',
-  keys: [
-    { key: 'Click node', action: 'Expand or collapse that branch' },
-    { key: 'Shift + Click node', action: 'Re-root the tree on that person' },
-    { key: 'Right-click node', action: 'Open detail panel' },
-    { key: 'Hover node', action: 'Show tooltip with name, dates, spouse, interaction hints' },
+  keyboard: [
     { key: '/', action: 'Focus the search bar' },
     { key: 'Escape', action: 'Close detail panel and search results' },
     { key: 'Home', action: 'Reset to George l Lack as root' },
-    { key: 'Scroll wheel', action: 'Zoom in/out' },
-    { key: 'Drag background', action: 'Pan the canvas' },
     { key: '?', action: 'Toggle this help panel' }
+  ],
+  mouse: [
+    { key: 'Left-click node', action: 'Expand or collapse that branch' },
+    { key: 'Shift + Left-click node', action: 'Re-root the tree on that person' },
+    { key: 'Right-click node', action: 'Open detail panel' },
+    { key: 'Hover node', action: 'Show tooltip with name, dates, spouse' },
+    { key: 'Drag background', action: 'Pan the canvas' },
+    { key: 'Scroll wheel', action: 'Zoom in/out' }
   ],
   sections: [
     { title: 'Modes', icon: '🔀', html: `

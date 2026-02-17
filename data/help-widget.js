@@ -138,7 +138,10 @@
 
   // ── Build DOM ──
   window.initHelp = function (config) {
-    const { title = 'Help', intro = '', keys = [], sections = [] } = config;
+    const { title = 'Help', intro = '', keys = [], keyboard = [], mouse = [], sections = [] } = config;
+
+    // If only keys[] provided (legacy), use it as combined; otherwise use separate arrays
+    const hasCategories = keyboard.length || mouse.length;
 
     // Button
     const btn = document.createElement('button');
@@ -157,7 +160,8 @@
       </div>
       <div class="help-panel-body">
         ${intro ? `<div class="help-intro">${intro}</div>` : ''}
-        ${keys.length ? buildKeyMap(keys) : ''}
+        ${hasCategories ? (keyboard.length ? buildInputMap('⌨ Keyboard', keyboard) : '') : (keys.length ? buildInputMap('⌨ Key & Mouse Map', keys) : '')}
+        ${hasCategories && mouse.length ? buildInputMap('🖱 Mouse', mouse) : ''}
         ${sections.map((s, i) => buildSection(s, i)).join('')}
         <div class="help-shortcut-hint">Press <span class="help-key">?</span> to toggle this panel</div>
       </div>
@@ -201,20 +205,16 @@
     });
   };
 
-  function buildKeyMap(keys) {
-    const rows = keys.map(k => {
+  function buildInputMap(heading, items) {
+    const rows = items.map(k => {
       const keyHtml = k.key.split(/\s*\+\s*/).map(part => {
-        // Check if it's a modifier combo or plain text
-        if (part.match(/^(Click|Drag|Scroll|Double.click|Right.click|Background|Hover)/i)) {
-          return `<span class="help-key">${esc(part)}</span>`;
-        }
         return `<span class="help-key">${esc(part)}</span>`;
       }).join(' + ');
       return `<tr><td>${keyHtml}</td><td>${esc(k.action)}</td></tr>`;
     }).join('');
     return `
       <div class="help-keymap">
-        <h3>⌨ Key &amp; Mouse Map</h3>
+        <h3>${heading}</h3>
         <table><thead><tr><th>Input</th><th>Action</th></tr></thead>
         <tbody>${rows}</tbody></table>
       </div>`;

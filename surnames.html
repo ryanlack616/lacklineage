@@ -640,11 +640,15 @@ loadData();
 initHelp({
   title: 'Surname Directory',
   intro: 'Browse all family surnames with counts, filter by letter, and drill down to see every person carrying a given surname.',
-  keys: [
+  keyboard: [
     { key: '/', action: 'Focus the search bar' },
     { key: 'Escape', action: 'Close the person drawer' },
-    { key: 'Click surname card', action: 'Open person drawer for that surname' },
     { key: '?', action: 'Toggle this help panel' }
+  ],
+  mouse: [
+    { key: 'Left-click surname card', action: 'Open person drawer for that surname' },
+    { key: 'Left-click person', action: 'Open their tree in a new tab' },
+    { key: 'Left-click letter tab', action: 'Filter surnames by that letter' }
   ],
   sections: [
     { title: 'Browsing', icon: '📖', html: `

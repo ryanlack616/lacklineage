@@ -1506,5 +1506,60 @@ document.getElementById('minimap').addEventListener('click', (e) => {
 resize();
 loadGraph();
 </script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'Family Graph',
+  intro: 'A force-directed graph showing every person and relationship in the database. Explore connections, find paths between people, and visually navigate the family network.',
+  keyboard: [
+    { key: '/', action: 'Focus the search bar' },
+    { key: 'Escape', action: 'Clear search / close path bar' },
+    { key: '?', action: 'Toggle this help panel' }
+  ],
+  mouse: [
+    { key: 'Left-click node', action: 'Focus that person — dims unconnected nodes' },
+    { key: 'Double-click node', action: 'Open that person\'s tree page' },
+    { key: 'Right-click node', action: 'Start path-finding (right-click a second person to see how related)' },
+    { key: 'Hover node', action: 'Highlight their connections and show name label' },
+    { key: 'Drag node', action: 'Move that person\'s node' },
+    { key: 'Drag background', action: 'Pan the canvas' },
+    { key: 'Scroll wheel', action: 'Zoom in/out' },
+    { key: 'Click minimap', action: 'Jump to that area of the graph' }
+  ],
+  sections: [
+    { title: 'Focus & Path Finding', icon: '🔗', html: `
+      <p><strong>Left-click</strong> any node to focus it — unconnected people fade out, making it easy to see direct family ties.</p>
+      <p>To find how two people are related, <strong>right-click</strong> the first person, then <strong>right-click</strong> the second. The path bar at the bottom shows every person and relationship linking them.</p>
+      <p>Click the <strong>×</strong> on the path bar or press <strong>Escape</strong> to dismiss it.</p>
+    ` },
+    { title: 'Controls Panel', icon: '⚙️', html: `
+      <p>The panel on the left lets you tune the graph physics:</p>
+      <ul>
+        <li><strong>Node Size</strong> — Scale all nodes larger or smaller</li>
+        <li><strong>Link Distance</strong> — How far apart connected nodes try to stay</li>
+        <li><strong>Repulsion</strong> — How strongly nodes push away from each other</li>
+        <li><strong>Gravity</strong> — Pull toward center (prevents drift)</li>
+        <li><strong>Collision</strong> — Extra padding between nodes</li>
+      </ul>
+      <p><strong>Reset</strong> returns all sliders to default. <strong>Recenter</strong> zooms to fit all nodes. <strong>Auto</strong> keeps the view fitted as the simulation runs.</p>
+    ` },
+    { title: 'Color Modes', icon: '🎨', html: `
+      <p>Use the <strong>Color</strong> dropdown to change node coloring:</p>
+      <ul>
+        <li><strong>Sex</strong> — Blue for male, pink for female, gray for unknown</li>
+        <li><strong>Generation</strong> — Color by generation depth from the root</li>
+        <li><strong>Confidence</strong> — Green/yellow/orange/red based on data quality</li>
+      </ul>
+      <p>The legend at the bottom updates to match the selected mode.</p>
+    ` },
+    { title: 'Search', icon: '🔍', html: `
+      <p>Type in the search bar (or press <strong>/</strong>) to find people by name. Click a result to zoom to that node and focus it.</p>
+    ` },
+    { title: 'Minimap', icon: '🗺', html: `
+      <p>The minimap in the bottom-right corner shows the full graph at a glance. The white rectangle shows your current viewport. Click anywhere on the minimap to jump to that area.</p>
+    ` }
+  ]
+});
+</script>
 </body>
 </html>
