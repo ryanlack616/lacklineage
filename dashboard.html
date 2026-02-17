@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Lack Lineage</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8f6f1;
+  --fg: #2a2520;
+  --fg2: #6b6360;
+  --accent: #8b6914;
+  --border: #d8d2c8;
+  --font: 'Georgia', 'Times New Roman', serif;
+  --mono: 'Consolas', 'Monaco', monospace;
+}
+html { font-size: 16px; }
+body {
+  font-family: var(--font);
+  color: var(--fg);
+  background: var(--bg);
+  line-height: 1.7;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: url('img/back.svg') center center / 100% auto no-repeat;
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 0;
+}
+body > * { position: relative; z-index: 1; }
+a { color: var(--accent); }
+
+/* ── Header ── */
+header {
+  background: var(--fg);
+  color: var(--bg);
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
+header h1 span { font-weight: 300; opacity: 0.6; }
+header h1 a { color: inherit; text-decoration: none; }
+nav { display: flex; gap: 0.5rem; }
+nav a {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: var(--bg);
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+nav a:hover, nav a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+nav a.active { font-weight: bold; }
+
+/* ── Main ── */
+main {
+  flex: 1;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 3rem;
+}
+h2 {
+  font-size: 2rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  margin-bottom: 1.5rem;
+  color: var(--fg);
+}
+.subtitle {
+  font-size: 1.1rem;
+  color: var(--fg2);
+  margin-bottom: 2.5rem;
+  max-width: 500px;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+.stat {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.2rem;
+  text-align: center;
+}
+.stat .n {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  display: block;
+  font-family: var(--mono);
+}
+.stat .label {
+  font-size: 0.75rem;
+  color: var(--fg2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 0.3rem;
+  display: block;
+}
+
+/* ── Dashboard Grid ── */
+.dash-sections { margin-top: 2rem; }
+.dash-sections h3 {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--fg2); margin-bottom: 0.8rem;
+  font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  font-weight: 700;
+}
+.dash-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;
+}
+.dash-card {
+  display: flex; flex-direction: column; gap: 0.3rem;
+  padding: 1.1rem 1rem; border: 1px solid var(--border);
+  border-radius: 8px; background: #fff;
+  text-decoration: none; color: var(--fg);
+  transition: all 0.15s; position: relative;
+}
+.dash-card:hover {
+  border-color: var(--accent); background: #fefcf6;
+  box-shadow: 0 2px 8px rgba(139,105,20,0.1);
+  transform: translateY(-1px); text-decoration: none;
+}
+.dash-card.accent { border-left: 4px solid var(--accent); }
+.dash-lock {
+  position: absolute; top: 0.6rem; right: 0.6rem; font-size: 0.8rem; opacity: 0.5;
+}
+.dash-icon { font-size: 1.3rem; }
+.dash-title { font-weight: 700; font-size: 0.88rem; }
+.dash-desc { font-size: 0.72rem; color: var(--fg2); line-height: 1.4; }
+
+.dash-grid.small { grid-template-columns: repeat(5, 1fr); }
+.dash-card-sm {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0.25rem; padding: 0.8rem 0.5rem;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: #fff; text-decoration: none; color: var(--fg);
+  transition: all 0.15s; text-align: center;
+}
+.dash-card-sm:hover {
+  border-color: var(--accent); background: #fefcf6; text-decoration: none;
+}
+.dash-card-sm .dash-icon { font-size: 1.1rem; }
+.dash-card-sm .dash-title { font-size: 0.72rem; font-weight: 600; }
+
+footer {
+  text-align: center;
+  padding: 2rem;
+  font-size: 0.75rem;
+  color: var(--fg2);
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 600px) {
+  header { padding: 0.75rem 1rem; gap: 0.75rem; flex-wrap: wrap; }
+  nav { gap: 0.3rem; }
+  nav a { padding: 0.25rem 0.5rem; font-size: 0.7rem; }
+  main { padding: 2rem 1rem 2rem; }
+  h2 { font-size: 1.5rem; }
+  .subtitle { font-size: 0.95rem; }
+  .stats { grid-template-columns: 1fr; gap: 0.6rem; }
+  .stat .n { font-size: 1.4rem; }
+  .dash-grid { grid-template-columns: 1fr; }
+  .dash-grid.small { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Search bar ── */
+.search-wrap {
+  position: relative; margin-bottom: 0.4rem;
+}
+.search-wrap input {
+  width: 100%; padding: 0.9rem 1rem 0.9rem 2.8rem;
+  border: 2px solid var(--border); border-radius: 8px;
+  font-size: 1rem; font-family: var(--font); background: #fff; outline: none;
+  transition: border-color 0.2s;
+}
+.search-wrap input:focus { border-color: var(--accent); }
+.search-wrap::before {
+  content: '🔍'; position: absolute; left: 0.8rem; top: 50%;
+  transform: translateY(-50%); font-size: 1.1rem; pointer-events: none;
+}
+.search-dd {
+  position: absolute; top: 100%; left: 0; right: 0;
+  background: #fff; border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 380px; overflow-y: auto; z-index: 50;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12); display: none;
+}
+.search-dd.open { display: block; }
+.sr {
+  padding: 0.55rem 1rem; cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid #f0ede6; font-size: 0.88rem;
+}
+.sr:hover { background: #fefcf6; }
+.sr-name { font-weight: 600; }
+.sr-sub { color: var(--fg2); font-size: 0.78rem; }
+.sr-tier {
+  font-size: 0.6rem; padding: 0.12rem 0.4rem; border-radius: 3px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  font-family: var(--mono); flex-shrink: 0;
+}
+.search-controls {
+  display: flex; align-items: center; gap: 0.5rem; margin-bottom: 2rem;
+}
+.search-hint {
+  font-size: 0.72rem; color: var(--fg2); font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; flex: 1;
+}
+.search-hint kbd {
+  background: #eae6dd; padding: 0.1rem 0.35rem; border-radius: 3px;
+  font-family: var(--mono); font-size: 0.7rem; border: 1px solid var(--border);
+}
+.ocr-search-btn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.3rem 0.7rem; border-radius: 5px;
+  border: 1px solid var(--border); background: #fff;
+  font-size: 0.72rem; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; color: var(--fg2);
+  cursor: pointer; transition: all 0.15s; white-space: nowrap; user-select: none;
+}
+.ocr-search-btn:hover { border-color: var(--accent); color: var(--accent); }
+.ocr-search-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.sr-ocr-snippet {
+  font-size: 0.7rem; color: var(--fg2); font-family: var(--mono);
+  margin-top: 0.15rem; max-width: 100%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sr-ocr-snippet mark {
+  background: #fff3cd; color: var(--fg); padding: 0 0.15rem; border-radius: 2px;
+}
+.sr-via {
+  font-size: 0.55rem; padding: 0.08rem 0.3rem; border-radius: 3px;
+  font-weight: 600; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background: #e8f0fe; color: #1a56db;
+  text-transform: uppercase; letter-spacing: 0.04em; margin-left: 0.4rem;
+}
+
+/* ── Recent Updates ── */
+.recent-section { margin-top: 2.5rem; }
+.recent-section h3 {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--fg2); margin-bottom: 0.8rem;
+  font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  font-weight: 700;
+}
+.recent-list { display: flex; flex-direction: column; gap: 0; }
+.recent-item {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.55rem 0.8rem; border-bottom: 1px solid #f0ede6;
+  text-decoration: none; color: var(--fg); transition: background 0.12s;
+  font-size: 0.85rem;
+}
+.recent-item:first-child { border-top: 1px solid #f0ede6; }
+.recent-item:hover { background: #fefcf6; text-decoration: none; }
+.ri-icon { font-size: 1rem; flex-shrink: 0; width: 1.4rem; text-align: center; }
+.ri-name { font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ri-dates { font-size: 0.75rem; color: var(--fg2); flex-shrink: 0; font-family: var(--mono); }
+.ri-tier {
+  font-size: 0.55rem; padding: 0.1rem 0.35rem; border-radius: 3px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  font-family: var(--mono); flex-shrink: 0;
+}
+.ri-docs { font-size: 0.7rem; color: var(--fg2); flex-shrink: 0; }
+.ri-meta { font-size: 0.7rem; color: var(--fg2); flex-shrink: 0; white-space: nowrap; }
+.ri-when { font-size: 0.65rem; color: var(--fg2); flex-shrink: 0; font-family: var(--mono); min-width: 3rem; text-align: right; }
+
+/* Activity feed specifics */
+.ri-type-badge {
+  font-size: 0.55rem; padding: 0.08rem 0.3rem; border-radius: 3px;
+  font-weight: 600; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0;
+}
+.ri-type-badge.vision { background: #e8f0fe; color: #1a56db; }
+.ri-type-badge.ocr { background: #fef3cd; color: #856404; }
+.ri-people {
+  font-size: 0.7rem; color: var(--accent); flex-shrink: 0;
+  max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+@media (max-width: 600px) {
+  .ri-dates, .ri-docs, .ri-when, .ri-people { display: none; }
+  .recent-item { padding: 0.45rem 0.5rem; font-size: 0.8rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><a href=\"/\">Lack <span>Lineage</span></a></h1>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/dashboard.html" class="active">Dashboard</a>
+    <a href="/search.html">Search</a>
+    <a href="/research.html">Research</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/places.html">Places</a>
+    <a href="/tree.html">Tree</a>
+    <a href="/globe.html">Globe</a>
+    <a href="/atlas.html">Atlas</a>
+    <a href="/rivers.html">Rivers</a>
+  </nav>
+</header>
+
+<main>
+  <img src="img/logo-header.svg" alt="LACK" style="height:16rem; margin: 0 auto 2rem; display:block;">
+  <p class="subtitle" id="subtitle">
+    A family database. <span id="sub-count">1,251</span> people across five centuries.
+    What we know, what we don't, and the shape of forgetting.
+  </p>
+
+  <!-- Search -->
+  <div class="search-wrap" id="search-wrap">
+    <input type="text" id="search-input" placeholder="Search by name… use & for AND, | for OR" autocomplete="off">
+    <div class="search-dd" id="search-dd"></div>
+  </div>
+  <div class="search-controls">
+    <span class="search-hint"><kbd>&amp;</kbd> AND &nbsp; <kbd>|</kbd> OR &nbsp; spaces = AND</span>
+    <button class="ocr-search-btn" id="ocr-search-btn" title="Also search OCR text from scanned documents">
+      📄 Search OCR
+    </button>
+  </div>
+
+  <div class="stats" id="stats">
+    <div class="stat"><span class="n" id="s-people">—</span><span class="label">People</span></div>
+    <div class="stat"><span class="n" id="s-surnames">—</span><span class="label">Surnames</span></div>
+    <div class="stat"><span class="n" id="s-rels">—</span><span class="label">Relationships</span></div>
+  </div>
+
+  <div class="stats" id="confidence-stats" style="display:none">
+    <div class="stat"><span class="n" id="s-avg-conf" style="color:#2d9a2d">—</span><span class="label">Avg Confidence</span></div>
+    <div class="stat"><span class="n" id="s-high" style="color:#2d9a2d">—</span><span class="label">High ≥ 80</span></div>
+    <div class="stat"><span class="n" id="s-medium" style="color:#c9a100">—</span><span class="label">Medium 50-79</span></div>
+  </div>
+
+  <!-- Dashboard Sub-sections -->
+  <div class="dash-sections">
+    <h3>Explore</h3>
+    <div class="dash-grid">
+      <a href="/search.html" class="dash-card accent">
+        <span class="dash-icon">🔍</span>
+        <span class="dash-title">Advanced Search</span>
+        <span class="dash-desc">Query by name, date, place, confidence, document type, OCR text</span>
+      </a>
+      <a href="/research.html" class="dash-card accent">
+        <span class="dash-icon">🧩</span>
+        <span class="dash-title">Research Hub</span>
+        <span class="dash-desc">Duplicates, missing data, anomalies, unmatched docs — ranked leads</span>
+      </a>
+      <a href="/profile.html" class="dash-card">
+        <span class="dash-icon">👤</span>
+        <span class="dash-title">People</span>
+        <span class="dash-desc">Browse all 1,251 individuals — full profiles &amp; confidence</span>
+      </a>
+      <a href="/surnames.html" class="dash-card">
+        <span class="dash-icon">🔤</span>
+        <span class="dash-title">Surnames</span>
+        <span class="dash-desc">600 family names — browse by lineage</span>
+      </a>
+      <a href="/living.html" class="dash-card">
+        <span class="dash-icon">⏳</span>
+        <span class="dash-title">Timeline</span>
+        <span class="dash-desc">Who was alive when — animated year-by-year</span>
+      </a>
+      <a href="/globe.html" class="dash-card accent">
+        <span class="dash-icon">🌍</span>
+        <span class="dash-title">Globe</span>
+        <span class="dash-desc">1,959 people across 562 locations on a 3D globe — migration arcs, era colors</span>
+      </a>
+      <a href="/places.html" class="dash-card accent">
+        <span class="dash-icon">📍</span>
+        <span class="dash-title">Places</span>
+        <span class="dash-desc">Precision map — pinpointed towns to lost homelands, German heritage glow, migration arcs</span>
+      </a>
+      <a href="/admin.html" class="dash-card locked">
+        <span class="dash-icon">✏️</span>
+        <span class="dash-title">Edit / Update</span>
+        <span class="dash-desc">Dad's desk — review, correct, and annotate records</span>
+        <span class="dash-lock">🔒</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- More Tools -->
+  <div class="dash-sections" style="margin-top: 2rem;">
+    <h3>More</h3>
+    <div class="dash-grid small">
+      <a href="/documents.html" class="dash-card-sm">
+        <span class="dash-icon">📄</span>
+        <span class="dash-title">Documents</span>
+      </a>
+      <a href="/related.html" class="dash-card-sm">
+        <span class="dash-icon">🔗</span>
+        <span class="dash-title">How Am I Related?</span>
+      </a>
+      <a href="/tree.html" class="dash-card-sm">
+        <span class="dash-icon">📜</span>
+        <span class="dash-title">Tree View</span>
+      </a>
+      <a href="/letter.html" class="dash-card-sm">
+        <span class="dash-icon">✉️</span>
+        <span class="dash-title">Letter to George</span>
+      </a>
+      <a href="/visualizations.html" class="dash-card-sm">
+        <span class="dash-icon">◈</span>
+        <span class="dash-title">Thirteen Ways</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Recently Updated People -->
+  <div class="recent-section" id="recent-updated-section" style="display:none">
+    <h3>🕐 Recently Updated</h3>
+    <div class="recent-list" id="recent-updated"></div>
+  </div>
+
+  <!-- Recent Activity Feed -->
+  <div class="recent-section" id="recent-activity-section" style="display:none">
+    <h3>📥 Newest Additions</h3>
+    <div class="recent-list" id="recent-activity"></div>
+  </div>
+
+  <p style="margin-top: 3rem; font-size: 0.85rem; color: var(--fg2); line-height: 1.8;">
+    Built from a database started by George Lack. Extended by
+    <a href="https://monospacepoetry.com">Ryan Lack</a>.
+    This project lives at the intersection of genealogy and art practice —
+    measuring what survives, performing what doesn't, and refusing to let
+    people be forgotten.
+  </p>
+</main>
+
+<footer>
+  lacklineage.com · 2026
+</footer>
+
+<script>
+fetch('/data/stats.json')
+  .then(r => r.json())
+  .then(s => {
+    document.getElementById('s-people').textContent = s.total_people.toLocaleString();
+    document.getElementById('s-surnames').textContent = s.unique_surnames.toLocaleString();
+    document.getElementById('s-rels').textContent = s.total_relationships.toLocaleString();
+    document.getElementById('sub-count').textContent = s.total_people.toLocaleString();
+    if (s.confidence) {
+      document.getElementById('confidence-stats').style.display = 'grid';
+      document.getElementById('s-avg-conf').textContent = s.confidence.average + '%';
+      document.getElementById('s-high').textContent = s.confidence.high.toLocaleString();
+      document.getElementById('s-medium').textContent = s.confidence.medium.toLocaleString();
+    }
+  })
+  .catch(() => {});
+
+/* ════════ Person Search ════════ */
+let allProfiles = null;
+let profileIndex = [];
+let ocrMode = false;
+const TIER_COLORS = { high:'#2d9a2d', medium:'#c9a100', low:'#d4740a', speculative:'#c0392b' };
+const TIER_BG    = { high:'#e8f5e9', medium:'#fff8e1', low:'#fff3e0', speculative:'#fde8e8' };
+
+fetch('/data/profiles.json')
+  .then(r => r.json())
+  .then(data => {
+    allProfiles = data;
+    profileIndex = Object.values(data).map(p => {
+      const ocrParts = [];
+      (p.documents||[]).forEach(d => {
+        if (d.ocr_excerpt) ocrParts.push(d.ocr_excerpt.toLowerCase());
+      });
+      return {
+        id: p.id, name: p.name, surname: p.surname||'',
+        searchStr: (p.name+' '+(p.surname||'')).toLowerCase(),
+        ocrStr: ocrParts.join(' '),
+        birth_date: p.birth_date, death_date: p.death_date,
+        confidence_tier: p.confidence_tier,
+      };
+    });
+    profileIndex.sort((a,b) => a.name.localeCompare(b.name));
+  })
+  .catch(() => {});
+
+function parseSearchQuery(raw) {
+  return raw.split('|').map(g => g.trim()).filter(Boolean)
+    .map(group => group.split('&').map(t => t.trim().toLowerCase()).filter(Boolean)
+      .flatMap(t => t.split(/\s+/)).filter(Boolean));
+}
+function matchProfile(p, orGroups, useOcr) {
+  for (const andTerms of orGroups) {
+    if (!andTerms.length) continue;
+    const nameMatch = andTerms.every(t => p.searchStr.includes(t));
+    if (nameMatch) return { match: true, via: 'name' };
+    if (useOcr && p.ocrStr) {
+      const ocrMatch = andTerms.every(t => p.ocrStr.includes(t));
+      if (ocrMatch) return { match: true, via: 'ocr', terms: andTerms };
+    }
+  }
+  return { match: false };
+}
+function getOcrSnippet(personId, terms) {
+  const docs = allProfiles[personId]?.documents || [];
+  for (const d of docs) {
+    if (!d.ocr_excerpt) continue;
+    const lower = d.ocr_excerpt.toLowerCase();
+    for (const t of terms) {
+      const idx = lower.indexOf(t);
+      if (idx >= 0) {
+        const start = Math.max(0, idx - 30);
+        const end = Math.min(d.ocr_excerpt.length, idx + t.length + 50);
+        let snip = d.ocr_excerpt.slice(start, end).trim();
+        if (start > 0) snip = '…' + snip;
+        if (end < d.ocr_excerpt.length) snip += '…';
+        const re = new RegExp('(' + terms.map(tt => tt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
+        snip = esc(snip).replace(re, '<mark>$1</mark>');
+        return snip;
+      }
+    }
+  }
+  return '';
+}
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function fmtRange(b, d) {
+  if (!b && !d) return '';
+  const by = b ? (b.match(/(\d{4})/)?.[1]||b) : '?';
+  const dy = d ? (d.match(/(\d{4})/)?.[1]||d) : '';
+  return dy ? `${by} – ${dy}` : `b. ${by}`;
+}
+
+const searchInput = document.getElementById('search-input');
+const searchDD    = document.getElementById('search-dd');
+const ocrBtn      = document.getElementById('ocr-search-btn');
+
+ocrBtn.addEventListener('click', () => {
+  ocrMode = !ocrMode;
+  ocrBtn.classList.toggle('active', ocrMode);
+  searchInput.placeholder = ocrMode
+    ? 'Search names + OCR text… use & for AND, | for OR'
+    : 'Search by name… use & for AND, | for OR';
+  searchInput.dispatchEvent(new Event('input'));
+});
+
+searchInput.addEventListener('input', () => {
+  if (!profileIndex.length) return;
+  const q = searchInput.value.trim();
+  if (q.length < 2) { searchDD.classList.remove('open'); return; }
+  const orGroups = parseSearchQuery(q);
+  if (!orGroups.length || orGroups.every(g => !g.length)) { searchDD.classList.remove('open'); return; }
+
+  const nameMatches = [];
+  const ocrMatches = [];
+  for (const p of profileIndex) {
+    const result = matchProfile(p, orGroups, ocrMode);
+    if (!result.match) continue;
+    if (result.via === 'name') nameMatches.push({ ...p, via: 'name' });
+    else ocrMatches.push({ ...p, via: 'ocr', matchTerms: result.terms });
+    if (nameMatches.length + ocrMatches.length >= 50) break;
+  }
+  const matches = [...nameMatches, ...ocrMatches];
+
+  if (!matches.length) {
+    searchDD.innerHTML = '<div class="sr" style="color:var(--fg2); cursor:default;">No results</div>';
+    searchDD.classList.add('open'); return;
+  }
+  searchDD.innerHTML = matches.map(m => {
+    const dates = fmtRange(m.birth_date, m.death_date);
+    const tc = TIER_COLORS[m.confidence_tier]||'#999';
+    const tb = TIER_BG[m.confidence_tier]||'#f0f0f0';
+    let snippet = '';
+    let viaTag = '';
+    if (m.via === 'ocr') {
+      snippet = `<div class="sr-ocr-snippet">${getOcrSnippet(m.id, m.matchTerms)}</div>`;
+      viaTag = '<span class="sr-via">OCR</span>';
+    }
+    return `<div class="sr" data-id="${m.id}">
+      <div>
+        <span class="sr-name">${esc(m.name)}</span>${viaTag}
+        <span class="sr-sub">${dates}</span>
+        ${snippet}
+      </div>
+      <span class="sr-tier" style="background:${tb};color:${tc};">${m.confidence_tier||'?'}</span>
+    </div>`;
+  }).join('');
+  searchDD.classList.add('open');
+  searchDD.querySelectorAll('.sr[data-id]').forEach(el => {
+    el.addEventListener('click', () => {
+      window.location.href = `/profile.html?id=${el.dataset.id}`;
+    });
+  });
+});
+searchInput.addEventListener('keydown', e => { if (e.key==='Escape') searchDD.classList.remove('open'); });
+document.addEventListener('click', e => { if (!e.target.closest('.search-wrap') && !e.target.closest('.search-controls')) searchDD.classList.remove('open'); });
+/* ════════ Recent Feeds ════════ */
+const TIER_ICONS = { high:'🟢', medium:'🟡', low:'🟠', speculative:'🔴' };
+
+fetch('/data/recent.json')
+  .then(r => r.json())
+  .then(data => {
+    // Recently Updated People
+    const updEl = document.getElementById('recent-updated');
+    const updSec = document.getElementById('recent-updated-section');
+    if (data.recently_updated && data.recently_updated.length) {
+      updSec.style.display = '';
+      updEl.innerHTML = data.recently_updated.map(p => {
+        const tc = TIER_COLORS[p.confidence_tier]||'#999';
+        const tb = TIER_BG[p.confidence_tier]||'#f0f0f0';
+        const icon = p.confidence_tier === 'high' ? '👤' : (p.confidence_tier === 'medium' ? '👤' : '👤');
+        return `<a href="/profile.html?id=${p.id}" class="recent-item">
+          <span class="ri-icon">${icon}</span>
+          <span class="ri-name">${esc(p.name)}</span>
+          <span class="ri-dates">${esc(p.dates)}</span>
+          <span class="ri-tier" style="background:${tb};color:${tc};">${p.confidence_tier||'?'}</span>
+          <span class="ri-docs">${p.doc_count ? p.doc_count + ' docs' : ''}</span>
+          <span class="ri-when">${esc(p.updated_label||'')}</span>
+        </a>`;
+      }).join('');
+    }
+
+    // Recent Activity
+    const actEl = document.getElementById('recent-activity');
+    const actSec = document.getElementById('recent-activity-section');
+    if (data.recent_activity && data.recent_activity.length) {
+      actSec.style.display = '';
+      const typeIcons = { photo:'📷', certificate:'📜', obituary:'✝️', military:'🎖️', census:'📋', newspaper:'📰', letter:'✉️', document:'📄', record:'📄' };
+      actEl.innerHTML = data.recent_activity.map(a => {
+        const icon = typeIcons[a.doc_type] || '📄';
+        const peopleStr = a.people.map(p => p.name).join(', ');
+        return `<a href="/documents.html?doc=${a.doc_id}" class="recent-item">
+          <span class="ri-icon">${icon}</span>
+          <span class="ri-name">${esc(a.label)}</span>
+          <span class="ri-type-badge ${a.type}">${a.type}</span>
+          <span class="ri-people" title="${esc(peopleStr)}">${esc(peopleStr)}</span>
+          <span class="ri-meta">${esc(a.doc_type||'')}</span>
+          <span class="ri-when">${esc(a.ts_label||'')}</span>
+        </a>`;
+      }).join('');
+    }
+  })
+  .catch(() => {});
+</script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'Dashboard',
+  intro: 'The home page of Lack Lineage — a family history project built from George Lack\'s genealogical research database.',
+  keyboard: [
+    { key: '?', action: 'Toggle this help panel' }
+  ],
+  mouse: [
+    { key: 'Left-click nav link', action: 'Navigate to that page' },
+    { key: 'Left-click stat card', action: 'View details for that statistic' }
+  ],
+  sections: [
+    { title: 'Overview', icon: '📊', html: `
+      <p>The dashboard shows live statistics pulled from the database: total people, unique surnames, relationships, and confidence scores.</p>
+      <p>Stats update automatically when <code>stats.json</code> is regenerated from the database.</p>
+    ` },
+    { title: 'Navigation', icon: '🧭', html: `
+      <p>Top navigation: <strong>Dashboard</strong>, <strong>Search</strong>, <strong>Graph</strong>, <strong>Tree</strong>.</p>
+      <p>Dashboard sections:</p>
+      <ul>
+        <li><strong>Advanced Search</strong> — Full database query with filters</li>
+        <li><strong>People</strong> — Browse all individuals with profiles</li>
+        <li><strong>Surnames</strong> — 600 family names by lineage</li>
+        <li><strong>Timeline</strong> — Animated year-by-year visualization</li>
+        <li><strong>Places</strong> — Search by birth/death locations</li>
+        <li><strong>Edit/Update</strong> — Dad's desk for review &amp; corrections (password-protected)</li>
+      </ul>
+    ` }
+  ]
+});
+</script>
+</body>
+</html>
