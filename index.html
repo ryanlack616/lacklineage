@@ -24,7 +24,18 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: url('img/back.svg') center center / 100% auto no-repeat;
+  opacity: 0.14;
+  pointer-events: none;
+  z-index: 0;
+}
+body > * { position: relative; z-index: 1; }
 a { color: var(--accent); }
 
 /* ── Header ── */
