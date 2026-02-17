@@ -553,7 +553,7 @@ def main():
 
     ged_path = sys.argv[1]
     script_dir = Path(__file__).parent
-    db_path = str(Path(r"C:\Users\PC\monospacepoetry\poems\lineage.db"))
+    db_path = str(script_dir / "lineage.db")
     out_dir = str(script_dir / "data")
 
     print(f"Parsing GEDCOM: {ged_path}")
