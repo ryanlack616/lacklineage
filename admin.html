@@ -357,7 +357,7 @@ nav a.active { font-weight: bold; }
     <a href="/rivers.html">Rivers</a>
   </nav>
   <div class="header-right">
-    <span class="dad-badge">★ Dad's Desk</span>
+    <span class="dad-badge" id="mode-badge">★ Dad's Desk</span>
   </div>
 </header>
 
@@ -375,6 +375,9 @@ if(sessionStorage.getItem('dad-auth')!=='1'){
   });
 }
 </script>
+
+<!-- Static data shim — serves /api/admin/* from JSON files + localStorage -->
+<script src="/data/admin-shim.js"></script>
 
 <div class="app">
 
@@ -449,6 +452,12 @@ const DOC_ICONS  = { photo:'📷', certificate:'📋', obituary:'🕯️', newsp
    ═══════════════════════════════════════════════ */
 loadStats();
 loadPeople();
+
+// Detect static mode (admin-shim loaded)
+if (window._adminShimActive !== undefined || document.querySelector('script[src*="admin-shim"]')) {
+  const badge = document.getElementById('mode-badge');
+  if (badge) badge.innerHTML = '📋 Static Mode';
+}
 
 document.getElementById('search-input').addEventListener('input', () => {
   clearTimeout(searchTimeout);
