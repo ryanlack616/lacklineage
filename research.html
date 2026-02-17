@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lack Lineage — Research Hub</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8f6f1; --card: #ffffff; --fg: #2a2520; --fg2: #6b6360;
+  --fg3: #9e9a93; --accent: #8b6914; --border: #d8d2c8;
+  --font: 'Georgia','Times New Roman',serif;
+  --sans: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono: 'Consolas','Monaco',monospace;
+  --green: #2d9a2d; --yellow: #c9a100; --orange: #d4740a; --red: #c0392b;
+  --radius: 8px;
+}
+html { font-size: 16px; }
+body { font-family: var(--font); color: var(--fg); background: var(--bg); line-height: 1.7; min-height: 100vh; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Header ── */
+header {
+  background: var(--fg); color: var(--bg); padding: 0.75rem 2rem;
+  display: flex; align-items: center; gap: 2rem;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
+header h1 span { font-weight: 300; opacity: 0.6; }
+header h1 a { color: inherit; text-decoration: none; }
+nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+nav a {
+  background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--bg);
+  padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.8rem;
+  text-decoration: none; transition: all 0.15s;
+}
+nav a:hover, nav a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+nav a.active { font-weight: bold; }
+
+/* ── Layout ── */
+.page { max-width: 1100px; margin: 0 auto; padding: 1.5rem 2rem 4rem; }
+.page-title { font-size: 1.8rem; font-weight: 400; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+.page-sub { color: var(--fg2); font-size: 0.9rem; margin-bottom: 1.5rem; }
+.page-sub strong { color: var(--fg); }
+
+/* ── Tab Bar ── */
+.tabs {
+  display: flex; gap: 0.25rem; border-bottom: 2px solid var(--border);
+  margin-bottom: 1.5rem; flex-wrap: wrap;
+}
+.tab-btn {
+  padding: 0.6rem 1rem; border: none; background: transparent; cursor: pointer;
+  font-family: var(--sans); font-size: 0.78rem; font-weight: 600;
+  color: var(--fg2); border-radius: 6px 6px 0 0;
+  transition: all 0.15s; position: relative;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.tab-btn:hover { color: var(--fg); background: rgba(139,105,20,0.06); }
+.tab-btn.active { color: var(--accent); background: var(--card); }
+.tab-btn.active::after {
+  content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
+  height: 2px; background: var(--accent);
+}
+.tab-btn .badge {
+  display: inline-block; background: var(--border); color: var(--fg2);
+  font-size: 0.62rem; padding: 0.1rem 0.4rem; border-radius: 999px;
+  margin-left: 0.3rem; font-weight: 700; min-width: 1.2rem; text-align: center;
+}
+.tab-btn.active .badge { background: var(--accent); color: #fff; }
+
+/* ── Panels ── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── Priority Cards ── */
+.priority-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+.priority-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.2rem 1.4rem; display: flex; align-items: flex-start; gap: 1rem;
+  transition: all 0.15s; cursor: pointer;
+}
+.priority-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(139,105,20,0.08); }
+.priority-rank {
+  flex-shrink: 0; width: 2rem; height: 2rem; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-weight: 700; font-size: 0.85rem;
+  background: var(--bg); border: 1px solid var(--border); color: var(--fg2);
+}
+.priority-card[data-impact="high"] .priority-rank { background: #fef3cd; border-color: var(--yellow); color: #856404; }
+.priority-body { flex: 1; }
+.priority-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.2rem; }
+.priority-desc { font-size: 0.82rem; color: var(--fg2); line-height: 1.5; }
+.priority-count {
+  flex-shrink: 0; font-family: var(--mono); font-size: 1.3rem; font-weight: 700;
+  color: var(--accent); text-align: right;
+}
+
+/* ── Data Table ── */
+.tbl-controls {
+  display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;
+}
+.tbl-search {
+  flex: 1; min-width: 200px; padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border); border-radius: 5px;
+  font-size: 0.85rem; font-family: var(--font); background: var(--card); outline: none;
+}
+.tbl-search:focus { border-color: var(--accent); }
+.tbl-count { font-size: 0.75rem; color: var(--fg2); font-family: var(--sans); white-space: nowrap; }
+select.tbl-filter {
+  padding: 0.5rem 0.6rem; border: 1px solid var(--border); border-radius: 5px;
+  font-size: 0.82rem; font-family: var(--font); background: var(--card); outline: none; cursor: pointer;
+}
+select.tbl-filter:focus { border-color: var(--accent); }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+thead th {
+  text-align: left; padding: 0.6rem 0.75rem; font-size: 0.7rem; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--fg2); font-family: var(--sans); font-weight: 700;
+  border-bottom: 2px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap;
+}
+thead th:hover { color: var(--accent); }
+thead th .sort-arrow { font-size: 0.6rem; margin-left: 0.2rem; }
+tbody td { padding: 0.55rem 0.75rem; border-bottom: 1px solid #f0ede6; vertical-align: top; }
+tbody tr:hover { background: #fefcf6; }
+.name-link { font-weight: 600; color: var(--accent); }
+.name-link:hover { text-decoration: underline; }
+
+/* ── Tier badges ── */
+.tier {
+  font-size: 0.6rem; padding: 0.12rem 0.4rem; border-radius: 3px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  font-family: var(--mono); display: inline-block;
+}
+.tier-high { background: #e6f4ea; color: var(--green); }
+.tier-medium { background: #fff8e1; color: var(--yellow); }
+.tier-low { background: #fef0e6; color: var(--orange); }
+.tier-speculative { background: #fce8e8; color: var(--red); }
+
+/* ── Gap tags ── */
+.gap-tag {
+  display: inline-block; font-size: 0.62rem; padding: 0.1rem 0.35rem;
+  border-radius: 3px; font-family: var(--sans); font-weight: 600;
+  margin: 0.1rem 0.15rem 0.1rem 0; white-space: nowrap;
+}
+.gap-tag.crit { background: #fce8e8; color: var(--red); }
+.gap-tag.warn { background: #fff8e1; color: #856404; }
+.gap-tag.info { background: #e8f0fe; color: #1a56db; }
+
+/* ── Dup card ── */
+.dup-list { display: grid; gap: 0.75rem; }
+.dup-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1rem 1.2rem;
+}
+.dup-card:hover { border-color: var(--accent); }
+.dup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.dup-score {
+  font-family: var(--mono); font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+.dup-score-high { background: #fce8e8; color: var(--red); }
+.dup-score-medium { background: #fff8e1; color: #856404; }
+.dup-score-low { background: #e8f0fe; color: #1a56db; }
+.dup-vs {
+  display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.75rem; align-items: center;
+  font-size: 0.85rem;
+}
+.dup-person { }
+.dup-person .dp-name { font-weight: 700; }
+.dup-person .dp-date { font-size: 0.78rem; color: var(--fg2); }
+.dup-person .dp-place { font-size: 0.72rem; color: var(--fg3); }
+.dup-arrow { font-size: 1.2rem; color: var(--fg3); text-align: center; }
+
+/* ── Variant groups ── */
+.var-group {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0.8rem 1rem; margin-bottom: 0.5rem;
+}
+.var-group:hover { border-color: var(--accent); }
+.var-header { font-weight: 700; font-size: 0.88rem; margin-bottom: 0.3rem; }
+.var-pills { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.var-pill {
+  font-size: 0.75rem; padding: 0.2rem 0.55rem; border-radius: 999px;
+  background: var(--bg); border: 1px solid var(--border);
+  font-family: var(--sans);
+}
+.var-pill .count { font-weight: 700; color: var(--accent); }
+
+/* ── Anomaly ── */
+.anom-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0.9rem 1.1rem; margin-bottom: 0.5rem;
+  border-left: 3px solid var(--border);
+}
+.anom-card.high { border-left-color: var(--red); }
+.anom-card.medium { border-left-color: var(--orange); }
+.anom-title { font-weight: 700; font-size: 0.88rem; }
+.anom-desc { font-size: 0.82rem; color: var(--fg2); margin-top: 0.1rem; }
+.anom-people { font-size: 0.78rem; margin-top: 0.3rem; }
+.anom-people a { margin-right: 0.5rem; }
+
+/* ── Doc card ── */
+.doc-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0.8rem 1rem; margin-bottom: 0.5rem;
+}
+.doc-card:hover { border-color: var(--accent); }
+.doc-header { display: flex; justify-content: space-between; align-items: center; }
+.doc-name { font-weight: 700; font-size: 0.85rem; }
+.doc-type {
+  font-size: 0.6rem; padding: 0.12rem 0.4rem; border-radius: 3px;
+  font-weight: 700; text-transform: uppercase; font-family: var(--mono);
+  background: #e8f0fe; color: #1a56db;
+}
+.doc-preview {
+  font-size: 0.75rem; color: var(--fg2); font-family: var(--mono);
+  margin-top: 0.4rem; line-height: 1.5; word-break: break-word;
+  max-height: 4rem; overflow: hidden;
+}
+
+/* ── Migration ── */
+.mig-row {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;
+  border-bottom: 1px solid #f0ede6; font-size: 0.85rem;
+}
+.mig-row:last-child { border-bottom: none; }
+.mig-from { flex: 1; text-align: right; }
+.mig-arrow { color: var(--accent); font-weight: 700; flex-shrink: 0; }
+.mig-to { flex: 1; }
+.mig-count {
+  font-family: var(--mono); font-weight: 700; color: var(--accent);
+  flex-shrink: 0; min-width: 2rem; text-align: center;
+}
+
+/* ── Pagination ── */
+.pager {
+  display: flex; justify-content: center; align-items: center; gap: 0.4rem;
+  margin-top: 1rem; font-family: var(--sans); font-size: 0.8rem;
+}
+.pager button {
+  padding: 0.35rem 0.7rem; border: 1px solid var(--border); border-radius: 5px;
+  background: var(--card); cursor: pointer; font-size: 0.78rem; color: var(--fg2);
+  transition: all 0.15s;
+}
+.pager button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.pager button:disabled { opacity: 0.3; cursor: default; }
+.pager button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.pager .pager-info { color: var(--fg2); font-size: 0.72rem; }
+
+/* ── Stats Bar ── */
+.stats-bar {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.6rem;
+  margin-bottom: 1.5rem;
+}
+.stat-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0.8rem; text-align: center;
+}
+.stat-n { font-family: var(--mono); font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+.stat-label {
+  font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--fg2); font-family: var(--sans); font-weight: 600; margin-top: 0.2rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+  header { padding: 0.75rem 1rem; gap: 0.75rem; flex-wrap: wrap; }
+  nav { gap: 0.3rem; }
+  nav a { padding: 0.25rem 0.5rem; font-size: 0.7rem; }
+  .page { padding: 1rem 1rem 3rem; }
+  .page-title { font-size: 1.4rem; }
+  .tabs { gap: 0; }
+  .tab-btn { padding: 0.5rem 0.6rem; font-size: 0.68rem; }
+  .dup-vs { grid-template-columns: 1fr; }
+  .dup-arrow { transform: rotate(90deg); }
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .priority-card { flex-direction: column; }
+  .mig-row { flex-wrap: wrap; }
+  table { font-size: 0.78rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Lack <span>Lineage</span></a></h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/search.html">Search</a>
+    <a href="/research.html" class="active">Research</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/tree.html">Tree</a>
+  </nav>
+</header>
+
+<div class="page">
+  <h1 class="page-title">Research Hub</h1>
+  <p class="page-sub">
+    Actionable leads to <strong>fill gaps</strong>, <strong>fix errors</strong>, and
+    <strong>extend the family tree</strong>. Generated from database analysis.
+  </p>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar" id="stats-bar"></div>
+
+  <!-- Tabs -->
+  <div class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="priorities">Priorities</button>
+    <button class="tab-btn" data-tab="duplicates">Duplicates</button>
+    <button class="tab-btn" data-tab="anomalies">Anomalies</button>
+    <button class="tab-btn" data-tab="missing">Missing Data</button>
+    <button class="tab-btn" data-tab="documents">Unmatched Docs</button>
+    <button class="tab-btn" data-tab="surnames">Surname Variants</button>
+    <button class="tab-btn" data-tab="census">Census</button>
+    <button class="tab-btn" data-tab="obituaries">Obituaries</button>
+    <button class="tab-btn" data-tab="migrations">Migration</button>
+  </div>
+
+  <!-- Panels -->
+  <div class="panel active" id="panel-priorities"></div>
+  <div class="panel" id="panel-duplicates"></div>
+  <div class="panel" id="panel-anomalies"></div>
+  <div class="panel" id="panel-missing"></div>
+  <div class="panel" id="panel-documents"></div>
+  <div class="panel" id="panel-surnames"></div>
+  <div class="panel" id="panel-census"></div>
+  <div class="panel" id="panel-obituaries"></div>
+  <div class="panel" id="panel-migrations"></div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   Research Hub – Lack Lineage
+   Loads data/research.json, renders all panels client-side
+   ════════════════════════════════════════════════════════════════ */
+
+let R = null; // research data
+
+// ── Helpers ──
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+const profileUrl = id => `/profile.html?id=${id}`;
+const nameLink = (id, name) => `<a href="${profileUrl(id)}" class="name-link">${esc(name)}</a>`;
+const tierBadge = t => t ? `<span class="tier tier-${t}">${t}</span>` : '';
+const fmt = n => typeof n === 'number' ? n.toLocaleString() : n;
+
+// ── Tab switching ──
+$('#tabs').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  $$('.tab-btn').forEach(b => b.classList.remove('active'));
+  $$('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  $(`#panel-${btn.dataset.tab}`).classList.add('active');
+});
+
+// ── Load data ──
+fetch('/data/research.json')
+  .then(r => r.json())
+  .then(data => { R = data; render(); })
+  .catch(e => { $('.page').innerHTML += `<p style="color:var(--red)">Failed to load research data: ${e.message}</p>`; });
+
+function render() {
+  renderStats();
+  renderBadges();
+  renderPriorities();
+  renderDuplicates();
+  renderAnomalies();
+  renderMissing();
+  renderDocuments();
+  renderSurnames();
+  renderCensus();
+  renderObituaries();
+  renderMigrations();
+}
+
+// ── Stats Bar ──
+function renderStats() {
+  const s = R.stats;
+  const items = [
+    { n: s.total_people, label: 'People' },
+    { n: s.no_documents, label: 'No Documents' },
+    { n: s.no_parents, label: 'No Parents' },
+    { n: s.unverified_matches, label: 'Unverified Matches' },
+    { n: s.unmatched_docs, label: 'Unmatched Docs' },
+    { n: s.zero_sources, label: 'Zero Sources' },
+  ];
+  $('#stats-bar').innerHTML = items.map(i =>
+    `<div class="stat-card"><div class="stat-n">${fmt(i.n)}</div><div class="stat-label">${i.label}</div></div>`
+  ).join('');
+}
+
+// ── Tab badges ──
+function renderBadges() {
+  const counts = {
+    priorities: R.priorities.length,
+    duplicates: R.duplicates.length,
+    anomalies: R.anomalies.length,
+    missing: R.missing_data.length,
+    documents: R.unmatched_docs.length,
+    surnames: R.surname_variants.length,
+    census: R.census_candidates.length,
+    obituaries: R.obituary_candidates.length,
+    migrations: R.migrations.length,
+  };
+  $$('.tab-btn').forEach(btn => {
+    const c = counts[btn.dataset.tab];
+    if (c != null) {
+      let badge = btn.querySelector('.badge');
+      if (!badge) { badge = document.createElement('span'); badge.className = 'badge'; btn.appendChild(badge); }
+      badge.textContent = fmt(c);
+    }
+  });
+}
+
+// ── 1. Priorities ──
+function renderPriorities() {
+  const el = $('#panel-priorities');
+  el.innerHTML = '<div class="priority-grid">' + R.priorities.map(p =>
+    `<div class="priority-card" data-impact="${p.impact}" onclick="switchTab('${p.action}')">
+       <div class="priority-rank">${p.rank}</div>
+       <div class="priority-body">
+         <div class="priority-title">${esc(p.title)}</div>
+         <div class="priority-desc">${esc(p.description)}</div>
+       </div>
+       <div class="priority-count">${fmt(p.count)}</div>
+     </div>`
+  ).join('') + '</div>';
+}
+
+function switchTab(tab) {
+  // Map priority action names to tab names
+  const map = { review: 'missing', documents: 'documents', duplicates: 'duplicates',
+    census: 'census', missing: 'missing', obituaries: 'obituaries',
+    anomalies: 'anomalies', surnames: 'surnames' };
+  const t = map[tab] || tab;
+  const btn = $(`.tab-btn[data-tab="${t}"]`);
+  if (btn) btn.click();
+}
+
+// ── 2. Duplicates ──
+function renderDuplicates() {
+  const el = $('#panel-duplicates');
+  const dups = R.duplicates;
+  el.innerHTML = `<p class="page-sub">People with similar names and matching dates who may be the <strong>same person</strong> entered twice. Higher score = more likely duplicate.</p>`;
+  el.innerHTML += '<div class="dup-list">' + dups.map(d => {
+    const sc = d.score >= 7 ? 'high' : d.score >= 5 ? 'medium' : 'low';
+    return `<div class="dup-card">
+      <div class="dup-header">
+        <span class="anom-title">${esc(d.reason)}</span>
+        <span class="dup-score dup-score-${sc}">Score: ${d.score}</span>
+      </div>
+      <div class="dup-vs">
+        <div class="dup-person">
+          <div class="dp-name">${nameLink(d.person1.id, d.person1.name)}</div>
+          <div class="dp-date">${esc(d.person1.birth_date || '?')} ${tierBadge(d.person1.confidence_tier)}</div>
+        </div>
+        <div class="dup-arrow">⇄</div>
+        <div class="dup-person">
+          <div class="dp-name">${nameLink(d.person2.id, d.person2.name)}</div>
+          <div class="dp-date">${esc(d.person2.birth_date || '?')} ${tierBadge(d.person2.confidence_tier)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+// ── 3. Anomalies ──
+function renderAnomalies() {
+  const el = $('#panel-anomalies');
+  el.innerHTML = `<p class="page-sub">Records with <strong>impossible or suspicious dates</strong> — negative parent ages, deaths before births, or implausible generation gaps.</p>`;
+  el.innerHTML += R.anomalies.map(a => {
+    let people = '';
+    if (a.type === 'age_gap') {
+      people = `<div class="anom-people">
+        Parent: ${nameLink(a.parent.id, a.parent.name)} (b. ${esc(a.parent.birth_date)}) ${tierBadge(a.parent.confidence_tier)}<br>
+        Child: ${nameLink(a.child.id, a.child.name)} (b. ${esc(a.child.birth_date)}) ${tierBadge(a.child.confidence_tier)}
+      </div>`;
+    } else if (a.person) {
+      people = `<div class="anom-people">${nameLink(a.person.id, a.person.name)} ${tierBadge(a.person.confidence_tier)}</div>`;
+    }
+    return `<div class="anom-card ${a.severity}">
+      <div class="anom-title">${a.type === 'age_gap' ? '⚠️ Generation Gap' : a.type === 'death_before_birth' ? '🚫 Death Before Birth' : '❓ Impossible Age'}</div>
+      <div class="anom-desc">${esc(a.description)}</div>
+      ${people}
+    </div>`;
+  }).join('');
+}
+
+// ── 4. Missing Data ──
+(function() {
+  let missPage = 1, missPerPage = 50, missFilter = 'all', missSearch = '', missSort = 'gaps', missSortDir = -1;
+
+  window.renderMissing = function renderMissing() {
+    const el = $('#panel-missing');
+    // Toolbar
+    el.innerHTML = `
+      <p class="page-sub">People with <strong>missing information</strong> — sorted by how many gaps they have. Focus on those with the most missing fields.</p>
+      <div class="tbl-controls">
+        <input class="tbl-search" id="miss-search" placeholder="Filter by name…" value="${esc(missSearch)}">
+        <select class="tbl-filter" id="miss-filter">
+          <option value="all" ${missFilter==='all'?'selected':''}>All gaps</option>
+          <option value="no_documents" ${missFilter==='no_documents'?'selected':''}>No documents</option>
+          <option value="no_parents" ${missFilter==='no_parents'?'selected':''}>No parents</option>
+          <option value="birth_date" ${missFilter==='birth_date'?'selected':''}>No birth date</option>
+          <option value="death_date" ${missFilter==='death_date'?'selected':''}>No death date</option>
+          <option value="birth_place" ${missFilter==='birth_place'?'selected':''}>No birth place</option>
+          <option value="death_place" ${missFilter==='death_place'?'selected':''}>No death place</option>
+          <option value="single_source" ${missFilter==='single_source'?'selected':''}>Single source</option>
+        </select>
+        <span class="tbl-count" id="miss-count"></span>
+      </div>
+    `;
+
+    // Filter data
+    let data = R.missing_data;
+    if (missFilter !== 'all') data = data.filter(p => p.gaps.includes(missFilter));
+    if (missSearch) {
+      const q = missSearch.toLowerCase();
+      data = data.filter(p => p.name.toLowerCase().includes(q));
+    }
+
+    // Sort
+    if (missSort === 'gaps') data.sort((a,b) => (b.gap_count - a.gap_count) * missSortDir);
+    else if (missSort === 'name') data.sort((a,b) => a.name.localeCompare(b.name) * missSortDir);
+    else if (missSort === 'birth') data.sort((a,b) => ((a.birth_date||'') < (b.birth_date||'') ? -1 : 1) * missSortDir);
+
+    $('#miss-count').textContent = `${data.length} people`;
+
+    // Paginate
+    const totalPages = Math.ceil(data.length / missPerPage);
+    missPage = Math.min(missPage, totalPages || 1);
+    const start = (missPage - 1) * missPerPage;
+    const page = data.slice(start, start + missPerPage);
+
+    // Gap tag helper
+    const gapTag = g => {
+      const labels = {
+        birth_date: 'Birth Date', death_date: 'Death Date',
+        birth_place: 'Birth Place', death_place: 'Death Place',
+        no_documents: 'No Docs', no_parents: 'No Parents',
+        no_spouse: 'No Spouse', single_source: '1 Source'
+      };
+      const cls = ['no_documents','no_parents','birth_date'].includes(g) ? 'crit' :
+                  ['death_date','birth_place','single_source'].includes(g) ? 'warn' : 'info';
+      return `<span class="gap-tag ${cls}">${labels[g] || g}</span>`;
+    };
+
+    // Table
+    const sortArrow = col => missSort === col ? (missSortDir > 0 ? ' ▲' : ' ▼') : '';
+    let tbl = `<table><thead><tr>
+      <th data-col="name">Name${sortArrow('name')}</th>
+      <th data-col="birth">Birth${sortArrow('birth')}</th>
+      <th>Tier</th>
+      <th data-col="gaps">Gaps${sortArrow('gaps')}</th>
+      <th>Missing</th>
+    </tr></thead><tbody>`;
+    for (const p of page) {
+      tbl += `<tr>
+        <td>${nameLink(p.id, p.name)}</td>
+        <td style="white-space:nowrap">${esc(p.birth_date || '—')}</td>
+        <td>${tierBadge(p.confidence_tier)}</td>
+        <td style="text-align:center;font-family:var(--mono);font-weight:700">${p.gap_count}</td>
+        <td>${p.gaps.map(gapTag).join('')}</td>
+      </tr>`;
+    }
+    tbl += '</tbody></table>';
+    el.innerHTML += tbl;
+
+    // Pager
+    if (totalPages > 1) {
+      el.innerHTML += renderPager(missPage, totalPages, 'miss');
+    }
+
+    // Events
+    $('#miss-search').addEventListener('input', e => { missSearch = e.target.value; missPage = 1; renderMissing(); });
+    $('#miss-filter').addEventListener('change', e => { missFilter = e.target.value; missPage = 1; renderMissing(); });
+    el.querySelectorAll('thead th[data-col]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.col;
+        if (missSort === col) missSortDir *= -1; else { missSort = col; missSortDir = -1; }
+        renderMissing();
+      });
+    });
+  };
+})();
+
+// ── 5. Unmatched Documents ──
+(function() {
+  let docPage = 1, docPerPage = 30, docFilter = 'all', docSearch = '';
+
+  window.renderDocuments = function renderDocuments() {
+    const el = $('#panel-documents');
+    el.innerHTML = `
+      <p class="page-sub"><strong>${R.unmatched_docs.length}</strong> documents with readable text that aren't connected to any person. These may contain names you recognize.</p>
+      <div class="tbl-controls">
+        <input class="tbl-search" id="doc-search" placeholder="Search document text…" value="${esc(docSearch)}">
+        <select class="tbl-filter" id="doc-filter">
+          <option value="all" ${docFilter==='all'?'selected':''}>All types</option>
+          ${[...new Set(R.unmatched_docs.map(d => d.doc_type))].filter(Boolean).sort().map(t =>
+            `<option value="${t}" ${docFilter===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+        <span class="tbl-count" id="doc-count"></span>
+      </div>
+    `;
+
+    let data = R.unmatched_docs;
+    if (docFilter !== 'all') data = data.filter(d => d.doc_type === docFilter);
+    if (docSearch) {
+      const q = docSearch.toLowerCase();
+      data = data.filter(d => (d.text_preview||'').toLowerCase().includes(q) || (d.filename||'').toLowerCase().includes(q));
+    }
+
+    $('#doc-count').textContent = `${data.length} documents`;
+
+    const totalPages = Math.ceil(data.length / docPerPage);
+    docPage = Math.min(docPage, totalPages || 1);
+    const start = (docPage - 1) * docPerPage;
+    const page = data.slice(start, start + docPerPage);
+
+    el.innerHTML += page.map(d =>
+      `<div class="doc-card">
+        <div class="doc-header">
+          <span class="doc-name">${esc(d.filename)}</span>
+          <span class="doc-type">${esc(d.doc_type || 'document')}</span>
+        </div>
+        ${d.text_preview ? `<div class="doc-preview">${esc(d.text_preview)}</div>` : ''}
+      </div>`
+    ).join('');
+
+    if (totalPages > 1) el.innerHTML += renderPager(docPage, totalPages, 'doc');
+
+    $('#doc-search').addEventListener('input', e => { docSearch = e.target.value; docPage = 1; renderDocuments(); });
+    $('#doc-filter').addEventListener('change', e => { docFilter = e.target.value; docPage = 1; renderDocuments(); });
+  };
+})();
+
+// ── 6. Surname Variants ──
+function renderSurnames() {
+  const el = $('#panel-surnames');
+  el.innerHTML = `<p class="page-sub">Surnames that <strong>sound the same</strong> but are spelled differently. These may represent the same family.</p>`;
+  el.innerHTML += R.surname_variants.map(g => {
+    const pills = g.variants.map(v => `<span class="var-pill">${esc(v.name)} <span class="count">×${v.count}</span></span>`).join('');
+    return `<div class="var-group">
+      <div class="var-header">${g.variants.map(v => v.name).join(' / ')} <span style="color:var(--fg3);font-weight:400;font-size:0.78rem">(${g.total} people)</span></div>
+      <div class="var-pills">${pills}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── 7. Census Candidates ──
+(function() {
+  let cenPage = 1, cenPerPage = 50, cenSearch = '';
+
+  window.renderCensus = function renderCensus() {
+    const el = $('#panel-census');
+    el.innerHTML = `
+      <p class="page-sub"><strong>${R.census_candidates.length}</strong> people have birth dates and places but <strong>no census record</strong>. US Census (1790–1950) is free on FamilySearch and Ancestry.</p>
+      <div class="tbl-controls">
+        <input class="tbl-search" id="cen-search" placeholder="Filter by name…" value="${esc(cenSearch)}">
+        <span class="tbl-count" id="cen-count"></span>
+      </div>
+    `;
+
+    let data = R.census_candidates;
+    if (cenSearch) {
+      const q = cenSearch.toLowerCase();
+      data = data.filter(p => p.name.toLowerCase().includes(q));
+    }
+
+    $('#cen-count').textContent = `${data.length} people`;
+
+    const totalPages = Math.ceil(data.length / cenPerPage);
+    cenPage = Math.min(cenPage, totalPages || 1);
+    const start = (cenPage - 1) * cenPerPage;
+    const page = data.slice(start, start + cenPerPage);
+
+    let tbl = `<table><thead><tr>
+      <th>Name</th><th>Birth</th><th>Birth Place</th><th>Death</th><th>Tier</th>
+    </tr></thead><tbody>`;
+    for (const p of page) {
+      tbl += `<tr>
+        <td>${nameLink(p.id, p.name)}</td>
+        <td style="white-space:nowrap">${esc(p.birth_date || '—')}</td>
+        <td>${esc(p.birth_place || '—')}</td>
+        <td style="white-space:nowrap">${esc(p.death_date || '—')}</td>
+        <td>${tierBadge(p.confidence_tier)}</td>
+      </tr>`;
+    }
+    tbl += '</tbody></table>';
+    el.innerHTML += tbl;
+
+    if (totalPages > 1) el.innerHTML += renderPager(cenPage, totalPages, 'cen');
+
+    $('#cen-search').addEventListener('input', e => { cenSearch = e.target.value; cenPage = 1; renderCensus(); });
+  };
+})();
+
+// ── 8. Obituary Candidates ──
+(function() {
+  let obPage = 1, obPerPage = 50, obSearch = '';
+
+  window.renderObituaries = function renderObituaries() {
+    const el = $('#panel-obituaries');
+    el.innerHTML = `
+      <p class="page-sub"><strong>${R.obituary_candidates.length}</strong> people have death dates but <strong>no obituary</strong>. Obituaries name parents, children, and siblings — huge research value.</p>
+      <div class="tbl-controls">
+        <input class="tbl-search" id="ob-search" placeholder="Filter by name…" value="${esc(obSearch)}">
+        <span class="tbl-count" id="ob-count"></span>
+      </div>
+    `;
+
+    let data = R.obituary_candidates;
+    if (obSearch) {
+      const q = obSearch.toLowerCase();
+      data = data.filter(p => p.name.toLowerCase().includes(q));
+    }
+
+    $('#ob-count').textContent = `${data.length} people`;
+
+    const totalPages = Math.ceil(data.length / obPerPage);
+    obPage = Math.min(obPage, totalPages || 1);
+    const start = (obPage - 1) * obPerPage;
+    const page = data.slice(start, start + obPerPage);
+
+    let tbl = `<table><thead><tr>
+      <th>Name</th><th>Birth</th><th>Death</th><th>Tier</th>
+    </tr></thead><tbody>`;
+    for (const p of page) {
+      tbl += `<tr>
+        <td>${nameLink(p.id, p.name)}</td>
+        <td style="white-space:nowrap">${esc(p.birth_date || '—')}</td>
+        <td style="white-space:nowrap">${esc(p.death_date || '—')}</td>
+        <td>${tierBadge(p.confidence_tier)}</td>
+      </tr>`;
+    }
+    tbl += '</tbody></table>';
+    el.innerHTML += tbl;
+
+    if (totalPages > 1) el.innerHTML += renderPager(obPage, totalPages, 'ob');
+
+    $('#ob-search').addEventListener('input', e => { obSearch = e.target.value; obPage = 1; renderObituaries(); });
+  };
+})();
+
+// ── 9. Migration ──
+function renderMigrations() {
+  const el = $('#panel-migrations');
+  el.innerHTML = `<p class="page-sub">Family <strong>migration patterns</strong> — where people were born vs where they died. Shows geographic movement across generations.</p>`;
+  el.innerHTML += '<div>' + R.migrations.map(m =>
+    `<div class="mig-row">
+      <div class="mig-from">${esc(m.from)}</div>
+      <div class="mig-arrow">→</div>
+      <div class="mig-to">${esc(m.to)}</div>
+      <div class="mig-count">${m.count}</div>
+    </div>`
+  ).join('') + '</div>';
+}
+
+// ── Shared pager renderer ──
+function renderPager(current, total, prefix) {
+  let html = '<div class="pager">';
+  html += `<button onclick="${prefix}Nav(1)" ${current<=1?'disabled':''}>«</button>`;
+  html += `<button onclick="${prefix}Nav(${current-1})" ${current<=1?'disabled':''}>‹</button>`;
+
+  const start = Math.max(1, current - 2);
+  const end = Math.min(total, current + 2);
+  for (let i = start; i <= end; i++) {
+    html += `<button class="${i===current?'active':''}" onclick="${prefix}Nav(${i})">${i}</button>`;
+  }
+
+  html += `<button onclick="${prefix}Nav(${current+1})" ${current>=total?'disabled':''}>›</button>`;
+  html += `<button onclick="${prefix}Nav(${total})" ${current>=total?'disabled':''}>»</button>`;
+  html += `<span class="pager-info">${current} / ${total}</span>`;
+  html += '</div>';
+  return html;
+}
+
+// Pager navigation functions
+function missNav(p) { /* set page and re-render */ }
+function docNav(p) { /* set page and re-render */ }
+function cenNav(p) { /* set page and re-render */ }
+function obNav(p) { /* set page and re-render */ }
+
+// Wire up pager nav functions properly via closures
+(function() {
+  // Missing Data pager
+  let _missPage = 1;
+  const origMiss = window.renderMissing;
+  window.renderMissing = function() {
+    // we use an IIFE approach so pager state is managed
+    origMiss();
+  };
+  window.missNav = function(p) {
+    // Access the closure variable in the IIFE above
+    // Since the IIFE uses its own page var, we need a different approach
+    // Let's just re-render with the page set
+    const el = $('#panel-missing');
+    // Store page in a data attribute
+    el.dataset.page = p;
+    window._missPageVal = p;
+    renderMissing();
+  };
+})();
+</script>
+
+<script>
+/* ── Pager state management (clean approach) ── */
+
+// Override the render functions with proper pager support
+(function() {
+  // We'll use a global state object
+  window._rp = { miss: 1, doc: 1, cen: 1, ob: 1 };
+
+  window.missNav = function(p) { window._rp.miss = p; renderMissing(); };
+  window.docNav = function(p) { window._rp.doc = p; renderDocuments(); };
+  window.cenNav = function(p) { window._rp.cen = p; renderCensus(); };
+  window.obNav = function(p) { window._rp.ob = p; renderObituaries(); };
+
+  // Patch render functions to use global page state
+  const _origRenderMissing = window.renderMissing;
+  const _origRenderDocuments = window.renderDocuments;
+  const _origRenderCensus = window.renderCensus;
+  const _origRenderObituaries = window.renderObituaries;
+
+  // We need to override the page variables. Let's use a simpler approach:
+  // The IIFEs set local page vars. We need to make those respond to window._rp.
+  // Simplest: redefine the functions entirely here.
+})();
+</script>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   FINAL: Clean pager-aware render functions
+   (Replaces the IIFE versions above with proper pager state)
+   ════════════════════════════════════════════════════════════════ */
+
+(function() {
+  const PAGE = { miss: 1, doc: 1, cen: 1, ob: 1 };
+  const PER  = { miss: 50, doc: 30, cen: 50, ob: 50 };
+  const FILT = { miss: 'all', doc: 'all' };
+  const SRCH = { miss: '', doc: '', cen: '', ob: '' };
+  const SORT = { missCol: 'gaps', missDir: -1 };
+
+  window.missNav = p => { PAGE.miss = p; renderMissing(); };
+  window.docNav  = p => { PAGE.doc = p; renderDocuments(); };
+  window.cenNav  = p => { PAGE.cen = p; renderCensus(); };
+  window.obNav   = p => { PAGE.ob = p; renderObituaries(); };
+
+  // ── Missing Data (overrides IIFE) ──
+  window.renderMissing = function() {
+    if (!R) return;
+    const el = $('#panel-missing');
+    const gapTag = g => {
+      const labels = { birth_date:'Birth Date', death_date:'Death Date', birth_place:'Birth Place',
+        death_place:'Death Place', no_documents:'No Docs', no_parents:'No Parents',
+        no_spouse:'No Spouse', single_source:'1 Source' };
+      const cls = ['no_documents','no_parents','birth_date'].includes(g)?'crit':
+                  ['death_date','birth_place','single_source'].includes(g)?'warn':'info';
+      return `<span class="gap-tag ${cls}">${labels[g]||g}</span>`;
+    };
+
+    el.innerHTML = `
+      <p class="page-sub">People with <strong>missing information</strong> — sorted by how many gaps they have.</p>
+      <div class="tbl-controls">
+        <input class="tbl-search" id="miss-search" placeholder="Filter by name…" value="${esc(SRCH.miss)}">
+        <select class="tbl-filter" id="miss-filter">
+          <option value="all" ${FILT.miss==='all'?'selected':''}>All gaps</option>
+          <option value="no_documents" ${FILT.miss==='no_documents'?'selected':''}>No documents</option>
+          <option value="no_parents" ${FILT.miss==='no_parents'?'selected':''}>No parents</option>
+          <option value="birth_date" ${FILT.miss==='birth_date'?'selected':''}>No birth date</option>
+          <option value="death_date" ${FILT.miss==='death_date'?'selected':''}>No death date</option>
+          <option value="birth_place" ${FILT.miss==='birth_place'?'selected':''}>No birth place</option>
+          <option value="death_place" ${FILT.miss==='death_place'?'selected':''}>No death place</option>
+          <option value="single_source" ${FILT.miss==='single_source'?'selected':''}>Single source</option>
+        </select>
+        <span class="tbl-count" id="miss-count"></span>
+      </div>`;
+
+    let data = R.missing_data.slice();
+    if (FILT.miss !== 'all') data = data.filter(p => p.gaps.includes(FILT.miss));
+    if (SRCH.miss) { const q = SRCH.miss.toLowerCase(); data = data.filter(p => p.name.toLowerCase().includes(q)); }
+    if (SORT.missCol === 'gaps') data.sort((a,b) => (b.gap_count - a.gap_count) * SORT.missDir);
+    else if (SORT.missCol === 'name') data.sort((a,b) => a.name.localeCompare(b.name) * SORT.missDir);
+    else if (SORT.missCol === 'birth') data.sort((a,b) => ((a.birth_date||'') < (b.birth_date||'') ? -1 : 1) * SORT.missDir);
+
+    $('#miss-count').textContent = `${data.length} people`;
+    const tp = Math.ceil(data.length / PER.miss) || 1;
+    PAGE.miss = Math.min(PAGE.miss, tp);
+    const start = (PAGE.miss - 1) * PER.miss;
+    const page = data.slice(start, start + PER.miss);
+
+    const sa = col => SORT.missCol === col ? (SORT.missDir > 0 ? ' ▲' : ' ▼') : '';
+    let tbl = `<table><thead><tr>
+      <th data-col="name">Name${sa('name')}</th>
+      <th data-col="birth">Birth${sa('birth')}</th>
+      <th>Tier</th>
+      <th data-col="gaps">Gaps${sa('gaps')}</th>
+      <th>Missing</th>
+    </tr></thead><tbody>`;
+    for (const p of page) {
+      tbl += `<tr>
+        <td>${nameLink(p.id, p.name)}</td>
+        <td style="white-space:nowrap">${esc(p.birth_date||'—')}</td>
+        <td>${tierBadge(p.confidence_tier)}</td>
+        <td style="text-align:center;font-family:var(--mono);font-weight:700">${p.gap_count}</td>
+        <td>${p.gaps.map(gapTag).join('')}</td>
+      </tr>`;
+    }
+    tbl += '</tbody></table>';
+    el.innerHTML += tbl;
+    if (tp > 1) el.innerHTML += renderPager(PAGE.miss, tp, 'miss');
+
+    $('#miss-search').addEventListener('input', e => { SRCH.miss = e.target.value; PAGE.miss = 1; renderMissing(); });
+    $('#miss-filter').addEventListener('change', e => { FILT.miss = e.target.value; PAGE.miss = 1; renderMissing(); });
+    el.querySelectorAll('thead th[data-col]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.col;
+        if (SORT.missCol === col) SORT.missDir *= -1; else { SORT.missCol = col; SORT.missDir = -1; }
+        renderMissing();
+      });
+    });
+  };
+
+  // ── Unmatched Documents (overrides IIFE) ──
+  window.renderDocuments = function() {
+    if (!R) return;
+    const el = $('#panel-documents');
+    el.innerHTML = `
+      <p class="page-sub"><strong>${R.unmatched_docs.length}</strong> documents with readable text that aren't connected to any person.</p>
+      <div class="tbl-controls">
+        <input class="tbl-search" id="doc-search" placeholder="Search document text…" value="${esc(SRCH.doc)}">
+        <select class="tbl-filter" id="doc-filter">
+          <option value="all" ${FILT.doc==='all'?'selected':''}>All types</option>
+          ${[...new Set(R.unmatched_docs.map(d=>d.doc_type))].filter(Boolean).sort().map(t =>
+            `<option value="${t}" ${FILT.doc===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+        <span class="tbl-count" id="doc-count"></span>
+      </div>`;
+
+    let data = R.unmatched_docs;
+    if (FILT.doc !== 'all') data = data.filter(d => d.doc_type === FILT.doc);
+    if (SRCH.doc) { const q = SRCH.doc.toLowerCase(); data = data.filter(d => (d.text_preview||'').toLowerCase().includes(q) || (d.filename||'').toLowerCase().includes(q)); }
+
+    $('#doc-count').textContent = `${data.length} documents`;
+    const tp = Math.ceil(data.length / PER.doc) || 1;
+    PAGE.doc = Math.min(PAGE.doc, tp);
+    const start = (PAGE.doc - 1) * PER.doc;
+    const page = data.slice(start, start + PER.doc);
+
+    el.innerHTML += page.map(d =>
+      `<div class="doc-card">
+        <div class="doc-header">
+          <span class="doc-name">${esc(d.filename)}</span>
+          <span class="doc-type">${esc(d.doc_type||'document')}</span>
+        </div>
+        ${d.text_preview ? `<div class="doc-preview">${esc(d.text_preview)}</div>` : ''}
+      </div>`
+    ).join('');
+    if (tp > 1) el.innerHTML += renderPager(PAGE.doc, tp, 'doc');
+
+    $('#doc-search').addEventListener('input', e => { SRCH.doc = e.target.value; PAGE.doc = 1; renderDocuments(); });
+    $('#doc-filter').addEventListener('change', e => { FILT.doc = e.target.value; PAGE.doc = 1; renderDocuments(); });
+  };
+
+  // ── Census (overrides IIFE) ──
+  window.renderCensus = function() {
+    if (!R) return;
+    const el = $('#panel-census');
+    el.innerHTML = `
+      <p class="page-sub"><strong>${R.census_candidates.length}</strong> people with dates and places but <strong>no census record</strong>.</p>
+      <div class="tbl-controls">
+        <input class="tbl-search" id="cen-search" placeholder="Filter by name…" value="${esc(SRCH.cen)}">
+        <span class="tbl-count" id="cen-count"></span>
+      </div>`;
+
+    let data = R.census_candidates;
+    if (SRCH.cen) { const q = SRCH.cen.toLowerCase(); data = data.filter(p => p.name.toLowerCase().includes(q)); }
+
+    $('#cen-count').textContent = `${data.length} people`;
+    const tp = Math.ceil(data.length / PER.cen) || 1;
+    PAGE.cen = Math.min(PAGE.cen, tp);
+    const start = (PAGE.cen - 1) * PER.cen;
+    const page = data.slice(start, start + PER.cen);
+
+    let tbl = `<table><thead><tr><th>Name</th><th>Birth</th><th>Birth Place</th><th>Death</th><th>Tier</th></tr></thead><tbody>`;
+    for (const p of page) {
+      tbl += `<tr>
+        <td>${nameLink(p.id, p.name)}</td>
+        <td style="white-space:nowrap">${esc(p.birth_date||'—')}</td>
+        <td>${esc(p.birth_place||'—')}</td>
+        <td style="white-space:nowrap">${esc(p.death_date||'—')}</td>
+        <td>${tierBadge(p.confidence_tier)}</td>
+      </tr>`;
+    }
+    tbl += '</tbody></table>';
+    el.innerHTML += tbl;
+    if (tp > 1) el.innerHTML += renderPager(PAGE.cen, tp, 'cen');
+
+    $('#cen-search').addEventListener('input', e => { SRCH.cen = e.target.value; PAGE.cen = 1; renderCensus(); });
+  };
+
+  // ── Obituaries (overrides IIFE) ──
+  window.renderObituaries = function() {
+    if (!R) return;
+    const el = $('#panel-obituaries');
+    el.innerHTML = `
+      <p class="page-sub"><strong>${R.obituary_candidates.length}</strong> people with death dates but <strong>no obituary</strong>.</p>
+      <div class="tbl-controls">
+        <input class="tbl-search" id="ob-search" placeholder="Filter by name…" value="${esc(SRCH.ob)}">
+        <span class="tbl-count" id="ob-count"></span>
+      </div>`;
+
+    let data = R.obituary_candidates;
+    if (SRCH.ob) { const q = SRCH.ob.toLowerCase(); data = data.filter(p => p.name.toLowerCase().includes(q)); }
+
+    $('#ob-count').textContent = `${data.length} people`;
+    const tp = Math.ceil(data.length / PER.ob) || 1;
+    PAGE.ob = Math.min(PAGE.ob, tp);
+    const start = (PAGE.ob - 1) * PER.ob;
+    const page = data.slice(start, start + PER.ob);
+
+    let tbl = `<table><thead><tr><th>Name</th><th>Birth</th><th>Death</th><th>Tier</th></tr></thead><tbody>`;
+    for (const p of page) {
+      tbl += `<tr>
+        <td>${nameLink(p.id, p.name)}</td>
+        <td style="white-space:nowrap">${esc(p.birth_date||'—')}</td>
+        <td style="white-space:nowrap">${esc(p.death_date||'—')}</td>
+        <td>${tierBadge(p.confidence_tier)}</td>
+      </tr>`;
+    }
+    tbl += '</tbody></table>';
+    el.innerHTML += tbl;
+    if (tp > 1) el.innerHTML += renderPager(PAGE.ob, tp, 'ob');
+
+    $('#ob-search').addEventListener('input', e => { SRCH.ob = e.target.value; PAGE.ob = 1; renderObituaries(); });
+  };
+})();
+</script>
+
+</body>
+</html>

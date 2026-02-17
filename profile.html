@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lack Lineage — Profile</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8f6f1; --card: #ffffff; --fg: #2a2520; --fg2: #6b6360;
+  --fg3: #9e9a93; --accent: #8b6914; --border: #d8d2c8;
+  --font: 'Georgia','Times New Roman',serif;
+  --sans: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono: 'Consolas','Monaco',monospace;
+  --green: #2d9a2d; --yellow: #c9a100; --orange: #d4740a; --red: #c0392b;
+  --radius: 8px;
+}
+html { font-size: 16px; }
+body { font-family: var(--font); color: var(--fg); background: var(--bg); line-height: 1.7; min-height: 100vh; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Header ── */
+header {
+  background: var(--fg); color: var(--bg); padding: 0.75rem 2rem;
+  display: flex; align-items: center; gap: 2rem;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
+header h1 span { font-weight: 300; opacity: 0.6; }
+header h1 a { color: inherit; text-decoration: none; }
+nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+nav a {
+  background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--bg);
+  padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.8rem;
+  text-decoration: none; transition: all 0.15s;
+}
+nav a:hover, nav a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+nav a.active { font-weight: bold; }
+
+/* ── Search bar ── */
+.search-wrap {
+  max-width: 560px; margin: 2rem auto 0; padding: 0 2rem; position: relative;
+}
+.search-wrap input {
+  width: 100%; padding: 0.9rem 1rem 0.9rem 2.8rem;
+  border: 2px solid var(--border); border-radius: var(--radius);
+  font-size: 1rem; font-family: var(--font); background: var(--card); outline: none;
+  transition: border-color 0.2s;
+}
+.search-wrap input:focus { border-color: var(--accent); }
+.search-wrap::before {
+  content: '🔍'; position: absolute; left: 2.8rem; top: 50%;
+  transform: translateY(-50%); font-size: 1.1rem; pointer-events: none;
+}
+.search-dd {
+  position: absolute; top: 100%; left: 2rem; right: 2rem;
+  background: var(--card); border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  max-height: 340px; overflow-y: auto; z-index: 50;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12); display: none;
+}
+.search-dd.open { display: block; }
+.sr {
+  padding: 0.55rem 1rem; cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid #f0ede6; font-size: 0.88rem;
+}
+.sr:hover { background: #fefcf6; }
+.sr-name { font-weight: 600; }
+.sr-sub { color: var(--fg2); font-size: 0.78rem; }
+.sr-tier {
+  font-size: 0.6rem; padding: 0.12rem 0.4rem; border-radius: 3px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  font-family: var(--sans); flex-shrink: 0;
+}
+
+/* ── Search controls ── */
+.search-controls {
+  display: flex; align-items: center; gap: 0.5rem; margin-top: 0.4rem;
+  max-width: 560px; margin-left: auto; margin-right: auto; padding: 0 2rem;
+}
+.search-hint {
+  font-size: 0.72rem; color: var(--fg3); font-family: var(--sans); flex: 1;
+}
+.search-hint kbd {
+  background: #eae6dd; padding: 0.1rem 0.35rem; border-radius: 3px;
+  font-family: var(--mono); font-size: 0.7rem; border: 1px solid var(--border);
+}
+.ocr-search-btn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.3rem 0.7rem; border-radius: 5px;
+  border: 1px solid var(--border); background: var(--card);
+  font-size: 0.72rem; font-family: var(--sans); color: var(--fg2);
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  user-select: none;
+}
+.ocr-search-btn:hover { border-color: var(--accent); color: var(--accent); }
+.ocr-search-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.sr-ocr-snippet {
+  font-size: 0.7rem; color: var(--fg3); font-family: var(--mono);
+  margin-top: 0.15rem; max-width: 100%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sr-ocr-snippet mark {
+  background: #fff3cd; color: var(--fg); padding: 0 0.15rem; border-radius: 2px;
+}
+.sr-via {
+  font-size: 0.55rem; padding: 0.08rem 0.3rem; border-radius: 3px;
+  font-weight: 600; font-family: var(--sans); background: #e8f0fe; color: #1a56db;
+  text-transform: uppercase; letter-spacing: 0.04em; margin-left: 0.4rem;
+}
+
+/* ── Loading / empty ── */
+.loading, .empty-state { text-align: center; padding: 4rem 2rem; color: var(--fg2); }
+.loading { font-size: 1.1rem; }
+.empty-state { display: none; }
+.empty-state h2 { font-size: 1.5rem; color: var(--fg); margin-bottom: 0.5rem; }
+
+/* ── Profile shell ── */
+.profile { display: none; max-width: 1060px; margin: 0 auto; padding: 1.5rem 2rem 4rem; }
+.profile.active { display: block; }
+
+/* ═══════ HERO BANNER ═══════ */
+.hero-banner {
+  display: grid; grid-template-columns: 1fr auto; gap: 1.5rem;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 2rem; margin-bottom: 1.5rem; position: relative; overflow: hidden;
+  border-top: 4px solid var(--accent);
+}
+.hero-name {
+  font-size: 2.2rem; font-weight: 400; letter-spacing: 0.03em; line-height: 1.15;
+}
+.hero-name .suffix { font-size: 0.85rem; color: var(--fg2); font-weight: 300; }
+.hero-sub { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.4rem; flex-wrap: wrap; }
+.sex-badge {
+  display: inline-block; font-size: 0.65rem; padding: 0.15rem 0.55rem;
+  border-radius: 3px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; font-family: var(--sans);
+}
+.sex-m { background: #dbeafe; color: #1e40af; }
+.sex-f { background: #fce7f3; color: #9d174d; }
+.sex-u { background: #f3f4f6; color: #6b7280; }
+.hero-dates { font-size: 0.95rem; color: var(--fg2); }
+.hero-dates .dash { margin: 0 0.2rem; }
+.hero-places { margin-top: 0.3rem; font-size: 0.85rem; color: var(--fg3); line-height: 1.5; }
+.hero-places .pl { color: var(--fg2); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--sans); margin-right: 0.3rem; }
+
+/* Vital stats in hero */
+.hero-vitals {
+  display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;
+}
+.vital {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 0.5rem 1rem; background: var(--bg); border-radius: var(--radius);
+  min-width: 72px;
+}
+.vital-num { font-size: 1.4rem; font-weight: 700; font-family: var(--mono); color: var(--accent); line-height: 1; }
+.vital-label { font-size: 0.6rem; text-transform: uppercase; color: var(--fg3); font-family: var(--sans); letter-spacing: 0.08em; margin-top: 0.2rem; }
+
+/* Confidence mini in hero */
+.conf-mini {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 100px; cursor: pointer; transition: transform 0.15s;
+}
+.conf-mini:hover { transform: scale(1.06); }
+.conf-mini-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
+.conf-mini-inner {
+  position: absolute; text-align: center;
+}
+.conf-score { font-size: 1.6rem; font-weight: 700; font-family: var(--mono); line-height: 1; }
+.conf-tier-label {
+  font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--fg3); font-family: var(--sans); margin-top: 0.15rem; text-align: center;
+}
+
+/* ═══════ VERIFIED BADGE ═══════ */
+.verified-badge {
+  display: inline-flex; align-items: center; gap: 0.25rem;
+  margin-left: 0.35rem; vertical-align: middle;
+}
+.verified-badge img {
+  width: 28px; height: 28px; flex-shrink: 0;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+}
+.verified-badge-label {
+  font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em;
+  font-family: var(--sans); font-weight: 700; color: #8b6914;
+}
+
+/* ═══════ CONFIDENCE PANEL OVERLAY ═══════ */
+.conf-panel-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  z-index: 200; display: none; align-items: center; justify-content: center;
+  backdrop-filter: blur(2px);
+}
+.conf-panel-overlay.open { display: flex; }
+.conf-panel {
+  background: var(--card); border-radius: 12px; width: 420px; max-width: 92vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25); overflow: hidden;
+  animation: confSlideIn 0.25s ease-out;
+}
+@keyframes confSlideIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.conf-panel-header {
+  padding: 1.5rem 1.5rem 1rem; text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.conf-panel-ring { margin: 0 auto 0.5rem; }
+.conf-panel-score {
+  font-size: 2.4rem; font-weight: 700; font-family: var(--mono); line-height: 1;
+}
+.conf-panel-tier {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--fg3); font-family: var(--sans); margin-top: 0.25rem;
+}
+.conf-panel-body { padding: 1.2rem 1.5rem; }
+.conf-panel-body .cb-row { margin-bottom: 0.5rem; }
+.conf-panel-body .cb-row:last-child { margin-bottom: 0; }
+
+/* Dad Approved section */
+.conf-panel-divider {
+  border-top: 1px solid var(--border);
+  margin: 0;
+}
+.conf-panel-approval {
+  padding: 1.2rem 1.5rem; text-align: center;
+}
+.approval-btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.7rem 1.4rem; border-radius: 999px;
+  font-size: 0.82rem; font-family: var(--sans); font-weight: 600;
+  cursor: pointer; transition: all 0.2s; border: 2px solid var(--border);
+  background: var(--card); color: var(--fg);
+}
+.approval-btn:hover { border-color: #8b6914; background: #fefcf6; }
+.approval-btn.approved {
+  background: linear-gradient(135deg, #f7eed5, #f0e4b8);
+  border-color: #8b6914; color: #5a4410;
+}
+.approval-btn.approved:hover {
+  background: linear-gradient(135deg, #f0e4b8, #e8d8a0);
+}
+.approval-status {
+  font-size: 0.65rem; color: var(--fg3); font-family: var(--sans);
+  margin-top: 0.5rem; letter-spacing: 0.04em;
+}
+.conf-panel-close {
+  position: absolute; top: 0.8rem; right: 0.8rem;
+  background: none; border: none; font-size: 1.3rem;
+  color: var(--fg3); cursor: pointer; line-height: 1;
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.conf-panel-close:hover { background: var(--bg); color: var(--fg); }
+
+/* Approved hero ring override */
+.conf-mini.dad-approved .conf-score { color: #8b6914 !important; }
+.conf-mini.dad-approved .conf-tier-label {
+  color: #8b6914 !important; font-weight: 700;
+}
+
+/* ═══════ NAV PILLS ═══════ */
+.nav-pills {
+  display: flex; gap: 0.4rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+}
+.nav-pills a {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.4rem 0.85rem; border: 1px solid var(--border); border-radius: 999px;
+  font-size: 0.78rem; font-family: var(--sans); background: var(--card);
+  color: var(--fg); transition: all 0.15s; white-space: nowrap;
+}
+.nav-pills a:hover { border-color: var(--accent); background: #fefcf6; text-decoration: none; }
+
+/* ═══════ TWO-COLUMN LAYOUT ═══════ */
+.content-grid {
+  display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem;
+  align-items: start;
+}
+
+/* ═══════ SECTION CARD ═══════ */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 1.5rem; overflow: hidden;
+}
+.card-head {
+  padding: 0.85rem 1.2rem; border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.card-title {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--fg2); font-family: var(--sans); font-weight: 700;
+}
+.card-count {
+  font-size: 0.7rem; color: var(--fg3); font-family: var(--mono);
+}
+.card-body { padding: 1.2rem; }
+
+/* ═══════ GALLERY (photos/docs) ═══════ */
+.gallery {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.75rem;
+}
+.gal-item {
+  border-radius: var(--radius); overflow: hidden; cursor: pointer;
+  border: 1px solid var(--border); transition: all 0.2s; position: relative;
+  background: var(--card);
+}
+.gal-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.15); transform: translateY(-2px); border-color: var(--accent); }
+.gal-thumb {
+  width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: #f0ede6;
+}
+.gal-placeholder {
+  width: 100%; aspect-ratio: 4/3;
+  background: linear-gradient(135deg, #f0ede6, #e2ddd4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; color: var(--fg3);
+}
+.gal-badge {
+  position: absolute; top: 0.4rem; left: 0.4rem;
+  padding: 0.12rem 0.45rem; border-radius: 3px;
+  font-size: 0.55rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.04em; font-family: var(--sans);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.badge-photo { background: rgba(212,237,218,0.92); color: #155724; }
+.badge-certificate { background: rgba(254,243,205,0.92); color: #856404; }
+.badge-obituary { background: rgba(240,230,246,0.92); color: #6f42c1; }
+.badge-newspaper { background: rgba(226,227,229,0.92); color: #383d41; }
+.badge-census { background: rgba(209,231,252,0.92); color: #1e40af; }
+.badge-military { background: rgba(220,214,208,0.92); color: #5a4a3a; }
+.badge-other { background: rgba(240,237,230,0.92); color: var(--fg2); }
+.gal-caption {
+  padding: 0.4rem 0.55rem; font-size: 0.72rem; color: var(--fg2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-family: var(--sans); border-top: 1px solid var(--border);
+}
+.gal-conf {
+  font-family: var(--mono); font-size: 0.65rem; color: var(--fg3); float: right;
+}
+
+/* ═══════ OCR TEXT PANEL ═══════ */
+.ocr-block { margin-bottom: 1.2rem; }
+.ocr-block:last-child { margin-bottom: 0; }
+.ocr-source {
+  font-size: 0.7rem; color: var(--fg3); font-family: var(--sans);
+  margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.5rem;
+}
+.ocr-source strong { color: var(--fg2); }
+.ocr-panel {
+  background: #faf8f4; border: 1px solid var(--border); border-radius: 4px;
+  padding: 1rem; font-size: 0.78rem; font-family: var(--mono);
+  white-space: pre-wrap; word-break: break-word;
+  max-height: 200px; overflow-y: auto; line-height: 1.55; color: var(--fg2);
+}
+.ocr-panel.expanded { max-height: none; }
+.ocr-toggle {
+  font-size: 0.7rem; color: var(--accent); cursor: pointer; font-family: var(--sans);
+  margin-top: 0.3rem; display: inline-block;
+}
+.ocr-toggle:hover { text-decoration: underline; }
+
+/* ═══════ FAMILY ═══════ */
+.fam-group { margin-bottom: 1rem; }
+.fam-group:last-child { margin-bottom: 0; }
+.fam-label {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--fg3); font-family: var(--sans); margin-bottom: 0.4rem; font-weight: 600;
+}
+.fam-list { display: flex; flex-direction: column; gap: 0.35rem; }
+.fam-card {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.5rem 0.7rem; border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--card);
+  transition: all 0.15s; text-decoration: none; color: var(--fg);
+}
+.fam-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-decoration: none; }
+.fam-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.dot-m { background: #93c5fd; }
+.dot-f { background: #f9a8d4; }
+.dot-u { background: #d1d5db; }
+.fam-info { flex: 1; min-width: 0; }
+.fam-name { font-weight: 600; font-size: 0.85rem; }
+.fam-dates { font-size: 0.72rem; color: var(--fg2); }
+.fam-marr { font-size: 0.68rem; color: var(--fg3); font-style: italic; }
+
+/* ═══════ CONFIDENCE DETAIL (sidebar) ═══════ */
+.conf-bars { display: flex; flex-direction: column; gap: 0.5rem; }
+.cb-row {
+  display: grid; grid-template-columns: 80px 1fr 32px; align-items: center; gap: 0.5rem;
+}
+.cb-label { font-size: 0.72rem; color: var(--fg2); font-family: var(--sans); }
+.cb-track {
+  height: 14px; background: #f0ede6; border-radius: 7px; overflow: hidden;
+}
+.cb-fill { height: 100%; border-radius: 7px; transition: width 0.6s ease; }
+.cb-val { font-size: 0.7rem; font-family: var(--mono); color: var(--fg2); text-align: right; }
+
+/* ═══════ TIMELINE ═══════ */
+.timeline { position: relative; padding-left: 1.5rem; }
+.timeline::before {
+  content: ''; position: absolute; left: 0.45rem; top: 0.5rem; bottom: 0.5rem;
+  width: 2px; background: var(--border);
+}
+.tl-event { position: relative; padding-bottom: 1rem; }
+.tl-event:last-child { padding-bottom: 0; }
+.tl-dot {
+  position: absolute; left: -1.3rem; top: 0.35rem;
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 2px solid var(--accent); background: var(--card);
+}
+.tl-date {
+  font-size: 0.7rem; font-family: var(--mono); color: var(--accent);
+  font-weight: 600; letter-spacing: 0.03em;
+}
+.tl-text { font-size: 0.85rem; color: var(--fg2); }
+.tl-place { font-size: 0.75rem; color: var(--fg3); }
+
+/* ═══════ FLAGS ═══════ */
+.flag-list { list-style: none; }
+.flag-item {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  padding: 0.5rem 0; border-bottom: 1px solid #f0ede6; font-size: 0.8rem;
+}
+.flag-item:last-child { border-bottom: none; }
+.flag-sev {
+  font-size: 0.6rem; padding: 0.12rem 0.45rem; border-radius: 3px;
+  font-weight: 700; text-transform: uppercase; font-family: var(--sans);
+  white-space: nowrap; flex-shrink: 0; margin-top: 0.1rem;
+}
+.sev-error { background: #fde8e8; color: #c0392b; }
+.sev-warning { background: #fef3cd; color: #856404; }
+.sev-info { background: #e8f0fe; color: #1a56db; }
+.flag-cat {
+  font-size: 0.6rem; color: var(--fg3); font-family: var(--sans);
+  text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0;
+  width: 70px; margin-top: 0.15rem;
+}
+.flag-desc { flex: 1; color: var(--fg2); }
+.no-flags { text-align: center; padding: 1rem; color: var(--fg3); font-size: 0.85rem; }
+
+/* ═══════ MODAL ═══════ */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.75); z-index: 200;
+  display: none; align-items: center; justify-content: center; padding: 2rem;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--card); border-radius: var(--radius);
+  max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+}
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.8rem 1.5rem; border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--card); z-index: 1;
+}
+.modal-header h3 { font-size: 0.95rem; font-weight: 600; }
+.modal-close {
+  background: none; border: none; font-size: 1.6rem; cursor: pointer;
+  color: var(--fg2); padding: 0.3rem; line-height: 1;
+}
+.modal-close:hover { color: var(--fg); }
+.modal-body { padding: 1.5rem; }
+.modal-body img { max-width: 100%; border-radius: 4px; margin-bottom: 1rem; display: block; }
+.modal-meta {
+  font-size: 0.78rem; color: var(--fg3); margin-bottom: 0.8rem;
+  font-family: var(--sans); display: flex; gap: 1rem; flex-wrap: wrap;
+}
+.modal-meta strong { color: var(--fg2); }
+.modal-ocr-label {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--fg3); font-family: var(--sans); font-weight: 600; margin-bottom: 0.4rem;
+}
+.modal-ocr {
+  background: #faf8f4; border: 1px solid var(--border); border-radius: 4px;
+  padding: 1rem; font-size: 0.8rem; font-family: var(--mono);
+  white-space: pre-wrap; word-break: break-word; max-height: 400px;
+  overflow-y: auto; line-height: 1.5; color: var(--fg2);
+}
+
+/* ═══════ RESPONSIVE ═══════ */
+@media (max-width: 800px) {
+  header { padding: 0.75rem 1rem; gap: 0.75rem; flex-wrap: wrap; }
+  nav { gap: 0.3rem; }
+  nav a { padding: 0.25rem 0.5rem; font-size: 0.7rem; }
+  .profile { padding: 1rem; }
+  .hero-banner { grid-template-columns: 1fr; }
+  .hero-name { font-size: 1.6rem; }
+  .conf-mini { flex-direction: row; gap: 0.5rem; }
+  .content-grid { grid-template-columns: 1fr; }
+  .gallery { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  .cb-row { grid-template-columns: 70px 1fr 28px; }
+  .hero-vitals { gap: 0.5rem; }
+  .vital { padding: 0.4rem 0.6rem; min-width: 58px; }
+  .vital-num { font-size: 1.1rem; }
+  .nav-pills { gap: 0.3rem; }
+  .nav-pills a { padding: 0.3rem 0.6rem; font-size: 0.72rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Lack <span>Lineage</span></a></h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/search.html">Search</a>
+    <a href="/research.html">Research</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/tree.html">Tree</a>
+  </nav>
+</header>
+
+<!-- Search -->
+<div class="search-wrap" id="search-wrap">
+  <input type="text" id="search-input" placeholder="Search by name… use & for AND, | for OR" autocomplete="off">
+  <div class="search-dd" id="search-dd"></div>
+</div>
+<div class="search-controls">
+  <span class="search-hint"><kbd>&amp;</kbd> AND &nbsp; <kbd>|</kbd> OR &nbsp; spaces = AND</span>
+  <button class="ocr-search-btn" id="ocr-search-btn" title="Also search OCR text from scanned documents">
+    📄 Search OCR
+  </button>
+</div>
+
+<div class="empty-state" id="empty-state">
+  <h2>Person Profile</h2>
+  <p>Search above or use <code>?id=123</code> to view a person's full record.</p>
+</div>
+
+<div class="loading" id="loading">Loading profiles…</div>
+
+<!-- ═══════ PROFILE ═══════ -->
+<div class="profile" id="profile">
+
+  <!-- HERO BANNER -->
+  <div class="hero-banner" id="hero-banner">
+    <div class="hero-left">
+      <h2 class="hero-name" id="p-name"></h2>
+      <div class="hero-sub">
+        <span class="sex-badge" id="p-sex"></span>
+        <span class="hero-dates" id="p-dates"></span>
+      </div>
+      <div class="hero-places" id="p-places"></div>
+      <div class="hero-vitals" id="p-vitals"></div>
+    </div>
+    <div class="conf-mini" id="conf-mini">
+      <div class="conf-mini-wrap">
+        <svg viewBox="0 0 120 120" width="90" height="90">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="#f0ede6" stroke-width="8"/>
+          <circle id="ring-arc" cx="60" cy="60" r="52" fill="none" stroke-width="8"
+                  stroke-linecap="round" transform="rotate(-90 60 60)"
+                  stroke-dasharray="0 327" />
+        </svg>
+        <div class="conf-mini-inner">
+          <div class="conf-score" id="ring-score">—</div>
+        </div>
+      </div>
+      <div class="conf-tier-label" id="ring-tier"></div>
+    </div>
+  </div>
+
+  <!-- NAV PILLS -->
+  <div class="nav-pills" id="nav-pills"></div>
+
+  <!-- MAIN CONTENT -->
+  <div class="content-grid" id="content-grid">
+
+    <!-- LEFT COLUMN -->
+    <div class="col-main" id="col-main">
+
+      <!-- TIMELINE -->
+      <div class="card" id="card-timeline" style="display:none">
+        <div class="card-head">
+          <span class="card-title">Life Events</span>
+        </div>
+        <div class="card-body">
+          <div class="timeline" id="timeline"></div>
+        </div>
+      </div>
+
+      <!-- PHOTOS & DOCUMENTS -->
+      <div class="card" id="card-gallery" style="display:none">
+        <div class="card-head">
+          <span class="card-title">Photos &amp; Documents</span>
+          <span class="card-count" id="gallery-count"></span>
+        </div>
+        <div class="card-body">
+          <div class="gallery" id="gallery"></div>
+        </div>
+      </div>
+
+      <!-- OCR TEXT -->
+      <div class="card" id="card-ocr" style="display:none">
+        <div class="card-head">
+          <span class="card-title">Extracted Text (OCR)</span>
+          <span class="card-count" id="ocr-count"></span>
+        </div>
+        <div class="card-body" id="ocr-body"></div>
+      </div>
+
+      <!-- QUALITY FLAGS -->
+      <div class="card" id="card-flags" style="display:none">
+        <div class="card-head">
+          <span class="card-title">Data Quality</span>
+          <span class="card-count" id="flag-count"></span>
+        </div>
+        <div class="card-body">
+          <ul class="flag-list" id="flag-list"></ul>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="col-side" id="col-side">
+
+      <!-- FAMILY -->
+      <div class="card" id="card-family" style="display:none">
+        <div class="card-head">
+          <span class="card-title">Family</span>
+        </div>
+        <div class="card-body" id="family-body"></div>
+      </div>
+
+      <!-- CONFIDENCE BREAKDOWN -->
+      <div class="card" id="card-conf">
+        <div class="card-head">
+          <span class="card-title">Confidence Breakdown</span>
+        </div>
+        <div class="card-body">
+          <div class="conf-bars" id="conf-bars"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- DOCUMENT MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-title"></h3>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- CONFIDENCE DETAIL PANEL -->
+<div class="conf-panel-overlay" id="conf-panel-overlay">
+  <div class="conf-panel">
+    <button class="conf-panel-close" id="conf-panel-close">&times;</button>
+    <div class="conf-panel-header">
+      <div class="conf-panel-ring">
+        <svg viewBox="0 0 120 120" width="100" height="100">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="#f0ede6" stroke-width="8"/>
+          <circle id="panel-ring-arc" cx="60" cy="60" r="52" fill="none" stroke-width="8"
+                  stroke-linecap="round" transform="rotate(-90 60 60)"
+                  stroke-dasharray="0 327"/>
+        </svg>
+      </div>
+      <div class="conf-panel-score" id="panel-score">—</div>
+      <div class="conf-panel-tier" id="panel-tier"></div>
+    </div>
+    <div class="conf-panel-body" id="panel-bars"></div>
+    <div class="conf-panel-divider"></div>
+    <div class="conf-panel-approval">
+      <button class="approval-btn" id="approval-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span id="approval-label">Dad Approved</span>
+      </button>
+      <div class="approval-status" id="approval-status"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   State
+   ══════════════════════════════════════════════════════ */
+let allProfiles = null;
+let profileIndex = [];
+let currentPersonId = null;
+const TIER_COLORS = { high:'#2d9a2d', medium:'#c9a100', low:'#d4740a', speculative:'#c0392b' };
+const TIER_BG    = { high:'#e8f5e9', medium:'#fff8e1', low:'#fff3e0', speculative:'#fde8e8' };
+const BAR_CATS = [
+  { key:'identity',   label:'Identity',    max:12 },
+  { key:'birth',      label:'Birth',       max:20 },
+  { key:'death',      label:'Death',       max:12 },
+  { key:'family',     label:'Family',      max:15 },
+  { key:'sources',    label:'Sources',     max:15 },
+  { key:'documents',  label:'Documents',   max:18 },
+  { key:'consistency',label:'Consistency', max:8  },
+];
+const DOC_ICONS = {
+  photo:'📷', certificate:'📋', obituary:'🕯️', newspaper:'📰',
+  census:'📊', military:'🎖️', other:'📄'
+};
+
+/* ══════════════════════════════════════════════════════
+   Init
+   ══════════════════════════════════════════════════════ */
+fetch('/data/profiles.json')
+  .then(r => r.json())
+  .then(data => {
+    allProfiles = data;
+    buildSearchIndex();
+    document.getElementById('loading').style.display = 'none';
+    const id = new URLSearchParams(location.search).get('id');
+    if (id && allProfiles[id]) renderProfile(allProfiles[id]);
+    else document.getElementById('empty-state').style.display = 'block';
+  })
+  .catch(err => {
+    document.getElementById('loading').textContent = 'Failed to load data.';
+    console.error(err);
+  });
+
+/* ══════════════════════════════════════════════════════
+   Search
+   ══════════════════════════════════════════════════════ */
+function buildSearchIndex() {
+  profileIndex = Object.values(allProfiles).map(p => {
+    const ocrParts = [];
+    (p.documents||[]).forEach(d => {
+      if (d.ocr_excerpt) ocrParts.push(d.ocr_excerpt.toLowerCase());
+    });
+    return {
+      id: p.id, name: p.name, surname: p.surname||'',
+      searchStr: (p.name+' '+(p.surname||'')).toLowerCase(),
+      ocrStr: ocrParts.join(' '),
+      birth_date: p.birth_date, death_date: p.death_date,
+      confidence_tier: p.confidence_tier,
+    };
+  });
+  profileIndex.sort((a,b) => a.name.localeCompare(b.name));
+}
+
+/* ── Multi-term search parser ── */
+function parseSearchQuery(raw) {
+  // Split on | for OR groups, within each split on & or spaces for AND
+  return raw.split('|').map(g => g.trim()).filter(Boolean)
+    .map(group => group.split('&').map(t => t.trim().toLowerCase()).filter(Boolean)
+      .flatMap(t => t.split(/\s+/)).filter(Boolean));
+}
+
+function matchProfile(p, orGroups, useOcr) {
+  for (const andTerms of orGroups) {
+    if (!andTerms.length) continue;
+    const nameMatch = andTerms.every(t => p.searchStr.includes(t));
+    if (nameMatch) return { match: true, via: 'name' };
+    if (useOcr && p.ocrStr) {
+      const ocrMatch = andTerms.every(t => p.ocrStr.includes(t));
+      if (ocrMatch) return { match: true, via: 'ocr', terms: andTerms };
+    }
+  }
+  return { match: false };
+}
+
+function getOcrSnippet(personId, terms) {
+  const docs = allProfiles[personId]?.documents || [];
+  for (const d of docs) {
+    if (!d.ocr_excerpt) continue;
+    const lower = d.ocr_excerpt.toLowerCase();
+    for (const t of terms) {
+      const idx = lower.indexOf(t);
+      if (idx >= 0) {
+        const start = Math.max(0, idx - 30);
+        const end = Math.min(d.ocr_excerpt.length, idx + t.length + 50);
+        let snip = d.ocr_excerpt.slice(start, end).trim();
+        if (start > 0) snip = '…' + snip;
+        if (end < d.ocr_excerpt.length) snip += '…';
+        // Highlight matched term
+        const re = new RegExp('(' + terms.map(tt => tt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
+        snip = esc(snip).replace(re, '<mark>$1</mark>');
+        return snip;
+      }
+    }
+  }
+  return '';
+}
+
+const searchInput = document.getElementById('search-input');
+const searchDD    = document.getElementById('search-dd');
+let ocrMode = false;
+const ocrBtn = document.getElementById('ocr-search-btn');
+ocrBtn.addEventListener('click', () => {
+  ocrMode = !ocrMode;
+  ocrBtn.classList.toggle('active', ocrMode);
+  searchInput.placeholder = ocrMode
+    ? 'Search names + OCR text… use & for AND, | for OR'
+    : 'Search by name… use & for AND, | for OR';
+  searchInput.dispatchEvent(new Event('input'));
+});
+
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim();
+  if (q.length < 2) { searchDD.classList.remove('open'); return; }
+  const orGroups = parseSearchQuery(q);
+  if (!orGroups.length || orGroups.every(g => !g.length)) { searchDD.classList.remove('open'); return; }
+
+  const nameMatches = [];
+  const ocrMatches = [];
+  for (const p of profileIndex) {
+    const result = matchProfile(p, orGroups, ocrMode);
+    if (!result.match) continue;
+    if (result.via === 'name') {
+      nameMatches.push({ ...p, via: 'name' });
+    } else {
+      ocrMatches.push({ ...p, via: 'ocr', matchTerms: result.terms });
+    }
+    if (nameMatches.length + ocrMatches.length >= 50) break;
+  }
+  const matches = [...nameMatches, ...ocrMatches];
+
+  if (!matches.length) {
+    searchDD.innerHTML = '<div class="sr" style="color:var(--fg3); cursor:default;">No results</div>';
+    searchDD.classList.add('open'); return;
+  }
+  searchDD.innerHTML = matches.map(m => {
+    const dates = fmtRange(m.birth_date, m.death_date);
+    const tc = TIER_COLORS[m.confidence_tier]||'#999';
+    const tb = TIER_BG[m.confidence_tier]||'#f0f0f0';
+    let snippet = '';
+    let viaTag = '';
+    if (m.via === 'ocr') {
+      snippet = `<div class="sr-ocr-snippet">${getOcrSnippet(m.id, m.matchTerms)}</div>`;
+      viaTag = '<span class="sr-via">OCR</span>';
+    }
+    return `<div class="sr" data-id="${m.id}">
+      <div>
+        <span class="sr-name">${esc(m.name)}</span>${viaTag}
+        <span class="sr-sub">${dates}</span>
+        ${snippet}
+      </div>
+      <span class="sr-tier" style="background:${tb};color:${tc};">${m.confidence_tier||'?'}</span>
+    </div>`;
+  }).join('');
+  searchDD.classList.add('open');
+  searchDD.querySelectorAll('.sr[data-id]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.id;
+      history.pushState(null,'',`?id=${id}`);
+      renderProfile(allProfiles[id]);
+      searchDD.classList.remove('open');
+      searchInput.value = '';
+    });
+  });
+});
+searchInput.addEventListener('keydown', e => { if (e.key==='Escape') searchDD.classList.remove('open'); });
+document.addEventListener('click', e => { if (!e.target.closest('.search-wrap') && !e.target.closest('.search-controls')) searchDD.classList.remove('open'); });
+
+/* ══════════════════════════════════════════════════════
+   Render Profile
+   ══════════════════════════════════════════════════════ */
+function renderProfile(p) {
+  currentPersonId = String(p.id);
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('profile').classList.add('active');
+  document.title = `${p.name} — Lack Lineage`;
+
+  renderHero(p);
+  renderNavPills(p);
+  renderTimeline(p);
+  renderGallery(p);
+  renderOCR(p);
+  renderFamily(p);
+  renderConfBars(p);
+  renderFlags(p);
+
+  // Apply Dad Approved state if set
+  if (isApproved(p.id)) updateHeroApproval(p, true);
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ─────── Hero ─────── */
+function renderHero(p) {
+  const tier  = p.confidence_tier||'speculative';
+  const color = TIER_COLORS[tier];
+  const banner = document.getElementById('hero-banner');
+  banner.style.borderTopColor = color;
+
+  // Name
+  document.getElementById('p-name').innerHTML =
+    esc(p.name) + (p.suffix ? ` <span class="suffix">${esc(p.suffix)}</span>` : '');
+
+  // Sex
+  const sexEl = document.getElementById('p-sex');
+  sexEl.className = 'sex-badge ' + (p.sex==='M'?'sex-m':p.sex==='F'?'sex-f':'sex-u');
+  sexEl.textContent = p.sex==='M'?'Male':p.sex==='F'?'Female':'Unknown';
+
+  // Dates
+  const b = p.birth_date || '?';
+  const d = p.death_date || (likelyDeceased(p) ? 'deceased?' : 'living?');
+  document.getElementById('p-dates').innerHTML = `${esc(b)} <span class="dash">—</span> ${esc(d)}`;
+
+  // Places
+  const placesEl = document.getElementById('p-places');
+  let ph = '';
+  if (p.birth_place) ph += `<span class="pl">Born</span> ${esc(p.birth_place)}`;
+  if (p.death_place) { if (ph) ph += '<br>'; ph += `<span class="pl">Died</span> ${esc(p.death_place)}`; }
+  placesEl.innerHTML = ph || '';
+
+  // Vitals counters
+  const totalFam = (p.parents||[]).length + (p.spouses||[]).length
+                 + (p.children||[]).length + (p.siblings||[]).length;
+  const nDocs = (p.documents||[]).length;
+  const nSrc  = p.source_count||0;
+  const vitals = [];
+  if (nDocs > 0)   vitals.push({ n: nDocs, l: nDocs===1?'Document':'Documents' });
+  if (nSrc > 0)    vitals.push({ n: nSrc,  l: nSrc===1?'Source':'Sources' });
+  if (totalFam > 0) vitals.push({ n: totalFam, l: 'Relations' });
+  const flags = p.flags||[];
+  const nErr  = flags.filter(f=>f.severity==='error').length;
+  const nWarn = flags.filter(f=>f.severity==='warning').length;
+  if (nErr > 0)       vitals.push({ n: nErr,  l: nErr===1?'Error':'Errors', cls:'--red' });
+  else if (nWarn > 0) vitals.push({ n: nWarn, l: nWarn===1?'Warning':'Warnings', cls:'--orange' });
+  document.getElementById('p-vitals').innerHTML = vitals.map(v =>
+    `<div class="vital"><span class="vital-num" ${v.cls?`style="color:var(${v.cls})"`:''}>${v.n}</span><span class="vital-label">${v.l}</span></div>`
+  ).join('');
+
+  // Confidence ring
+  const score = p.confidence||0;
+  const circ  = 2 * Math.PI * 52;
+  const arc   = document.getElementById('ring-arc');
+  arc.setAttribute('stroke', color);
+  arc.setAttribute('stroke-dasharray', '0 ' + circ);
+  setTimeout(() => arc.setAttribute('stroke-dasharray', `${(score/100)*circ} ${circ}`), 80);
+  document.getElementById('ring-score').textContent = score;
+  document.getElementById('ring-score').style.color = color;
+  document.getElementById('ring-tier').textContent  = tier;
+  document.getElementById('ring-tier').style.color  = color;
+}
+
+/* ─────── Nav pills ─────── */
+function renderNavPills(p) {
+  document.getElementById('nav-pills').innerHTML = `
+    <a href="/ancestry.html#person-${p.id}">📜 Ancestry</a>
+    <a href="/tree.html?root=${p.id}">🌳 Tree</a>
+    <a href="/graph.html?focus=${p.id}">◉ Graph</a>
+    <a href="/related.html?from=${p.id}">🔗 Relationships</a>
+    <a href="/review.html">📝 Review</a>
+  `;
+}
+
+/* ─────── Timeline ─────── */
+function renderTimeline(p) {
+  const card = document.getElementById('card-timeline');
+  const el   = document.getElementById('timeline');
+  const events = [];
+
+  if (p.birth_date)
+    events.push({ date: p.birth_date, sort: sortDate(p.birth_date), text: 'Born', place: p.birth_place });
+
+  (p.spouses||[]).forEach(sp => {
+    if (sp.marr_date)
+      events.push({ date: sp.marr_date, sort: sortDate(sp.marr_date),
+                     text: `Married ${sp.name}`, place: sp.marr_place });
+  });
+
+  (p.children||[]).forEach(ch => {
+    if (ch.birth_date) {
+      const label = ch.sex==='M'?'Son':ch.sex==='F'?'Daughter':'Child';
+      events.push({ date: ch.birth_date, sort: sortDate(ch.birth_date),
+                     text: `${label} born — ${ch.name}`, place: null });
+    }
+  });
+
+  if (p.death_date)
+    events.push({ date: p.death_date, sort: sortDate(p.death_date), text: 'Died', place: p.death_place });
+
+  if (!events.length) { card.style.display = 'none'; return; }
+  events.sort((a,b) => (a.sort||0) - (b.sort||0));
+  card.style.display = '';
+
+  el.innerHTML = events.map(ev => `
+    <div class="tl-event">
+      <div class="tl-dot"></div>
+      <div class="tl-date">${esc(ev.date)}</div>
+      <div class="tl-text">${esc(ev.text)}</div>
+      ${ev.place ? `<div class="tl-place">${esc(ev.place)}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+/* ─────── Gallery ─────── */
+function renderGallery(p) {
+  const card = document.getElementById('card-gallery');
+  const el   = document.getElementById('gallery');
+  const docs = p.documents||[];
+  if (!docs.length) { card.style.display='none'; return; }
+  card.style.display = '';
+  document.getElementById('gallery-count').textContent = docs.length;
+
+  el.innerHTML = docs.map((d,i) => {
+    const type     = d.doc_type||'other';
+    const icon     = DOC_ICONS[type]||DOC_ICONS.other;
+    const badgeCls = 'badge-' + (type in DOC_ICONS ? type : 'other');
+    const imgSrc   = d.thumb || d.filepath;
+    const thumb    = imgSrc
+      ? `<img class="gal-thumb" src="${encP(imgSrc)}" loading="lazy"
+              onerror="this.outerHTML='<div class=\\'gal-placeholder\\'>${icon}</div>'">`
+      : `<div class="gal-placeholder">${icon}</div>`;
+    const conf    = d.match_confidence!=null ? `${(d.match_confidence*100).toFixed(0)}%` : '';
+    const caption = d.description
+      || d.filepath?.split(/[/\\]/).pop()?.replace(/_[a-f0-9]{8}\.\w+$/,'')
+      || `Doc #${d.doc_id}`;
+    return `<div class="gal-item" data-idx="${i}">
+      ${thumb}
+      <span class="gal-badge ${badgeCls}">${type}</span>
+      <div class="gal-caption">
+        ${conf ? `<span class="gal-conf">${conf}${d.verified?' ✓':''}</span>` : ''}
+        ${esc(caption)}
+      </div>
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('.gal-item').forEach(item => {
+    item.addEventListener('click', () => openModal(docs[parseInt(item.dataset.idx)]));
+  });
+}
+
+/* ─────── OCR Text ─────── */
+function renderOCR(p) {
+  const card = document.getElementById('card-ocr');
+  const body = document.getElementById('ocr-body');
+  const docs = (p.documents||[]).filter(d => d.ocr_excerpt);
+  if (!docs.length) { card.style.display='none'; return; }
+  card.style.display = '';
+  document.getElementById('ocr-count').textContent = `${docs.length} document${docs.length>1?'s':''}`;
+
+  body.innerHTML = docs.map((d, i) => {
+    const label = d.description || d.filepath?.split(/[/\\]/).pop() || `Doc #${d.doc_id}`;
+    const long  = (d.ocr_excerpt||'').length > 400;
+    return `<div class="ocr-block">
+      <div class="ocr-source">
+        <strong>${esc(label)}</strong>
+        <span>${d.doc_type||'unknown'}${d.match_confidence!=null ? ` · ${(d.match_confidence*100).toFixed(0)}% match` : ''}</span>
+      </div>
+      <div class="ocr-panel${long ? '' : ' expanded'}" id="ocr-panel-${i}">${esc(d.ocr_excerpt)}</div>
+      ${long ? `<span class="ocr-toggle" data-target="ocr-panel-${i}">Show more ▾</span>` : ''}
+    </div>`;
+  }).join('');
+
+  body.querySelectorAll('.ocr-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const panel = document.getElementById(btn.dataset.target);
+      panel.classList.toggle('expanded');
+      btn.textContent = panel.classList.contains('expanded') ? 'Show less ▴' : 'Show more ▾';
+    });
+  });
+}
+
+/* ─────── Family ─────── */
+function renderFamily(p) {
+  const card = document.getElementById('card-family');
+  const body = document.getElementById('family-body');
+  const groups = [];
+  if (p.parents?.length)  groups.push({ label:'Parents',  list: p.parents });
+  if (p.spouses?.length)  groups.push({ label:'Spouse'+(p.spouses.length>1?'s':''), list: p.spouses, showMarr: true });
+  if (p.children?.length) groups.push({ label:'Children', list: p.children });
+  if (p.siblings?.length) groups.push({ label:'Siblings', list: p.siblings });
+
+  if (!groups.length) { card.style.display='none'; return; }
+  card.style.display = '';
+
+  body.innerHTML = groups.map(g => {
+    const items = g.list.map(per => {
+      const dotCls = per.sex==='M'?'dot-m':per.sex==='F'?'dot-f':'dot-u';
+      const dates  = fmtRange(per.birth_date, per.death_date);
+      let marrLine = '';
+      if (g.showMarr && (per.marr_date||per.marr_place)) {
+        marrLine = `<div class="fam-marr">m. ${esc([per.marr_date,per.marr_place].filter(Boolean).join(', '))}</div>`;
+      }
+      return `<a class="fam-card" href="?id=${per.id}" data-id="${per.id}">
+        <span class="fam-dot ${dotCls}"></span>
+        <div class="fam-info">
+          <div class="fam-name">${esc(per.name)}</div>
+          <div class="fam-dates">${dates}</div>
+          ${marrLine}
+        </div>
+      </a>`;
+    }).join('');
+    return `<div class="fam-group"><div class="fam-label">${g.label}</div><div class="fam-list">${items}</div></div>`;
+  }).join('');
+
+  body.querySelectorAll('.fam-card[data-id]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.preventDefault();
+      const id = el.dataset.id;
+      if (allProfiles[id]) {
+        history.pushState(null,'',`?id=${id}`);
+        renderProfile(allProfiles[id]);
+      }
+    });
+  });
+}
+
+/* ─────── Confidence Bars ─────── */
+function renderConfBars(p) {
+  const bd = p.confidence_breakdown||{};
+  document.getElementById('conf-bars').innerHTML = BAR_CATS.map(cat => {
+    const val = bd[cat.key]||0;
+    const pct = Math.round((val/cat.max)*100);
+    const c = pct>=70?'var(--green)':pct>=40?'var(--yellow)':pct>0?'var(--orange)':'#d1d5db';
+    return `<div class="cb-row">
+      <span class="cb-label">${cat.label}</span>
+      <div class="cb-track"><div class="cb-fill" style="width:${pct}%;background:${c};"></div></div>
+      <span class="cb-val">${val}/${cat.max}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ─────── Flags ─────── */
+function renderFlags(p) {
+  const card  = document.getElementById('card-flags');
+  const list  = document.getElementById('flag-list');
+  const flags = p.flags||[];
+  if (!flags.length) {
+    card.style.display = '';
+    document.getElementById('flag-count').textContent = '';
+    list.innerHTML = '<li class="no-flags">✓ No data quality flags</li>';
+    return;
+  }
+  card.style.display = '';
+  document.getElementById('flag-count').textContent = flags.length;
+  const order  = { error:0, warning:1, info:2 };
+  const sorted = [...flags].sort((a,b)=>(order[a.severity]??3)-(order[b.severity]??3));
+  list.innerHTML = sorted.map(f => {
+    const sc = f.severity==='error'?'sev-error':f.severity==='warning'?'sev-warning':'sev-info';
+    return `<li class="flag-item">
+      <span class="flag-sev ${sc}">${f.severity}</span>
+      <span class="flag-cat">${f.category||''}</span>
+      <span class="flag-desc">${esc(f.description)}</span>
+    </li>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════
+   Document Modal
+   ══════════════════════════════════════════════════════ */
+function openModal(doc) {
+  const title = doc.description || doc.filepath?.split(/[/\\]/).pop() || `Document #${doc.doc_id}`;
+  document.getElementById('modal-title').textContent = title;
+
+  let html = '';
+
+  // Meta row
+  html += '<div class="modal-meta">';
+  html += `<span>Type: <strong>${doc.doc_type||'unknown'}</strong></span>`;
+  if (doc.match_confidence!=null) html += `<span>Match: <strong>${(doc.match_confidence*100).toFixed(0)}%</strong></span>`;
+  if (doc.match_type) html += `<span>Via: <strong>${doc.match_type}</strong></span>`;
+  if (doc.verified) html += '<span style="color:var(--green);">✓ Verified</span>';
+  html += '</div>';
+
+  // Image
+  const imgSrc = doc.thumb || doc.filepath;
+  if (imgSrc) html += `<img src="${encP(imgSrc)}" alt="Document image">`;
+
+  // OCR text
+  if (doc.ocr_excerpt) {
+    html += '<div class="modal-ocr-label">Extracted Text</div>';
+    html += `<div class="modal-ocr">${esc(doc.ocr_excerpt)}</div>`;
+  }
+
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape' && document.getElementById('modal-overlay').classList.contains('open')) closeModal();
+});
+
+/* ══════════════════════════════════════════════════════
+   Confidence Panel + Dad Approved
+   ══════════════════════════════════════════════════════ */
+const APPROVAL_KEY = 'lack-dad-approved';
+
+function getApprovedSet() {
+  try { return new Set(JSON.parse(localStorage.getItem(APPROVAL_KEY) || '[]')); }
+  catch { return new Set(); }
+}
+function saveApprovedSet(set) {
+  localStorage.setItem(APPROVAL_KEY, JSON.stringify([...set]));
+}
+function isApproved(id) { return getApprovedSet().has(String(id)); }
+function setApproved(id, val) {
+  const set = getApprovedSet();
+  if (val) set.add(String(id)); else set.delete(String(id));
+  saveApprovedSet(set);
+}
+
+// Open confidence panel
+document.getElementById('conf-mini').addEventListener('click', () => {
+  if (!currentPersonId || !allProfiles[currentPersonId]) return;
+  const p = allProfiles[currentPersonId];
+  const tier = p.confidence_tier || 'speculative';
+  const color = TIER_COLORS[tier];
+  const score = p.confidence || 0;
+  const circ = 2 * Math.PI * 52;
+  const approved = isApproved(p.id);
+
+  // Ring
+  const arc = document.getElementById('panel-ring-arc');
+  const displayScore = approved ? 100 : score;
+  const displayColor = approved ? '#8b6914' : color;
+  arc.setAttribute('stroke', displayColor);
+  arc.setAttribute('stroke-dasharray', '0 ' + circ);
+  setTimeout(() => arc.setAttribute('stroke-dasharray', `${(displayScore/100)*circ} ${circ}`), 80);
+
+  // Score + tier
+  const scoreEl = document.getElementById('panel-score');
+  const tierEl  = document.getElementById('panel-tier');
+  scoreEl.textContent = displayScore;
+  scoreEl.style.color = displayColor;
+  tierEl.textContent  = approved ? 'Dad Approved ★' : tier;
+  tierEl.style.color  = displayColor;
+
+  // Bars
+  const bd = p.confidence_breakdown || {};
+  document.getElementById('panel-bars').innerHTML = BAR_CATS.map(cat => {
+    const val = bd[cat.key] || 0;
+    const pct = Math.round((val / cat.max) * 100);
+    const c = pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--yellow)' : pct > 0 ? 'var(--orange)' : '#d1d5db';
+    return `<div class="cb-row">
+      <span class="cb-label">${cat.label}</span>
+      <div class="cb-track"><div class="cb-fill" style="width:${pct}%;background:${c};"></div></div>
+      <span class="cb-val">${val}/${cat.max}</span>
+    </div>`;
+  }).join('');
+
+  // Approval button
+  updateApprovalBtn(approved);
+
+  document.getElementById('conf-panel-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+});
+
+function updateApprovalBtn(approved) {
+  const btn   = document.getElementById('approval-btn');
+  const label = document.getElementById('approval-label');
+  const status = document.getElementById('approval-status');
+  if (approved) {
+    btn.classList.add('approved');
+    label.textContent = 'Dad Approved ★';
+    status.textContent = 'Click to remove approval';
+  } else {
+    btn.classList.remove('approved');
+    label.textContent = 'Dad Approved';
+    status.textContent = 'Click to mark as verified by Dad';
+  }
+}
+
+// Approval toggle
+document.getElementById('approval-btn').addEventListener('click', () => {
+  if (!currentPersonId) return;
+  const nowApproved = !isApproved(currentPersonId);
+  setApproved(currentPersonId, nowApproved);
+  updateApprovalBtn(nowApproved);
+
+  // Update panel ring/score to reflect
+  const p = allProfiles[currentPersonId];
+  const tier = p.confidence_tier || 'speculative';
+  const score = p.confidence || 0;
+  const circ = 2 * Math.PI * 52;
+  const displayScore = nowApproved ? 100 : score;
+  const displayColor = nowApproved ? '#8b6914' : TIER_COLORS[tier];
+
+  const arc = document.getElementById('panel-ring-arc');
+  arc.setAttribute('stroke', displayColor);
+  arc.setAttribute('stroke-dasharray', `${(displayScore/100)*circ} ${circ}`);
+  document.getElementById('panel-score').textContent = displayScore;
+  document.getElementById('panel-score').style.color = displayColor;
+  document.getElementById('panel-tier').textContent = nowApproved ? 'Dad Approved ★' : tier;
+  document.getElementById('panel-tier').style.color = displayColor;
+
+  // Update hero ring + badge
+  updateHeroApproval(p, nowApproved);
+});
+
+// Close confidence panel
+function closeConfPanel() {
+  document.getElementById('conf-panel-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('conf-panel-close').addEventListener('click', closeConfPanel);
+document.getElementById('conf-panel-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('conf-panel-overlay')) closeConfPanel();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('conf-panel-overlay').classList.contains('open'))
+    closeConfPanel();
+});
+
+// Update hero to show/hide approval state
+function updateHeroApproval(p, approved) {
+  const confMini = document.getElementById('conf-mini');
+  const wrap = confMini.querySelector('.conf-mini-wrap');
+  const score = p.confidence || 0;
+  const tier = p.confidence_tier || 'speculative';
+  const circ = 2 * Math.PI * 52;
+
+  if (approved) {
+    confMini.classList.add('dad-approved');
+    // Replace the circle ring with the dad-approved SVG
+    wrap.innerHTML = `<img src="/img/confidence-passed.svg" alt="Dad Approved" style="width:90px;height:90px;">`;
+    document.getElementById('ring-tier').textContent = 'dad approved ★';
+    document.getElementById('ring-tier').style.color = '#8b6914';
+  } else {
+    confMini.classList.remove('dad-approved');
+    const color = TIER_COLORS[tier];
+    // Restore the circle ring
+    wrap.innerHTML = `
+      <svg viewBox="0 0 120 120" width="90" height="90">
+        <circle cx="60" cy="60" r="52" fill="none" stroke="#f0ede6" stroke-width="8"/>
+        <circle id="ring-arc" cx="60" cy="60" r="52" fill="none" stroke-width="8"
+                stroke-linecap="round" transform="rotate(-90 60 60)"
+                stroke-dasharray="${(score/100)*circ} ${circ}" stroke="${color}" />
+      </svg>
+      <div class="conf-mini-inner">
+        <div class="conf-score" id="ring-score" style="color:${color}">${score}</div>
+      </div>`;
+    document.getElementById('ring-tier').textContent = tier;
+    document.getElementById('ring-tier').style.color = color;
+  }
+
+  // Toggle verified badge in hero
+  renderVerifiedBadge(p.id, approved);
+}
+
+// Render or remove the verified SVG badge next to the name
+function renderVerifiedBadge(id, approved) {
+  const nameEl = document.getElementById('p-name');
+  const existing = nameEl.querySelector('.verified-badge');
+  if (existing) existing.remove();
+  if (!approved) return;
+  const badge = document.createElement('span');
+  badge.className = 'verified-badge';
+  badge.innerHTML = `
+    <img src="/img/confidence-passed.svg" alt="Dad Approved" title="Verified by Dad">
+    <span class="verified-badge-label">Verified</span>
+  `;
+  nameEl.appendChild(badge);
+}
+
+/* ══════════════════════════════════════════════════════
+   Helpers
+   ══════════════════════════════════════════════════════ */
+function fmtRange(b, d) {
+  if (!b && !d) return '';
+  const by = b ? (yr(b)||b) : '?';
+  const dy = d ? (yr(d)||d) : '';
+  return dy ? `${by} – ${dy}` : `b. ${by}`;
+}
+function yr(s) { if (!s) return null; const m = s.match(/(\d{4})/); return m ? m[1] : null; }
+function sortDate(s) {
+  if (!s) return 0;
+  const m = s.match(/(\d{4})/);
+  if (!m) return 0;
+  let v = parseInt(m[1]) * 10000;
+  const mo = s.match(/(\d{4})-(\d{2})/);
+  if (mo) v += parseInt(mo[2]) * 100;
+  const da = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (da) v += parseInt(da[3]);
+  return v;
+}
+function likelyDeceased(p) { const y = yr(p.birth_date); return y && (new Date().getFullYear() - parseInt(y)) > 110; }
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function encP(path) {
+  if (!path) return '';
+  return path.replace(/\\/g, '/').split('/').map(s => encodeURIComponent(s)).join('/');
+}
+
+/* ── Browser history ── */
+window.addEventListener('popstate', () => {
+  const id = new URLSearchParams(location.search).get('id');
+  if (id && allProfiles && allProfiles[id]) renderProfile(allProfiles[id]);
+  else {
+    document.getElementById('profile').classList.remove('active');
+    document.getElementById('empty-state').style.display = 'block';
+  }
+});
+</script>
+</body>
+</html>
