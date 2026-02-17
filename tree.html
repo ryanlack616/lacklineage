@@ -39,7 +39,7 @@ header {
 header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
 header h1 span { font-weight: 300; opacity: 0.6; }
 header h1 a { color: inherit; text-decoration: none; }
-nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+nav { display: flex; gap: 0.5rem; flex-wrap: wrap; flex: 1; }
 nav a {
   background: transparent;
   border: 1px solid rgba(255,255,255,0.2);
@@ -57,10 +57,79 @@ nav a:hover, nav a.active {
 }
 nav a.active { font-weight: bold; }
 
+/* ── Header search ── */
+.header-search { position: relative; flex-shrink: 0; }
+.header-search input {
+  width: 200px;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.1);
+  color: var(--bg);
+  outline: none;
+  transition: all 0.15s;
+}
+.header-search input::placeholder { color: rgba(255,255,255,0.4); }
+.header-search input:focus {
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.5);
+  width: 260px;
+}
+.header-search .search-results {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 300px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 0 0 var(--radius) var(--radius);
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 25;
+  display: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.header-search .search-results .result {
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  font-size: 0.78rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg);
+}
+.header-search .search-results .result:hover { background: #f0ece4; }
+.header-search .search-results .result .rname { font-weight: bold; }
+.header-search .search-results .result .rmeta { color: var(--fg2); font-size: 0.7rem; }
+
+/* ── Options toggle ── */
+.options-toggle {
+  position: fixed;
+  top: 60px;
+  left: 1rem;
+  z-index: 6;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.35rem 0.7rem;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  color: var(--fg2);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.15s;
+}
+.options-toggle:hover { color: var(--fg); border-color: var(--accent); }
+.options-toggle .arrow { transition: transform 0.2s; font-size: 0.6rem; }
+.options-toggle.open .arrow { transform: rotate(180deg); }
+
 /* ── Controls ── */
 .controls {
   position: fixed;
-  top: 60px;
+  top: 90px;
   left: 1rem;
   z-index: 5;
   background: var(--bg2);
@@ -70,8 +139,15 @@ nav a.active { font-weight: bold; }
   box-shadow: var(--shadow);
   font-size: 0.8rem;
   max-width: 260px;
-  max-height: calc(100vh - 80px);
+  max-height: calc(100vh - 110px);
   overflow-y: auto;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  transform-origin: top left;
+}
+.controls.collapsed {
+  transform: scaleY(0);
+  opacity: 0;
+  pointer-events: none;
 }
 .controls h3 { font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--accent); }
 .controls label { display: block; margin: 0.4rem 0 0.15rem; color: var(--fg2); font-size: 0.75rem; }
@@ -123,33 +199,40 @@ nav a.active { font-weight: bold; }
   border-color: var(--accent);
 }
 
-/* ── Search dropdown ── */
-.search-wrap { position: relative; }
-.search-results {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-top: none;
-  border-radius: 0 0 var(--radius) var(--radius);
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 20;
-  display: none;
+/* ── Marquee selection ── */
+.marquee {
+  fill: rgba(139,105,20,0.1);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+  pointer-events: none;
+}
+
+/* ── Selected nodes ── */
+.node.selected rect {
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px rgba(139,105,20,0.4));
+}
+.node.dragging { opacity: 0.85; cursor: grabbing; }
+
+/* ── Selection badge ── */
+.selection-badge {
+  position: fixed;
+  bottom: 3.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  background: var(--accent);
+  color: #fff;
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
   box-shadow: var(--shadow);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
 }
-.search-results .result {
-  padding: 0.35rem 0.5rem;
-  cursor: pointer;
-  font-size: 0.78rem;
-  border-bottom: 1px solid var(--border);
-  line-height: 1.3;
-}
-.search-results .result:hover { background: #f0ece4; }
-.search-results .result .rname { font-weight: bold; }
-.search-results .result .rmeta { color: var(--fg2); font-size: 0.7rem; }
+.selection-badge.visible { opacity: 1; }
 
 /* ── Tooltip ── */
 .tooltip {
@@ -360,17 +443,20 @@ svg:active { cursor: grabbing; }
     <a href="/documents.html">Documents</a>
     <a href="/profile.html">Profile</a>
   </nav>
-</header>
-
-<!-- Controls panel -->
-<div class="controls">
-  <h3>Tree Explorer</h3>
-
-  <label>Find person</label>
-  <div class="search-wrap">
-    <input type="text" id="search-input" placeholder="Type a name…" autocomplete="off">
+  <div class="header-search">
+    <input type="text" id="search-input" placeholder="Find person… (/)" autocomplete="off">
     <div class="search-results" id="search-results"></div>
   </div>
+</header>
+
+<!-- Options toggle -->
+<button class="options-toggle" id="options-toggle">
+  <span class="arrow">▼</span> Options
+</button>
+
+<!-- Controls panel -->
+<div class="controls collapsed" id="controls-panel">
+  <h3>Tree Explorer</h3>
 
   <label>Mode</label>
   <div class="mode-group">
@@ -386,6 +472,13 @@ svg:active { cursor: grabbing; }
 
   <div class="stat" id="stat-info"></div>
 
+  <label>Lines</label>
+  <div class="mode-group">
+    <button data-line="curved" class="active">Curved</button>
+    <button data-line="straight">Straight</button>
+    <button data-line="step">Step</button>
+  </div>
+
   <div class="conf-legend">
     <div class="conf-legend-item"><span class="conf-swatch" style="background:#2d9a2d"></span>High</div>
     <div class="conf-legend-item"><span class="conf-swatch" style="background:#c9a100"></span>Medium</div>
@@ -393,6 +486,9 @@ svg:active { cursor: grabbing; }
     <div class="conf-legend-item"><span class="conf-swatch" style="background:#c44"></span>Speculative</div>
   </div>
 </div>
+
+<!-- Selection badge -->
+<div class="selection-badge" id="selection-badge"></div>
 
 <!-- Tooltip -->
 <div class="tooltip" id="tooltip"></div>
@@ -440,8 +536,13 @@ const MAX_VISIBLE_CHILDREN = 10; // show "…+N more" beyond this
 let currentRoot = DEFAULT_ROOT;
 let currentMode = 'ancestors';
 let currentDepth = DEFAULT_DEPTH;
+let currentLineStyle = 'curved';
 let treeData = null;
 let svg, g, zoom, treeSvg;
+let selectedNodes = new Set();
+let dragState = null;
+let marqueeState = null;
+let allRenderedNodes = [];  // keeps track of all rendered d3 hierarchy nodes
 
 // ── Helpers ──
 function sexColor(sex) {
@@ -1203,6 +1304,7 @@ document.getElementById('btn-zoomout').addEventListener('click', () => {
   svg.transition().duration(300).call(zoom.scaleBy, 0.7);
 });
 document.getElementById('btn-reset').addEventListener('click', () => {
+  // Reset all state to defaults
   currentRoot = DEFAULT_ROOT;
   currentMode = 'ancestors';
   currentDepth = DEFAULT_DEPTH;
@@ -1211,7 +1313,9 @@ document.getElementById('btn-reset').addEventListener('click', () => {
   document.querySelectorAll('.mode-group button').forEach(b => b.classList.remove('active'));
   document.querySelector('.mode-group button[data-mode="ancestors"]').classList.add('active');
   searchInput.value = '';
-  loadAndRender();
+  searchResults.style.display = 'none';
+  document.getElementById('detail-panel').classList.remove('open');
+  loadAndRender().then(() => setTimeout(fitToView, 100));
 });
 document.getElementById('btn-collapse-all').addEventListener('click', () => {
   if (!treeData) return;
