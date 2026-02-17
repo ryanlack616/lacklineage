@@ -512,6 +512,7 @@ svg:active { cursor: grabbing; }
   <button id="btn-reset">Reset</button>
   <button id="btn-collapse-all">Collapse all</button>
   <button id="btn-expand-all">Expand all</button>
+  <button id="btn-download-png" title="Save as PNG">&#128247; PNG</button>
 </div>
 
 <!-- Loading indicator -->
@@ -1679,6 +1680,48 @@ document.addEventListener('keydown', (e) => {
     currentRoot = DEFAULT_ROOT;
     loadAndRender().then(() => setTimeout(fitToView, 100));
   }
+});
+
+// ── PNG Download ──
+document.getElementById('btn-download-png').addEventListener('click', () => {
+  const svgEl = document.getElementById('tree-svg');
+  const bbox = g.node().getBBox();
+  const pad = 40;
+
+  // Clone SVG for export
+  const clone = svgEl.cloneNode(true);
+  clone.setAttribute('width', bbox.width + pad * 2);
+  clone.setAttribute('height', bbox.height + pad * 2);
+  clone.setAttribute('viewBox', `${bbox.x - pad} ${bbox.y - pad} ${bbox.width + pad * 2} ${bbox.height + pad * 2}`);
+  // Ensure styles are inlined — add a white background rect
+  const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  bgRect.setAttribute('x', bbox.x - pad);
+  bgRect.setAttribute('y', bbox.y - pad);
+  bgRect.setAttribute('width', bbox.width + pad * 2);
+  bgRect.setAttribute('height', bbox.height + pad * 2);
+  bgRect.setAttribute('fill', '#f8f6f1');
+  clone.insertBefore(bgRect, clone.firstChild);
+
+  // Serialize and draw to canvas
+  const xml = new XMLSerializer().serializeToString(clone);
+  const blob = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = () => {
+    const scale = 2; // hi-res
+    const c = document.createElement('canvas');
+    c.width = img.width * scale;
+    c.height = img.height * scale;
+    const ctx = c.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+    const link = document.createElement('a');
+    link.download = 'lack-lineage-tree.png';
+    link.href = c.toDataURL('image/png');
+    link.click();
+  };
+  img.src = url;
 });
 </script>
 <script src="/data/help-widget.js"></script>
