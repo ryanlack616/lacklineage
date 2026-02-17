@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lack Lineage — Places</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8f6f1;
+  --bg2: #fff;
+  --fg: #2a2520;
+  --fg2: #6b6360;
+  --accent: #8b6914;
+  --accent2: #a07d2a;
+  --red: #b85450;
+  --border: #d8d2c8;
+  --radius: 6px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.12);
+  --font: 'Georgia', 'Times New Roman', serif;
+  --mono: 'Consolas', 'Monaco', monospace;
+  /* Precision palette */
+  --pin: #2d6a4f;
+  --approx: #52796f;
+  --regional: #84a98c;
+  --homeland: #b7c9a8;
+  /* German amber */
+  --german: #c4912a;
+  --german-glow: rgba(196, 145, 42, 0.25);
+}
+html, body { height: 100%; overflow: hidden; }
+body { font-family: var(--font); color: var(--fg); background: var(--bg); }
+
+/* ── Header ── */
+header {
+  background: var(--fg);
+  color: var(--bg);
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  z-index: 1000;
+  position: relative;
+}
+header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.5px; }
+header h1 a { color: var(--bg); text-decoration: none; }
+header h1 span { color: var(--accent2); }
+header nav { display: flex; gap: 1.5rem; }
+header nav a {
+  color: rgba(248,246,241,0.6);
+  text-decoration: none;
+  font-size: 0.85rem;
+  letter-spacing: 0.3px;
+  transition: color 0.2s;
+}
+header nav a:hover, header nav a.active { color: var(--bg); }
+
+/* ── Map fills remaining space ── */
+#map {
+  position: absolute;
+  top: 52px; left: 0; right: 0; bottom: 0;
+  z-index: 1;
+}
+
+/* ── Controls Panel (left side) ── */
+.panel {
+  position: absolute;
+  top: 66px;
+  left: 16px;
+  z-index: 800;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 280px;
+  box-shadow: var(--shadow);
+  font-size: 0.82rem;
+  overflow: hidden;
+  max-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+}
+.panel-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-header:hover { background: rgba(0,0,0,0.02); }
+.panel-header .chevron {
+  font-size: 0.7rem;
+  transition: transform 0.2s;
+  color: var(--fg2);
+}
+.panel.collapsed .chevron { transform: rotate(-90deg); }
+.panel.collapsed .panel-body { display: none; }
+.panel-header h2 { font-size: 0.95rem; font-weight: 600; flex: 1; }
+.panel-body {
+  padding: 10px 14px 14px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ── Panel sections ── */
+.section { margin-bottom: 14px; }
+.section:last-child { margin-bottom: 0; }
+.section-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--fg2);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.section select, .section input[type="range"] {
+  width: 100%;
+  font-family: var(--font);
+  font-size: 0.82rem;
+}
+.section select {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+/* ── Layer toggles ── */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+.toggle-row input[type="checkbox"] {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.toggle-row label {
+  cursor: pointer;
+  font-size: 0.82rem;
+  flex: 1;
+}
+.toggle-row .count {
+  font-size: 0.72rem;
+  color: var(--fg2);
+  font-family: var(--mono);
+}
+
+/* ── Precision legend ── */
+.prec-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.prec-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.prec-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid currentColor;
+}
+.prec-dot.pinpointed {
+  background: var(--pin);
+  color: var(--pin);
+  opacity: 0.9;
+}
+.prec-dot.approximate {
+  background: var(--approx);
+  color: var(--approx);
+  opacity: 0.75;
+  border-style: dashed;
+}
+.prec-dot.regional {
+  background: rgba(132, 169, 140, 0.4);
+  color: var(--regional);
+  width: 18px;
+  height: 18px;
+  border-style: dashed;
+}
+.prec-dot.homeland {
+  background: rgba(183, 201, 168, 0.2);
+  color: var(--homeland);
+  width: 22px;
+  height: 22px;
+  border-style: dotted;
+}
+.prec-label { font-size: 0.78rem; flex: 1; }
+.prec-count {
+  font-size: 0.72rem;
+  color: var(--fg2);
+  font-family: var(--mono);
+}
+.german-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(196,145,42,0.12);
+  border: 1px solid rgba(196,145,42,0.3);
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  color: var(--german);
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+/* ── Time slider ── */
+.time-slider-wrap {
+  padding: 4px 0;
+}
+.time-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--fg2);
+  font-family: var(--mono);
+  margin-top: 2px;
+}
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid var(--bg2);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.time-value {
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 2px;
+}
+
+/* ── Stats bar (bottom) ── */
+.stats-bar {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 800;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 20px;
+  display: flex;
+  gap: 20px;
+  font-size: 0.78rem;
+  box-shadow: var(--shadow);
+}
+.stats-bar .stat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.stats-bar .stat-num {
+  font-weight: 700;
+  font-family: var(--mono);
+  color: var(--accent);
+}
+.stats-bar .stat-label {
+  color: var(--fg2);
+}
+
+/* ── Research panel (right) ── */
+.research-panel {
+  position: absolute;
+  top: 66px;
+  right: 16px;
+  z-index: 800;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 260px;
+  box-shadow: var(--shadow);
+  font-size: 0.82rem;
+  overflow: hidden;
+  max-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+}
+.research-panel .panel-body {
+  padding: 10px 14px;
+  overflow-y: auto;
+  flex: 1;
+}
+.research-item {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.research-item:last-child { border-bottom: none; }
+.research-place {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 2px;
+}
+.research-people {
+  font-size: 0.72rem;
+  color: var(--fg2);
+}
+.research-count {
+  display: inline-block;
+  background: var(--red);
+  color: white;
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  border-radius: 8px;
+  font-family: var(--mono);
+  margin-left: 4px;
+}
+.research-empty {
+  color: var(--fg2);
+  font-style: italic;
+  text-align: center;
+  padding: 12px;
+}
+
+/* ── Leaflet popup styling ── */
+.leaflet-popup-content-wrapper {
+  border-radius: var(--radius) !important;
+  font-family: var(--font) !important;
+  box-shadow: var(--shadow) !important;
+  max-width: 320px;
+}
+.leaflet-popup-content {
+  margin: 12px 14px !important;
+  font-size: 0.82rem !important;
+  line-height: 1.5 !important;
+}
+.popup-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+.popup-precision {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+.popup-precision.pinpointed {
+  background: rgba(45,106,79,0.12);
+  color: var(--pin);
+}
+.popup-precision.approximate {
+  background: rgba(82,121,111,0.12);
+  color: var(--approx);
+}
+.popup-precision.regional {
+  background: rgba(132,169,140,0.12);
+  color: var(--regional);
+}
+.popup-precision.homeland {
+  background: rgba(183,201,168,0.15);
+  color: #6b7b63;
+}
+.popup-german {
+  background: rgba(196,145,42,0.1);
+  border: 1px solid rgba(196,145,42,0.25);
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-bottom: 8px;
+  font-size: 0.72rem;
+  color: var(--german);
+}
+.popup-people {
+  max-height: 180px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+  padding-top: 6px;
+}
+.popup-person {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  font-size: 0.78rem;
+}
+.popup-person a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.popup-person a:hover { text-decoration: underline; }
+.popup-person .yr {
+  color: var(--fg2);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+.popup-count-more {
+  font-size: 0.72rem;
+  color: var(--fg2);
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* ── Precision descriptions ── */
+.prec-desc {
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--fg2);
+  margin-left: 22px;
+  margin-top: -3px;
+}
+
+/* ── Color mode variants ── */
+.mode-indicator {
+  font-size: 0.7rem;
+  color: var(--fg2);
+  font-style: italic;
+  margin-top: 4px;
+  padding: 3px 6px;
+  background: rgba(0,0,0,0.03);
+  border-radius: 3px;
+}
+
+/* ── Migration arc tooltip ── */
+.arc-tooltip {
+  background: rgba(42,37,32,0.92) !important;
+  color: var(--bg) !important;
+  border: none !important;
+  border-radius: 4px !important;
+  padding: 6px 10px !important;
+  font-family: var(--font) !important;
+  font-size: 0.78rem !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3) !important;
+}
+.arc-tooltip::before { border-top-color: rgba(42,37,32,0.92) !important; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .panel, .research-panel { width: 220px; font-size: 0.78rem; }
+  .stats-bar { font-size: 0.72rem; gap: 12px; padding: 5px 14px; }
+  header { padding: 0.5rem 1rem; gap: 1rem; }
+}
+@media (max-width: 540px) {
+  .research-panel { display: none; }
+  .panel { width: 200px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Lack <span>Lineage</span></a></h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/search.html">Search</a>
+    <a href="/research.html">Research</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/places.html" class="active">Places</a>
+    <a href="/tree.html">Tree</a>
+    <a href="/globe.html">Globe</a>
+    <a href="/atlas.html">Atlas</a>
+    <a href="/rivers.html">Rivers</a>
+  </nav>
+</header>
+
+<div id="map"></div>
+
+<!-- ── Controls Panel ── -->
+<div class="panel" id="controlPanel">
+  <div class="panel-header" onclick="togglePanel('controlPanel')">
+    <span class="chevron">&#9660;</span>
+    <h2>Roots &amp; Reaches</h2>
+  </div>
+  <div class="panel-body">
+
+    <!-- Color mode -->
+    <div class="section">
+      <div class="section-label">Color By</div>
+      <select id="colorMode" onchange="updateColors()">
+        <option value="precision" selected>Map Precision</option>
+        <option value="german">German Heritage</option>
+        <option value="era">Birth Era</option>
+        <option value="region">Country of Origin</option>
+      </select>
+    </div>
+
+    <!-- Layers -->
+    <div class="section">
+      <div class="section-label">Layers</div>
+      <div class="toggle-row">
+        <input type="checkbox" id="layerBirths" checked onchange="toggleLayer('births')">
+        <label for="layerBirths">Birthplaces</label>
+        <span class="count" id="countBirths">–</span>
+      </div>
+      <div class="toggle-row">
+        <input type="checkbox" id="layerDeaths" onchange="toggleLayer('deaths')">
+        <label for="layerDeaths">Final resting places</label>
+        <span class="count" id="countDeaths">–</span>
+      </div>
+      <div class="toggle-row">
+        <input type="checkbox" id="layerMigrations" onchange="toggleLayer('migrations')">
+        <label for="layerMigrations">Migration journeys</label>
+        <span class="count" id="countMigrations">–</span>
+      </div>
+    </div>
+
+    <!-- Precision legend -->
+    <div class="section" id="precisionLegend">
+      <div class="section-label">Precision</div>
+      <div class="prec-legend">
+        <div class="prec-row">
+          <div class="prec-dot pinpointed"></div>
+          <span class="prec-label">Pinpointed</span>
+          <span class="prec-count" id="precPin">–</span>
+        </div>
+        <div class="prec-desc">Exact town or village found</div>
+        <div class="prec-row">
+          <div class="prec-dot approximate"></div>
+          <span class="prec-label">Approximate</span>
+          <span class="prec-count" id="precApprox">–</span>
+        </div>
+        <div class="prec-desc">Nearby area, not exact spot</div>
+        <div class="prec-row">
+          <div class="prec-dot regional"></div>
+          <span class="prec-label">Regional</span>
+          <span class="prec-count" id="precRegional">–</span>
+        </div>
+        <div class="prec-desc">State or province only</div>
+        <div class="prec-row">
+          <div class="prec-dot homeland"></div>
+          <span class="prec-label">Homeland</span>
+          <span class="prec-count" id="precHomeland">–</span>
+        </div>
+        <div class="prec-desc">Country — the village is lost to time</div>
+      </div>
+      <div class="german-badge">
+        <span>&#9670;</span> German Heritage: <span id="germanCount">–</span> people
+      </div>
+    </div>
+
+    <!-- Time filter -->
+    <div class="section">
+      <div class="section-label">Time Period</div>
+      <div class="time-slider-wrap">
+        <div class="time-value" id="timeDisplay">All Eras</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="range" id="timeMin" min="1450" max="2010" value="1450" step="10"
+                 oninput="updateTimeFilter()">
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
+          <input type="range" id="timeMax" min="1450" max="2010" value="2010" step="10"
+                 oninput="updateTimeFilter()">
+        </div>
+        <div class="time-labels">
+          <span id="timeMinLabel">1450</span>
+          <span id="timeMaxLabel">2010</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Research Opportunities Panel ── -->
+<div class="research-panel" id="researchPanel">
+  <div class="panel-header" onclick="togglePanel('researchPanel')">
+    <span class="chevron">&#9660;</span>
+    <h2>&#128270; Lost Places</h2>
+  </div>
+  <div class="panel-body" id="researchList">
+    <div class="research-empty">Loading...</div>
+  </div>
+</div>
+
+<!-- ── Stats Bar ── -->
+<div class="stats-bar" id="statsBar">
+  <div class="stat">
+    <span class="stat-num" id="statPlaces">–</span>
+    <span class="stat-label">places</span>
+  </div>
+  <div class="stat">
+    <span class="stat-num" id="statPeople">–</span>
+    <span class="stat-label">people</span>
+  </div>
+  <div class="stat">
+    <span class="stat-num" id="statJourneys">–</span>
+    <span class="stat-label">journeys</span>
+  </div>
+  <div class="stat">
+    <span class="stat-num" id="statYears">–</span>
+    <span class="stat-label">span</span>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// Data & State
+// ══════════════════════════════════════════════════════════════
+let DATA = null;
+let map, birthLayer, deathLayer, migrationLayer;
+let allBirthMarkers = [], allDeathMarkers = [], allMigrationArcs = [];
+let colorMode = 'precision';
+let timeRange = [1450, 2010];
+
+// ══════════════════════════════════════════════════════════════
+// Color palettes
+// ══════════════════════════════════════════════════════════════
+const PREC_COLORS = {
+  pinpointed:  '#2d6a4f',
+  approximate: '#52796f',
+  regional:    '#84a98c',
+  homeland:    '#b7c9a8',
+};
+
+const PREC_OPACITIES = {
+  pinpointed:  0.85,
+  approximate: 0.65,
+  regional:    0.40,
+  homeland:    0.20,
+};
+
+const PREC_RADII = {
+  pinpointed:  1,
+  approximate: 1.3,
+  regional:    2.5,
+  homeland:    4,
+};
+
+const GERMAN_COLOR = '#c4912a';
+const GERMAN_GLOW  = 'rgba(196,145,42,0.20)';
+const OTHER_COLOR  = '#4a7fb5';
+const DEATH_COLOR  = '#8b7355';
+
+const ERA_COLORS = {
+  '1400s': '#8B4513',
+  '1500s': '#A0522D',
+  '1600s': '#CD853F',
+  '1700s': '#D2691E',
+  '1800s': '#4a7fb5',
+  '1900s': '#2d6a4f',
+  '2000s': '#52796f',
+};
+
+const REGION_COLORS = {
+  'USA':            '#3a6ea5',
+  'Germany':        '#c4912a',
+  'Canada':         '#cc3333',
+  'Ireland':        '#2e8b57',
+  'England':        '#b85450',
+  'France':         '#1e3a5f',
+  'Switzerland':    '#d4423e',
+  'Italy':          '#2ca02c',
+  'Hungary':        '#e15759',
+  'Czechoslovakia': '#7f6d5f',
+  'Poland':         '#d62728',
+  'Wales':          '#a05195',
+  'Scotland':       '#4e79a7',
+  'Austria':        '#e45756',
+  'Netherlands':    '#f28e2b',
+  'Belgium':        '#76b7b2',
+  'Sweden':         '#006aa7',
+  'Norway':         '#ba171b',
+  'Denmark':        '#c1121f',
+};
+
+// ══════════════════════════════════════════════════════════════
+// Map setup
+// ══════════════════════════════════════════════════════════════
+function initMap() {
+  map = L.map('map', {
+    center: [42, -40],
+    zoom: 4,
+    zoomControl: false,
+    attributionControl: false,
+  });
+
+  // Warm-toned vintage tiles
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 18,
+    subdomains: 'abcd',
+  }).addTo(map);
+
+  // Attribution (subtle)
+  L.control.attribution({position: 'bottomright', prefix: false})
+    .addAttribution('&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &bull; <a href="https://carto.com/">CARTO</a>')
+    .addTo(map);
+
+  // Zoom control top-right
+  L.control.zoom({position: 'topright'}).addTo(map);
+
+  // Create layer groups
+  birthLayer = L.layerGroup().addTo(map);
+  deathLayer = L.layerGroup();
+  migrationLayer = L.layerGroup();
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// Marker styling
+// ══════════════════════════════════════════════════════════════
+function getMarkerColor(m) {
+  if (colorMode === 'german') {
+    return m.isGerman ? GERMAN_COLOR : OTHER_COLOR;
+  }
+  if (colorMode === 'precision') {
+    return PREC_COLORS[m.precision] || PREC_COLORS.regional;
+  }
+  if (colorMode === 'era') {
+    // Use median birth year
+    const years = m.people.map(p => p.birth_year).filter(y => y);
+    if (!years.length) return '#999';
+    const med = years.sort((a,b) => a-b)[Math.floor(years.length/2)];
+    const century = Math.floor(med / 100) * 100 + 's';
+    return ERA_COLORS[century] || '#999';
+  }
+  if (colorMode === 'region') {
+    return REGION_COLORS[m.region] || '#888';
+  }
+  return PREC_COLORS[m.precision] || '#888';
+}
+
+function getMarkerRadius(m) {
+  const base = Math.max(4, Math.min(16, 3 + Math.sqrt(m.count) * 1.8));
+  const precMult = PREC_RADII[m.precision] || 1;
+  return base * precMult;
+}
+
+function getMarkerStyle(m, isDeath) {
+  const color = isDeath ? DEATH_COLOR : getMarkerColor(m);
+  const prec = m.precision;
+  const radius = isDeath ? Math.max(3, Math.sqrt(m.count) * 1.5 + 2) : getMarkerRadius(m);
+  const fillOpacity = isDeath ? 0.5 : (PREC_OPACITIES[prec] || 0.5);
+  const weight = prec === 'pinpointed' ? 2 : (prec === 'approximate' ? 1.5 : 1);
+  const dashArray = prec === 'homeland' ? '2 3' : (prec === 'regional' ? '3 2' : null);
+
+  return {
+    radius,
+    fillColor: color,
+    color: color,
+    weight: isDeath ? 1 : weight,
+    opacity: isDeath ? 0.6 : 0.8,
+    fillOpacity,
+    dashArray: isDeath ? null : dashArray,
+  };
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// Build popup content
+// ══════════════════════════════════════════════════════════════
+function buildPopup(m, type) {
+  const placeText = m.places.join(' · ');
+  const precLabel = {
+    pinpointed: 'Pinpointed',
+    approximate: 'Approximate',
+    regional: 'Regional',
+    homeland: 'Homeland',
+  }[m.precision] || m.precision;
+
+  const precDesc = {
+    pinpointed: 'Exact town or village identified',
+    approximate: 'Nearby area — exact spot uncertain',
+    regional: 'Known to this state or province',
+    homeland: 'Country known — the village is lost to time',
+  }[m.precision] || '';
+
+  let html = `<div class="popup-title">${placeText}</div>`;
+  html += `<div class="popup-precision ${m.precision}">${precLabel}</div> `;
+  html += `<span style="font-size:0.72rem;color:var(--fg2)">${precDesc}</span>`;
+
+  if (m.isGerman) {
+    html += `<div class="popup-german">&#9670; German Heritage — Ancestral homeland of the Lack family</div>`;
+  }
+
+  html += `<div class="popup-people">`;
+  const showPeople = m.people.slice(0, 20);
+  for (const p of showPeople) {
+    const yr = p.birth_year ? `b. ${p.birth_year}` : '';
+    html += `<div class="popup-person">
+      <a href="/profile.html?id=${p.id}">${p.name}</a>
+      <span class="yr">${yr}</span>
+    </div>`;
+  }
+  if (m.people.length > 20) {
+    html += `<div class="popup-count-more">+ ${m.people.length - 20} more</div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// Create markers
+// ══════════════════════════════════════════════════════════════
+function createMarkers() {
+  if (!DATA) return;
+  birthLayer.clearLayers();
+  deathLayer.clearLayers();
+  migrationLayer.clearLayers();
+  allBirthMarkers = [];
+  allDeathMarkers = [];
+  allMigrationArcs = [];
+
+  const [tMin, tMax] = timeRange;
+
+  // ── Birth markers ──
+  for (const m of DATA.birth_markers) {
+    // Time filter: check if any person falls in range
+    const filtered = m.people.filter(p => {
+      if (!p.birth_year) return tMin <= 1450;
+      return p.birth_year >= tMin && p.birth_year <= tMax;
+    });
+    if (filtered.length === 0) continue;
+
+    const fm = {...m, people: filtered, count: filtered.length};
+    const style = getMarkerStyle(fm, false);
+
+    const marker = L.circleMarker([fm.lat, fm.lng], style)
+      .bindPopup(() => buildPopup(fm, 'birth'), {maxWidth: 320});
+
+    // German heritage glow effect
+    if (fm.isGerman && colorMode === 'german') {
+      const glow = L.circleMarker([fm.lat, fm.lng], {
+        radius: style.radius + 8,
+        fillColor: GERMAN_COLOR,
+        color: GERMAN_COLOR,
+        weight: 0,
+        fillOpacity: 0.12,
+        interactive: false,
+      });
+      birthLayer.addLayer(glow);
+    }
+
+    // Homeland pulse ring
+    if (fm.precision === 'homeland') {
+      const ring = L.circleMarker([fm.lat, fm.lng], {
+        radius: style.radius + 12,
+        fillColor: 'transparent',
+        color: style.fillColor,
+        weight: 0.5,
+        opacity: 0.2,
+        dashArray: '1 4',
+        interactive: false,
+      });
+      birthLayer.addLayer(ring);
+    }
+
+    birthLayer.addLayer(marker);
+    allBirthMarkers.push({marker, data: fm});
+  }
+
+  // ── Death markers ──
+  for (const m of DATA.death_markers) {
+    const filtered = m.people.filter(p => {
+      if (!p.birth_year) return tMin <= 1450;
+      return p.birth_year >= tMin && p.birth_year <= tMax;
+    });
+    if (filtered.length === 0) continue;
+
+    const fm = {...m, people: filtered, count: filtered.length};
+    const style = getMarkerStyle(fm, true);
+    const marker = L.circleMarker([fm.lat, fm.lng], style)
+      .bindPopup(() => buildPopup(fm, 'death'), {maxWidth: 320});
+    deathLayer.addLayer(marker);
+    allDeathMarkers.push({marker, data: fm});
+  }
+
+  // ── Migration arcs ──
+  for (const route of DATA.migration_routes) {
+    const filtered = route.people.filter(p => {
+      if (!p.birth_year) return tMin <= 1450;
+      return p.birth_year >= tMin && p.birth_year <= tMax;
+    });
+    if (filtered.length === 0) continue;
+
+    const from = L.latLng(route.from[0], route.from[1]);
+    const to = L.latLng(route.to[0], route.to[1]);
+
+    // Calculate midpoint with offset for curve
+    const midLat = (from.lat + to.lat) / 2;
+    const midLng = (from.lng + to.lng) / 2;
+    const dist = from.distanceTo(to);
+    const offset = Math.min(dist * 0.00002, 8);
+
+    // For transatlantic routes, curve northward
+    const isTransatlantic = (from.lng < -30 && to.lng > -30) || (from.lng > -30 && to.lng < -30) ||
+                            Math.abs(from.lng - to.lng) > 30;
+    const curveDir = isTransatlantic ? 1 : (from.lat > to.lat ? 0.5 : -0.5);
+
+    const cp = L.latLng(midLat + offset * curveDir, midLng);
+
+    // Bezier curve approximation with polyline points
+    const points = [];
+    for (let t = 0; t <= 1; t += 0.05) {
+      const lat = (1-t)*(1-t)*from.lat + 2*(1-t)*t*cp.lat + t*t*to.lat;
+      const lng = (1-t)*(1-t)*from.lng + 2*(1-t)*t*cp.lng + t*t*to.lng;
+      points.push([lat, lng]);
+    }
+
+    const opacity = Math.min(0.6, 0.08 + filtered.length * 0.05);
+    const weight = Math.min(3, 0.8 + filtered.length * 0.3);
+
+    const arc = L.polyline(points, {
+      color: '#8b6914',
+      weight,
+      opacity,
+      dashArray: '6 4',
+      lineCap: 'round',
+    });
+
+    const tooltip = `${route.people[0].from_place} → ${route.people[0].to_place}<br>${filtered.length} ${filtered.length === 1 ? 'journey' : 'journeys'}`;
+    arc.bindTooltip(tooltip, {className: 'arc-tooltip', sticky: true});
+
+    migrationLayer.addLayer(arc);
+    allMigrationArcs.push({arc, data: route, filtered});
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// UI handlers
+// ══════════════════════════════════════════════════════════════
+function togglePanel(id) {
+  document.getElementById(id).classList.toggle('collapsed');
+}
+
+function toggleLayer(layer) {
+  if (layer === 'births') {
+    if (document.getElementById('layerBirths').checked) map.addLayer(birthLayer);
+    else map.removeLayer(birthLayer);
+  } else if (layer === 'deaths') {
+    if (document.getElementById('layerDeaths').checked) map.addLayer(deathLayer);
+    else map.removeLayer(deathLayer);
+  } else if (layer === 'migrations') {
+    if (document.getElementById('layerMigrations').checked) map.addLayer(migrationLayer);
+    else map.removeLayer(migrationLayer);
+  }
+}
+
+function updateColors() {
+  colorMode = document.getElementById('colorMode').value;
+  createMarkers();
+  // Re-apply layer visibility
+  toggleLayer('births');
+  toggleLayer('deaths');
+  toggleLayer('migrations');
+}
+
+function updateTimeFilter() {
+  let tMin = parseInt(document.getElementById('timeMin').value);
+  let tMax = parseInt(document.getElementById('timeMax').value);
+  if (tMin > tMax) {
+    // Swap
+    const tmp = tMin;
+    document.getElementById('timeMin').value = tMax;
+    document.getElementById('timeMax').value = tmp;
+    tMin = tMax; tMax = tmp;
+  }
+  timeRange = [tMin, tMax];
+
+  if (tMin <= 1450 && tMax >= 2010) {
+    document.getElementById('timeDisplay').textContent = 'All Eras';
+  } else {
+    document.getElementById('timeDisplay').textContent = `${tMin} – ${tMax}`;
+  }
+  document.getElementById('timeMinLabel').textContent = tMin;
+  document.getElementById('timeMaxLabel').textContent = tMax;
+
+  createMarkers();
+  toggleLayer('births');
+  toggleLayer('deaths');
+  toggleLayer('migrations');
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// Populate stats and panels
+// ══════════════════════════════════════════════════════════════
+function populateUI() {
+  if (!DATA) return;
+  const s = DATA.stats;
+
+  // Stats bar
+  document.getElementById('statPlaces').textContent = s.total_places.toLocaleString();
+  document.getElementById('statPeople').textContent = s.total_people_with_places.toLocaleString();
+  document.getElementById('statJourneys').textContent = s.migrations_people.toLocaleString();
+  document.getElementById('statYears').textContent = `${DATA.year_range[0]}–${DATA.year_range[1]}`;
+
+  // Layer counts
+  document.getElementById('countBirths').textContent = s.birth_clusters;
+  document.getElementById('countDeaths').textContent = s.death_clusters;
+  document.getElementById('countMigrations').textContent = s.migration_routes;
+
+  // Precision counts
+  const pc = s.precision || {};
+  document.getElementById('precPin').textContent = pc.pinpointed || 0;
+  document.getElementById('precApprox').textContent = pc.approximate || 0;
+  document.getElementById('precRegional').textContent = pc.regional || 0;
+  document.getElementById('precHomeland').textContent = pc.homeland || 0;
+  document.getElementById('germanCount').textContent = s.german_births || 0;
+
+  // Time slider range
+  document.getElementById('timeMin').min = DATA.year_range[0];
+  document.getElementById('timeMin').value = DATA.year_range[0];
+  document.getElementById('timeMax').max = DATA.year_range[1];
+  document.getElementById('timeMax').value = DATA.year_range[1];
+  document.getElementById('timeMinLabel').textContent = DATA.year_range[0];
+  document.getElementById('timeMaxLabel').textContent = DATA.year_range[1];
+  timeRange = [DATA.year_range[0], DATA.year_range[1]];
+
+  // Research opportunities
+  const rl = document.getElementById('researchList');
+  if (DATA.research_opportunities && DATA.research_opportunities.length > 0) {
+    rl.innerHTML = DATA.research_opportunities.map(r => {
+      const people = r.people.slice(0, 3).map(p => p.name).join(', ');
+      const more = r.count > 3 ? ` +${r.count - 3} more` : '';
+      return `<div class="research-item">
+        <div class="research-place">${r.place}<span class="research-count">${r.count}</span></div>
+        <div class="research-people">${people}${more}</div>
+      </div>`;
+    }).join('');
+  } else {
+    rl.innerHTML = '<div class="research-empty">All places resolved! &#127881;</div>';
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// Init
+// ══════════════════════════════════════════════════════════════
+initMap();
+
+fetch('data/map.json')
+  .then(r => r.json())
+  .then(data => {
+    DATA = data;
+    populateUI();
+    createMarkers();
+
+    // Fit map to birth markers
+    if (DATA.birth_markers.length > 0) {
+      const lats = DATA.birth_markers.map(m => m.lat);
+      const lngs = DATA.birth_markers.map(m => m.lng);
+      map.fitBounds([
+        [Math.min(...lats) - 2, Math.min(...lngs) - 5],
+        [Math.max(...lats) + 2, Math.max(...lngs) + 5],
+      ]);
+    }
+  })
+  .catch(err => {
+    console.error('Failed to load map data:', err);
+    document.getElementById('statsBar').innerHTML = `
+      <div class="stat" style="color:var(--red)">
+        Failed to load map data. Run generate_map.py first.
+      </div>`;
+  });
+</script>
+</body>
+</html>

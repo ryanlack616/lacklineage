@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Migration Rivers — Lack Lineage</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0f;
+  --fg: #e8e4dc;
+  --fg2: #9a9590;
+  --accent: #d4a832;
+  --accent2: #8b6914;
+  --border: #3a352e;
+  --font: 'Georgia', 'Times New Roman', serif;
+  --mono: 'Consolas', 'Monaco', monospace;
+  --panel-bg: rgba(10, 10, 15, 0.92);
+}
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font);
+  color: var(--fg);
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+header {
+  background: #1a1714;
+  color: #f8f6f1;
+  padding: 0.5rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  z-index: 100;
+  flex-shrink: 0;
+}
+header h1 { font-size: 1rem; letter-spacing: 0.05em; white-space: nowrap; }
+header h1 a { color: inherit; text-decoration: none; }
+nav { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+nav a {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #f8f6f1;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+nav a:hover, nav a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+nav a.active { font-weight: bold; }
+
+/* ── Globe ── */
+#globe-wrapper {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+}
+#globe-wrapper:active { cursor: grabbing; }
+#globe-container { position: absolute; inset: 0; }
+
+/* ── Side Panel ── */
+.panel {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  width: 340px;
+  max-height: calc(100% - 1.5rem);
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.panel-header {
+  padding: 1rem 1.2rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.panel-header h2 {
+  font-size: 1.05rem; font-weight: 400; letter-spacing: 0.08em;
+  color: var(--accent); margin-bottom: 0.3rem;
+}
+.panel-sub {
+  font-size: 0.72rem; color: var(--fg2); font-style: italic;
+}
+
+/* ── Controls ── */
+.panel-controls {
+  padding: 0.5rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; flex-wrap: wrap; gap: 0.35rem;
+}
+.panel-controls button {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 0.25rem 0.6rem;
+  border-radius: 5px;
+  font-family: var(--font);
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.panel-controls button:hover { background: rgba(212,168,50,0.15); border-color: var(--accent); }
+.panel-controls button.active { background: rgba(212,168,50,0.2); border-color: var(--accent); color: var(--accent); }
+
+/* ── Corridor list ── */
+.corridor-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.corridor-list::-webkit-scrollbar { width: 5px; }
+.corridor-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.corridor-item {
+  padding: 0.6rem 1.2rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.corridor-item:hover { background: rgba(212,168,50,0.06); }
+.corridor-item.active { background: rgba(212,168,50,0.12); border-left: 3px solid var(--accent); }
+.corridor-name {
+  font-size: 0.82rem;
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.corridor-name .arrow { color: var(--accent); font-size: 0.7rem; }
+.corridor-count {
+  font-size: 0.65rem;
+  color: var(--fg2);
+  margin-top: 0.15rem;
+}
+.corridor-bar {
+  height: 3px;
+  border-radius: 2px;
+  margin-top: 0.3rem;
+  transition: width 0.3s;
+}
+
+/* ── Detail overlay ── */
+.corridor-detail {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 1.2rem;
+  display: none;
+}
+.corridor-detail.visible { display: block; }
+.cd-back {
+  font-size: 0.7rem;
+  color: var(--accent);
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.cd-back:hover { text-decoration: underline; }
+.cd-title { font-size: 1rem; color: var(--accent); margin-bottom: 0.3rem; }
+.cd-subtitle { font-size: 0.72rem; color: var(--fg2); margin-bottom: 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.cd-story { font-size: 0.78rem; color: var(--fg2); line-height: 1.5; margin-bottom: 0.6rem; }
+
+.person-list { list-style: none; }
+.person-item {
+  display: flex; align-items: baseline; gap: 0.5rem;
+  padding: 0.25rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.person-item a { color: var(--fg); text-decoration: none; font-size: 0.78rem; transition: color 0.15s; }
+.person-item a:hover { color: var(--accent); }
+.person-dates { font-size: 0.68rem; color: var(--fg2); white-space: nowrap; }
+.tier-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.tier-dot.high { background: #4a4; } .tier-dot.medium { background: #aa4; }
+.tier-dot.low { background: #a44; } .tier-dot.unknown { background: #666; }
+
+/* ── Legend ── */
+.legend {
+  position: absolute;
+  bottom: 0.75rem; right: 0.75rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.62rem;
+  color: var(--fg2);
+  z-index: 50;
+  backdrop-filter: blur(8px);
+}
+.legend-title { color: var(--fg); font-size: 0.7rem; margin-bottom: 0.25rem; }
+.legend-row { display: flex; align-items: center; gap: 0.4rem; margin: 0.12rem 0; }
+.legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+/* ── Tooltip ── */
+.globe-tooltip {
+  position: absolute;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: var(--fg);
+  pointer-events: none;
+  z-index: 200;
+  max-width: 300px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  transition: opacity 0.15s;
+}
+.globe-tooltip .tt-place { color: var(--accent); font-size: 0.82rem; margin-bottom: 0.2rem; }
+.globe-tooltip .tt-counts { color: var(--fg2); font-size: 0.7rem; }
+
+/* ── Loading ── */
+.loading {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg); z-index: 300;
+  transition: opacity 0.5s;
+}
+.loading-text {
+  color: var(--accent); font-size: 1rem; letter-spacing: 0.1em;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100% { opacity:0.4; } 50% { opacity:1; } }
+
+/* ── Mobile ── */
+@media (max-width: 700px) {
+  .panel { width: 100%; left: 0; top: auto; bottom: 0; max-height: 45vh; border-radius: 10px 10px 0 0; }
+  .legend { bottom: auto; top: 0.5rem; right: 0.5rem; }
+  header { padding: 0.4rem 0.8rem; gap: 0.8rem; }
+  header h1 { font-size: 0.85rem; }
+  nav a { font-size: 0.65rem; padding: 0.2rem 0.4rem; }
+}
+
+footer {
+  position: absolute;
+  bottom: 0.75rem; left: 50%; transform: translateX(-50%);
+  font-size: 0.6rem; color: rgba(255,255,255,0.15);
+  z-index: 10; pointer-events: none;
+}
+</style>
+</head>
+<body>
+<header>
+  <h1><a href="/">Lack Lineage</a></h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/search.html">Search</a>
+    <a href="/research.html">Research</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/places.html">Places</a>
+    <a href="/tree.html">Tree</a>
+    <a href="/globe.html">Globe</a>
+    <a href="/atlas.html">Atlas</a>
+    <a href="/rivers.html" class="active">Rivers</a>
+  </nav>
+</header>
+
+<div id="globe-wrapper">
+  <div id="globe-container"></div>
+  <div class="loading" id="loading">
+    <div class="loading-text">Building migration corridors&hellip;</div>
+  </div>
+
+  <!-- Side panel -->
+  <div class="panel" id="panel">
+    <div class="panel-header">
+      <h2>MIGRATION RIVERS</h2>
+      <div class="panel-sub">733 migrations bundled into major corridors</div>
+    </div>
+    <div class="panel-controls" id="controls">
+      <button id="btn-all" class="active">All Corridors</button>
+      <button id="btn-trans">Transatlantic</button>
+      <button id="btn-internal">Internal</button>
+      <button id="btn-points">Show Points</button>
+      <button id="btn-reset">Reset</button>
+    </div>
+    <div class="corridor-list" id="corridor-list"></div>
+    <div class="corridor-detail" id="corridor-detail"></div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-title">Corridor Color</div>
+    <div class="legend-row"><div class="legend-swatch" style="background:#5588cc;"></div> Pre-1800</div>
+    <div class="legend-row"><div class="legend-swatch" style="background:#44aa99;"></div> 1800s</div>
+    <div class="legend-row"><div class="legend-swatch" style="background:#d4a832;"></div> 1900s</div>
+    <div class="legend-row"><div class="legend-swatch" style="background:#ee8844;"></div> 2000s</div>
+    <div class="legend-row" style="margin-top:0.3rem;"><div class="legend-swatch" style="background:transparent; border:1px dashed var(--fg2);"></div> Width = migrants</div>
+  </div>
+
+  <div class="globe-tooltip" id="tooltip" style="opacity:0;"></div>
+  <footer>lacklineage.com · 2026</footer>
+</div>
+
+<script src="https://unpkg.com/globe.gl"></script>
+<script src="/data/help-widget.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  const ERA_COLORS = {
+    'pre1800': '#5588cc',
+    '1800s':   '#44aa99',
+    '1900s':   '#d4a832',
+    '2000s':   '#ee8844',
+    'unknown': '#888888'
+  };
+
+  // ─── State ───
+  let globeData = null;
+  let globe = null;
+  let corridors = [];
+  let selectedCorridor = null;
+  let showPoints = false;
+  let filterMode = 'all';
+
+  const wrapper = document.getElementById('globe-wrapper');
+  const container = document.getElementById('globe-container');
+  const loadingEl = document.getElementById('loading');
+  const tooltip = document.getElementById('tooltip');
+  const corridorList = document.getElementById('corridor-list');
+  const corridorDetail = document.getElementById('corridor-detail');
+
+  // ─── Load data ───
+  fetch('/data/globe.json')
+    .then(r => r.json())
+    .then(data => {
+      globeData = data;
+      corridors = buildCorridors(data.arcs);
+      initGlobe(data);
+    })
+    .catch(err => {
+      loadingEl.querySelector('.loading-text').textContent = 'Failed to load data';
+      console.error(err);
+    });
+
+  // ─── Bundle arcs into corridors ───
+  function buildCorridors(arcs) {
+    // Normalize region names
+    function normalizeRegion(place) {
+      if (!place) return 'Unknown';
+      const p = place.toLowerCase().trim();
+
+      // European countries
+      if (p.includes('germany') || p.includes('prussia') || p.includes('deutschland') ||
+          p.includes('hesse') || p.includes('baden') || p.includes('mecklenburg') ||
+          p.includes('nassau') || p.includes('wolfhagen') || p.includes('langenselbold') ||
+          p.includes('rheinland') || p.includes('nordrhein') || p.includes('dambach') ||
+          p.includes('kühlungsborn') || p.includes('duitsland')) return 'Germany';
+      if (p.includes('ireland') || p.includes('cork') || p.includes('kerry') ||
+          p.includes('northern ireland')) return 'Ireland';
+      if (p.includes('england') || p.includes('staffordshire') || p.includes('u.k.') ||
+          p.includes('united kingdom') || p.includes('wales') || p.includes('whales')) return 'Britain';
+      if (p.includes('scotland') || p.includes('lanarkshire') || p.includes('argyleshire') ||
+          p.includes('newarthill') || p.includes('isle of bute')) return 'Scotland';
+      if (p.includes('france') || p.includes('fra')) return 'France';
+      if (p.includes('austria') || p.includes('hungary')) return 'Austria-Hungary';
+      if (p.includes('czech')) return 'Czech Lands';
+      if (p.includes('poland')) return 'Poland';
+      if (p.includes('slovakia')) return 'Slovakia';
+      if (p.includes('ukraine') || p.includes('russia')) return 'Eastern Europe';
+      if (p.includes('italy')) return 'Italy';
+      if (p.includes('sweden') || p.includes('norway')) return 'Scandinavia';
+      if (p.includes('switzerland') || p.includes('switz')) return 'Switzerland';
+      if (p.includes('belgium') || p.includes('flanders') || p.includes('nieuwerkerken')) return 'Belgium';
+
+      // North American regions
+      if (p.includes('pennsylvania') || p === 'pa' || p.includes('bedford') || p.includes('cambria') ||
+          p.includes('blair') || p.includes('vinco') || p.includes('wehrum')) return 'Pennsylvania';
+      if (p.includes('michigan') || p.includes('wayne mi')) return 'Michigan';
+      if (p.includes('ohio')) return 'Ohio';
+      if (p.includes('virginia')) return 'Virginia';
+      if (p.includes('maryland') || p.includes('maryland colony') || p.includes('frederick')) return 'Maryland';
+      if (p.includes('new york') || p === 'ny') return 'New York';
+      if (p.includes('indiana')) return 'Indiana';
+      if (p.includes('illinois')) return 'Illinois';
+      if (p.includes('connecticut') || p === 'ct') return 'Connecticut';
+      if (p.includes('new jersey')) return 'New Jersey';
+      if (p.includes('massachusetts')) return 'Massachusetts';
+      if (p.includes('wisconsin')) return 'Wisconsin';
+      if (p.includes('tennessee')) return 'Tennessee';
+      if (p.includes('missouri')) return 'Missouri';
+      if (p.includes('iowa')) return 'Iowa';
+      if (p.includes('delaware')) return 'Delaware';
+      if (p.includes('nevada')) return 'Nevada';
+      if (p.includes('north carolina') || p === 'nc') return 'North Carolina';
+      if (p.includes('ontario') || p.includes('peterborough') || p.includes('ennismore') ||
+          p.includes('renfrew') || p.includes('clinton')) return 'Ontario';
+      if (p.includes('quebec')) return 'Quebec';
+      if (p.includes('british columbia')) return 'British Columbia';
+      if (p.includes('canada')) return 'Canada';
+      if (p.includes('marshall islands')) return 'Pacific';
+
+      // Generic US/colonial
+      if (p.includes('usa') || p.includes('united states') || p.includes('u.s.') ||
+          p.includes('british colonial') || p.includes('province of penn')) return 'United States';
+
+      return place.split(',').pop().trim();
+    }
+
+    // Group arcs by from-region → to-region
+    const groups = {};
+    arcs.forEach(a => {
+      const fromR = normalizeRegion(a.from);
+      const toR = normalizeRegion(a.to);
+      if (fromR === toR) return; // skip same-region
+      const key = fromR + '→' + toR;
+      if (!groups[key]) groups[key] = { from: fromR, to: toR, arcs: [], midLat: 0, midLng: 0 };
+      groups[key].arcs.push(a);
+    });
+
+    // Build corridor objects
+    const result = Object.values(groups)
+      .filter(g => g.arcs.length >= 2)
+      .map(g => {
+        // Average positions
+        const avgStartLat = g.arcs.reduce((s, a) => s + a.startLat, 0) / g.arcs.length;
+        const avgStartLng = g.arcs.reduce((s, a) => s + a.startLng, 0) / g.arcs.length;
+        const avgEndLat = g.arcs.reduce((s, a) => s + a.endLat, 0) / g.arcs.length;
+        const avgEndLng = g.arcs.reduce((s, a) => s + a.endLng, 0) / g.arcs.length;
+
+        // Dominant era
+        const eras = {};
+        g.arcs.forEach(a => { eras[a.era] = (eras[a.era] || 0) + 1; });
+        let bestEra = 'unknown', bestC = 0;
+        for (const [e, c] of Object.entries(eras)) { if (c > bestC) { bestEra = e; bestC = c; } }
+
+        // Is transatlantic?
+        const isTransatlantic = ['Germany', 'Ireland', 'Britain', 'Scotland', 'France',
+          'Austria-Hungary', 'Czech Lands', 'Poland', 'Slovakia', 'Eastern Europe',
+          'Italy', 'Scandinavia', 'Switzerland', 'Belgium'].includes(g.from);
+
+        // Year range
+        const years = [];
+        g.arcs.forEach(a => {
+          const m = (a.dates || '').match(/\b(1[0-9]{3}|20[0-9]{2})\b/);
+          if (m) years.push(parseInt(m[1]));
+        });
+        years.sort((a, b) => a - b);
+
+        return {
+          from: g.from,
+          to: g.to,
+          count: g.arcs.length,
+          arcs: g.arcs,
+          startLat: avgStartLat,
+          startLng: avgStartLng,
+          endLat: avgEndLat,
+          endLng: avgEndLng,
+          era: bestEra,
+          isTransatlantic,
+          yearRange: years.length ? years[0] + '–' + years[years.length - 1] : '',
+          eraBreakdown: eras
+        };
+      })
+      .sort((a, b) => b.count - a.count);
+
+    return result;
+  }
+
+  // ─── Init Globe ───
+  function initGlobe(data) {
+    const maxCount = Math.max(...corridors.map(c => c.count));
+
+    globe = Globe()
+      .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+      .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
+      .atmosphereColor('#6688aa')
+      .atmosphereAltitude(0.18)
+      // Start with empty points
+      .pointsData([])
+      .pointLat('lat')
+      .pointLng('lng')
+      .pointAltitude(0.005)
+      .pointRadius(d => 0.15 + Math.sqrt(d.total / 150) * 0.8)
+      .pointColor(d => {
+        const eras = {};
+        d.people.forEach(p => { eras[p.era] = (eras[p.era] || 0) + 1; });
+        let best = 'unknown', bc = 0;
+        for (const [e, c] of Object.entries(eras)) { if (c > bc) { best = e; bc = c; } }
+        return ERA_COLORS[best] || '#888';
+      })
+      .pointLabel('')
+      .onPointHover(handlePointHover)
+      // Corridors as arcs
+      .arcsData(corridors)
+      .arcStartLat('startLat')
+      .arcStartLng('startLng')
+      .arcEndLat('endLat')
+      .arcEndLng('endLng')
+      .arcColor(d => {
+        const base = ERA_COLORS[d.era] || '#888';
+        return [base, base];
+      })
+      .arcAltitude(d => {
+        const dist = Math.sqrt(
+          Math.pow(d.startLat - d.endLat, 2) + Math.pow(d.startLng - d.endLng, 2)
+        );
+        return 0.06 + Math.min(dist / 180, 0.55);
+      })
+      .arcStroke(d => 0.3 + (d.count / maxCount) * 4)
+      .arcDashLength(0.6)
+      .arcDashGap(0.15)
+      .arcDashAnimateTime(d => 6000 - Math.min(d.count / maxCount * 3000, 3000))
+      .arcLabel('')
+      .onArcHover(handleArcHover)
+      .onArcClick(d => selectCorridor(d))
+      (container);
+
+    // Start: slightly zoomed out view of transatlantic
+    globe.pointOfView({ lat: 38, lng: -40, altitude: 1.8 }, 1500);
+
+    globe.controls().autoRotate = true;
+    globe.controls().autoRotateSpeed = 0.2;
+    globe.controls().enableDamping = true;
+    globe.controls().dampingFactor = 0.1;
+
+    wrapper.addEventListener('mousedown', () => { globe.controls().autoRotate = false; });
+    wrapper.addEventListener('touchstart', () => { globe.controls().autoRotate = false; });
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    loadingEl.style.opacity = '0';
+    setTimeout(() => loadingEl.style.display = 'none', 500);
+
+    renderCorridorList(corridors);
+  }
+
+  function handleResize() {
+    if (!globe) return;
+    globe.width(wrapper.clientWidth);
+    globe.height(wrapper.clientHeight);
+  }
+
+  // ─── Render corridor list ───
+  function renderCorridorList(list) {
+    const maxCount = Math.max(...list.map(c => c.count));
+    corridorList.style.display = '';
+    corridorDetail.classList.remove('visible');
+
+    let html = '';
+    list.forEach((c, i) => {
+      const color = ERA_COLORS[c.era] || '#888';
+      const pct = (c.count / maxCount * 100).toFixed(0);
+      const flag = c.isTransatlantic ? '🌊' : '🏔️';
+      html += `<div class="corridor-item" data-idx="${i}">
+        <div class="corridor-name">
+          <span>${flag}</span>
+          <span>${escHtml(c.from)}</span>
+          <span class="arrow">→</span>
+          <span>${escHtml(c.to)}</span>
+        </div>
+        <div class="corridor-count">${c.count} migrants · ${c.yearRange || 'dates unknown'}</div>
+        <div class="corridor-bar" style="width:${pct}%; background:${color};"></div>
+      </div>`;
+    });
+    corridorList.innerHTML = html;
+
+    // Click handlers
+    corridorList.querySelectorAll('.corridor-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.dataset.idx);
+        const filteredList = getFilteredCorridors();
+        selectCorridor(filteredList[idx]);
+      });
+    });
+  }
+
+  function getFilteredCorridors() {
+    if (filterMode === 'trans') return corridors.filter(c => c.isTransatlantic);
+    if (filterMode === 'internal') return corridors.filter(c => !c.isTransatlantic);
+    return corridors;
+  }
+
+  // ─── Select corridor ───
+  function selectCorridor(c) {
+    if (!c) return;
+    selectedCorridor = c;
+    globe.controls().autoRotate = false;
+
+    // Fly to midpoint
+    const midLat = (c.startLat + c.endLat) / 2;
+    const midLng = (c.startLng + c.endLng) / 2;
+    const dist = Math.sqrt(Math.pow(c.startLat - c.endLat, 2) + Math.pow(c.startLng - c.endLng, 2));
+    const alt = 0.5 + Math.min(dist / 80, 1.5);
+    globe.pointOfView({ lat: midLat, lng: midLng, altitude: alt }, 1000);
+
+    // Highlight this corridor
+    const maxCount = Math.max(...corridors.map(cc => cc.count));
+    globe.arcsData(corridors.map(cc => ({
+      ...cc,
+      _highlighted: cc === c
+    })));
+    globe.arcColor(d => {
+      const base = ERA_COLORS[d.era] || '#888';
+      if (d._highlighted) return [base, base];
+      return ['rgba(100,100,100,0.08)', 'rgba(100,100,100,0.08)'];
+    });
+    globe.arcStroke(d => {
+      if (d._highlighted) return 1 + (d.count / maxCount) * 6;
+      return 0.15;
+    });
+
+    // Show detail
+    showCorridorDetail(c);
+  }
+
+  function showCorridorDetail(c) {
+    corridorList.style.display = 'none';
+    corridorDetail.classList.add('visible');
+
+    const color = ERA_COLORS[c.era] || '#888';
+
+    // Generate story text
+    let story = '';
+    if (c.isTransatlantic) {
+      story = `<strong>${c.count} family members</strong> made the journey from ${c.from} to ${c.to}`;
+      if (c.yearRange) story += ` between ${c.yearRange}`;
+      story += '. This was one of the major immigration corridors that shaped the Lack family story.';
+    } else {
+      story = `<strong>${c.count} family members</strong> migrated from ${c.from} to ${c.to}`;
+      if (c.yearRange) story += ` between ${c.yearRange}`;
+      story += '. This internal migration reflects the family spreading across the American landscape.';
+    }
+
+    // Era breakdown
+    const eraList = Object.entries(c.eraBreakdown)
+      .sort((a, b) => b[1] - a[1])
+      .map(([era, count]) => `<span style="color:${ERA_COLORS[era] || '#888'}">${era}</span>: ${count}`)
+      .join(' · ');
+
+    let html = `
+      <div class="cd-back" id="cd-back">← Back to corridors</div>
+      <h3 class="cd-title" style="border-left: 3px solid ${color}; padding-left: 0.6rem;">
+        ${escHtml(c.from)} → ${escHtml(c.to)}
+      </h3>
+      <div class="cd-subtitle">${c.count} migrants · ${c.yearRange || 'dates unknown'} · ${eraList}</div>
+      <div class="cd-story">${story}</div>
+      <ul class="person-list">
+    `;
+
+    // Sort arcs by year
+    const sorted = [...c.arcs].sort((a, b) => {
+      const ya = ((a.dates || '').match(/\b(1[0-9]{3}|20[0-9]{2})\b/) || [])[1];
+      const yb = ((b.dates || '').match(/\b(1[0-9]{3}|20[0-9]{2})\b/) || [])[1];
+      return (ya || 9999) - (yb || 9999);
+    });
+
+    sorted.forEach(a => {
+      html += `<li class="person-item">
+        <div class="tier-dot ${a.tier}"></div>
+        <a href="/profile.html?id=${a.id}">${escHtml(a.name)}</a>
+        <span class="person-dates">${escHtml(a.dates)}</span>
+      </li>`;
+    });
+
+    html += '</ul>';
+    corridorDetail.innerHTML = html;
+
+    document.getElementById('cd-back').addEventListener('click', () => {
+      deselectCorridor();
+    });
+  }
+
+  function deselectCorridor() {
+    selectedCorridor = null;
+    corridorDetail.classList.remove('visible');
+    corridorList.style.display = '';
+
+    // Restore all corridors
+    const maxCount = Math.max(...corridors.map(c => c.count));
+    const filtered = getFilteredCorridors();
+    globe.arcsData(filtered);
+    globe.arcColor(d => {
+      const base = ERA_COLORS[d.era] || '#888';
+      return [base, base];
+    });
+    globe.arcStroke(d => 0.3 + (d.count / maxCount) * 4);
+  }
+
+  // ─── Controls ───
+  document.getElementById('btn-all').addEventListener('click', () => setFilter('all'));
+  document.getElementById('btn-trans').addEventListener('click', () => setFilter('trans'));
+  document.getElementById('btn-internal').addEventListener('click', () => setFilter('internal'));
+  document.getElementById('btn-points').addEventListener('click', togglePoints);
+  document.getElementById('btn-reset').addEventListener('click', resetView);
+
+  function setFilter(mode) {
+    filterMode = mode;
+    document.querySelectorAll('.panel-controls button').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + mode).classList.add('active');
+    if (showPoints) document.getElementById('btn-points').classList.add('active');
+
+    const filtered = getFilteredCorridors();
+    const maxCount = Math.max(...filtered.map(c => c.count));
+    globe.arcsData(filtered);
+    globe.arcStroke(d => 0.3 + (d.count / maxCount) * 4);
+    renderCorridorList(filtered);
+
+    if (selectedCorridor) deselectCorridor();
+
+    // Fly to appropriate view
+    if (mode === 'trans') {
+      globe.pointOfView({ lat: 42, lng: -30, altitude: 1.8 }, 1200);
+    } else if (mode === 'internal') {
+      globe.pointOfView({ lat: 40, lng: -82, altitude: 0.8 }, 1200);
+    }
+  }
+
+  function togglePoints() {
+    showPoints = !showPoints;
+    document.getElementById('btn-points').classList.toggle('active', showPoints);
+    globe.pointsData(showPoints ? globeData.points : []);
+  }
+
+  function resetView() {
+    filterMode = 'all';
+    showPoints = false;
+    selectedCorridor = null;
+
+    document.querySelectorAll('.panel-controls button').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-all').classList.add('active');
+
+    const maxCount = Math.max(...corridors.map(c => c.count));
+    globe.arcsData(corridors);
+    globe.arcColor(d => {
+      const base = ERA_COLORS[d.era] || '#888';
+      return [base, base];
+    });
+    globe.arcStroke(d => 0.3 + (d.count / maxCount) * 4);
+    globe.pointsData([]);
+    globe.pointOfView({ lat: 38, lng: -40, altitude: 1.8 }, 1200);
+    globe.controls().autoRotate = true;
+    renderCorridorList(corridors);
+  }
+
+  // ─── Tooltips ───
+  function handleArcHover(d) {
+    if (!d) { tooltip.style.opacity = '0'; wrapper.style.cursor = 'grab'; return; }
+    wrapper.style.cursor = 'pointer';
+    tooltip.innerHTML = `
+      <div class="tt-place">${escHtml(d.from)} → ${escHtml(d.to)}</div>
+      <div class="tt-counts">${d.count} migrants · ${d.yearRange || ''}</div>
+    `;
+    tooltip.style.opacity = '1';
+  }
+
+  function handlePointHover(d) {
+    if (!d) { tooltip.style.opacity = '0'; wrapper.style.cursor = 'grab'; return; }
+    wrapper.style.cursor = 'pointer';
+    tooltip.innerHTML = `
+      <div class="tt-place">${escHtml(d.place)}</div>
+      <div class="tt-counts">${d.total} people · ${d.births} born · ${d.deaths} died</div>
+    `;
+    tooltip.style.opacity = '1';
+  }
+
+  wrapper.addEventListener('mousemove', (e) => {
+    const rect = wrapper.getBoundingClientRect();
+    let x = e.clientX - rect.left + 15;
+    let y = e.clientY - rect.top - 10;
+    if (x + 300 > rect.width) x = e.clientX - rect.left - 310;
+    if (y + 80 > rect.height) y = e.clientY - rect.top - 80;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+  });
+
+  function escHtml(s) {
+    if (!s) return '';
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ─── Help ───
+  if (typeof initHelp === 'function') {
+    initHelp({
+      title: 'Migration Rivers',
+      intro: '733 individual migrations bundled into major corridors — revealing the rivers of movement that shaped the Lack family across 5 centuries.',
+      keyboard: [
+        { key: '?', action: 'Toggle this help panel' }
+      ],
+      mouse: [
+        { key: 'Left-drag', action: 'Rotate the globe' },
+        { key: 'Scroll', action: 'Zoom in/out' },
+        { key: 'Click corridor', action: 'See who traveled that route' },
+        { key: 'Hover corridor', action: 'Show route summary' }
+      ],
+      sections: [
+        { title: 'Corridors', icon: '🌊', html: '<p>Individual migration arcs are bundled into <strong>corridors</strong> — routes shared by 2 or more family members. Thicker ribbons = more migrants. Color = dominant era of migration.</p>' },
+        { title: 'Filters', icon: '🔍', html: '<p><strong>Transatlantic</strong> shows Europe → America routes. <strong>Internal</strong> shows movement within North America. <strong>Show Points</strong> adds the location markers from the Globe view.</p>' },
+        { title: 'Stories', icon: '📖', html: '<p>Click any corridor to see its story: who traveled that route, when, and the chronological list of migrants with links to their profiles.</p>' }
+      ]
+    });
+  }
+})();
+</script>
+</body>
+</html>
