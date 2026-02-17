@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lack Lineage — Documents</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #e8e4dc;
+  --card-bg: #ffffff;
+  --card-hover: #faf8f5;
+  --text: #333333;
+  --text2: #706b63;
+  --text3: #9e9a93;
+  --accent: #457b3b;
+  --accent-hover: #3a6b32;
+  --accent-light: #e8f0e6;
+  --border: #d4cfc7;
+  --shadow: 0 2px 8px rgba(0,0,0,0.12);
+  --shadow-hover: 0 4px 16px rgba(0,0,0,0.18);
+  --radius: 8px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+html, body { height: 100%; }
+body { font-family: var(--font); color: var(--text); background: var(--bg); }
+
+/* ── Top bar ── */
+.topbar {
+  background: linear-gradient(180deg, #3a7232 0%, #2d5f27 100%);
+  color: #fff;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 0 1.2rem;
+  gap: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.topbar .logo {
+  font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em;
+  white-space: nowrap; text-decoration: none; color: #fff;
+}
+.topbar .logo span { font-weight: 300; opacity: 0.7; }
+.topbar nav { display: flex; gap: 0.15rem; margin-left: 1rem; }
+.topbar nav a {
+  color: rgba(255,255,255,0.8); text-decoration: none;
+  padding: 0.4rem 0.8rem; border-radius: 4px 4px 0 0;
+  font-size: 0.82rem; transition: all 0.15s;
+}
+.topbar nav a:hover { color: #fff; background: rgba(255,255,255,0.12); }
+.topbar nav a.active { color: #fff; background: rgba(255,255,255,0.2); font-weight: 600; }
+
+/* ── Filter bar ── */
+.filter-bar {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 0.8rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.filter-bar input[type="text"] {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.5rem 0.8rem 0.5rem 2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-family: var(--font);
+  background: #faf8f5;
+  outline: none;
+}
+.filter-bar input:focus { border-color: var(--accent); background: #fff; }
+.filter-bar .search-wrap { position: relative; flex: 1; min-width: 200px; }
+.filter-bar .search-wrap::before {
+  content: '🔍'; position: absolute; left: 0.6rem; top: 50%;
+  transform: translateY(-50%); font-size: 0.8rem; pointer-events: none;
+}
+.filter-bar select {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.82rem;
+  font-family: var(--font);
+  background: #faf8f5;
+  cursor: pointer;
+}
+.filter-bar .count {
+  font-size: 0.8rem;
+  color: var(--text2);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* ── Stats row ── */
+.stats-row {
+  display: flex;
+  gap: 0.8rem;
+  padding: 0.8rem 1.5rem;
+  flex-wrap: wrap;
+}
+.stat-chip {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.78rem;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.stat-chip .n {
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 0.85rem;
+}
+
+/* ── Grid ── */
+.doc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+  padding: 1rem 1.5rem 2rem;
+}
+.doc-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+.doc-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+.doc-card .thumb {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  background: #f0ede6;
+  display: block;
+}
+.doc-card .thumb-placeholder {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: linear-gradient(135deg, #f0ede6, #e2ddd4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: var(--text3);
+}
+.doc-card .card-body {
+  padding: 0.7rem 0.8rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.doc-card .card-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.doc-card .card-type {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  width: fit-content;
+}
+.type-certificate { background: #fef3cd; color: #856404; }
+.type-obituary { background: #f0e6f6; color: #6f42c1; }
+.type-newspaper { background: #e2e3e5; color: #383d41; }
+.type-photo { background: #d4edda; color: #155724; }
+.type-census { background: #d1ecf1; color: #0c5460; }
+.type-military { background: #f8d7da; color: #721c24; }
+.type-death { background: #e0d0d0; color: #5a2d2d; }
+.type-birth { background: #d0e8d0; color: #2d5a2d; }
+.type-marriage { background: #ffe0ec; color: #8b2252; }
+.type-bible { background: #f5e6d0; color: #7a5a2d; }
+.type-document { background: #e8e4dc; color: #555; }
+.type-other { background: #eee; color: #666; }
+.type-map { background: #d0e0f0; color: #2d4a6b; }
+.type-ship { background: #d0e8e8; color: #2d5a5a; }
+
+.doc-card .card-matches {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.match-tag {
+  background: var(--accent-light);
+  color: var(--accent);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+.match-tag:hover { background: #d0e8cc; }
+
+/* ── Modal ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 200;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 3vh 1rem;
+  overflow-y: auto;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 1100px;
+  width: 100%;
+  max-height: 94vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.modal-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  flex: 1;
+}
+.modal-header .close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text3);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  line-height: 1;
+}
+.modal-header .close-btn:hover { background: #f0ede6; color: var(--text); }
+.modal-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  min-height: 400px;
+}
+@media (max-width: 768px) {
+  .modal-body { grid-template-columns: 1fr; }
+}
+.modal-image {
+  background: #1a1815;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  min-height: 300px;
+}
+.modal-image img {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 4px;
+}
+.modal-image .no-image {
+  color: #888;
+  font-size: 3rem;
+  text-align: center;
+}
+.modal-details {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+  max-height: 75vh;
+}
+.modal-details .section-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text3);
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+.modal-details .meta-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.modal-details .meta-item {
+  background: #f8f6f1;
+  padding: 0.4rem 0.7rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+.modal-details .meta-item strong {
+  color: var(--text2);
+  font-weight: 600;
+}
+.modal-details .ocr-box {
+  background: #f8f6f1;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.8rem;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  font-family: 'Consolas', 'Monaco', monospace;
+  white-space: pre-wrap;
+  max-height: 300px;
+  overflow-y: auto;
+  color: var(--text2);
+}
+.modal-details .match-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.modal-details .match-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--accent-light);
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
+.modal-details .match-item .match-name {
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+.modal-details .match-item .match-name:hover { text-decoration: underline; }
+.modal-details .match-conf {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--text3);
+}
+.modal-details .match-item .verified-badge {
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.6rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-weight: 700;
+}
+.modal-details .filename-text {
+  font-size: 0.72rem;
+  color: var(--text3);
+  word-break: break-all;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text3);
+}
+.empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+.empty-state p { font-size: 0.9rem; }
+
+/* ── Loading ── */
+.loading {
+  text-align: center;
+  padding: 4rem;
+  color: var(--text3);
+  font-size: 0.9rem;
+}
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <a href="/" class="logo">Lack <span>Lineage</span></a>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/tree.html">Tree</a>
+    <a href="/ancestry.html">Ancestry</a>
+    <a href="/documents.html" class="active">Documents</a>
+  </nav>
+</div>
+
+<!-- Filter bar -->
+<div class="filter-bar">
+  <div class="search-wrap">
+    <input type="text" id="search" placeholder="Search documents by title, person, or filename…" autocomplete="off">
+  </div>
+  <select id="filter-type">
+    <option value="">All Types</option>
+  </select>
+  <select id="filter-match">
+    <option value="all">All Documents</option>
+    <option value="matched">Matched Only</option>
+    <option value="unmatched">Unmatched Only</option>
+  </select>
+  <span class="count" id="count"></span>
+</div>
+
+<!-- Stats -->
+<div class="stats-row" id="stats-row"></div>
+
+<!-- Grid -->
+<div class="doc-grid" id="grid">
+  <div class="loading">Loading documents…</div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <h2 id="modal-title"></h2>
+      <button class="close-btn" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-image" id="modal-image"></div>
+      <div class="modal-details" id="modal-details"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ────────── State ────────── */
+let allDocs = [];
+let filtered = [];
+
+/* ────────── Load ────────── */
+fetch('/data/documents.json')
+  .then(r => {
+    if (!r.ok) throw new Error('Not found');
+    return r.json();
+  })
+  .then(docs => {
+    allDocs = docs;
+    buildTypeFilter(docs);
+    buildStats(docs);
+    applyFilters();
+  })
+  .catch(() => {
+    document.getElementById('grid').innerHTML =
+      '<div class="empty-state"><div class="icon">📄</div>' +
+      '<p>No documents found. Run <code>python scan_documents.py</code> to scan your family documents.</p></div>';
+  });
+
+/* ────────── Filters ────────── */
+function buildTypeFilter(docs) {
+  const types = new Set(docs.map(d => d.type).filter(Boolean));
+  const sel = document.getElementById('filter-type');
+  [...types].sort().forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+    sel.appendChild(opt);
+  });
+}
+
+function buildStats(docs) {
+  const row = document.getElementById('stats-row');
+  const total = docs.length;
+  const withOcr = docs.filter(d => d.ocr_text && d.ocr_text.length > 10).length;
+  const withMatch = docs.filter(d => d.matches && d.matches.length > 0).length;
+  const totalMatches = docs.reduce((s, d) => s + (d.matches ? d.matches.length : 0), 0);
+  const uniquePeople = new Set(docs.flatMap(d => (d.matches || []).map(m => m.person_id))).size;
+  const types = {};
+  docs.forEach(d => { types[d.type] = (types[d.type] || 0) + 1; });
+
+  row.innerHTML = `
+    <div class="stat-chip"><span class="n">${total}</span> documents</div>
+    <div class="stat-chip"><span class="n">${withMatch}</span> matched</div>
+    <div class="stat-chip"><span class="n">${totalMatches}</span> total matches</div>
+    <div class="stat-chip"><span class="n">${uniquePeople}</span> people linked</div>
+    <div class="stat-chip"><span class="n">${withOcr}</span> with OCR text</div>
+  `;
+}
+
+function applyFilters() {
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const typeFilter = document.getElementById('filter-type').value;
+  const matchFilter = document.getElementById('filter-match').value;
+
+  filtered = allDocs.filter(d => {
+    // Type filter
+    if (typeFilter && d.type !== typeFilter) return false;
+
+    // Match filter
+    if (matchFilter === 'matched' && (!d.matches || d.matches.length === 0)) return false;
+    if (matchFilter === 'unmatched' && d.matches && d.matches.length > 0) return false;
+
+    // Text search
+    if (q) {
+      const haystack = [
+        d.title, d.filename, d.type,
+        ...(d.matches || []).map(m => m.name)
+      ].join(' ').toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+
+    return true;
+  });
+
+  document.getElementById('count').textContent = `${filtered.length} of ${allDocs.length}`;
+  renderGrid();
+}
+
+document.getElementById('search').addEventListener('input', applyFilters);
+document.getElementById('filter-type').addEventListener('change', applyFilters);
+document.getElementById('filter-match').addEventListener('change', applyFilters);
+
+/* ────────── Render Grid ────────── */
+function typeIcon(type) {
+  const icons = {
+    certificate: '📜', obituary: '🕊️', newspaper: '📰', photo: '📷',
+    census: '📋', military: '⚔️', death: '✝️', birth: '👶',
+    marriage: '💍', bible: '📖', document: '📄', map: '🗺️',
+    ship: '🚢', letter: '✉️', other: '📎'
+  };
+  return icons[type] || '📎';
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><div class="icon">🔍</div>' +
+      '<p>No documents match your filters.</p></div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map((doc, i) => {
+    const thumbHtml = doc.thumb
+      ? `<img class="thumb" src="${doc.thumb}" alt="${esc(doc.title)}" loading="lazy">`
+      : `<div class="thumb-placeholder">${typeIcon(doc.type)}</div>`;
+
+    const typeClass = 'type-' + (doc.type || 'other');
+    const matches = (doc.matches || []).slice(0, 3).map(m =>
+      `<a class="match-tag" href="/ancestry.html#person-${m.person_id}">${esc(m.name)}</a>`
+    ).join('');
+    const moreCount = (doc.matches || []).length - 3;
+    const moreTag = moreCount > 0 ? `<span class="match-tag">+${moreCount}</span>` : '';
+
+    return `<div class="doc-card" data-idx="${i}">
+      ${thumbHtml}
+      <div class="card-body">
+        <div class="card-title">${esc(doc.title)}</div>
+        <span class="card-type ${typeClass}">${doc.type || 'other'}</span>
+        <div class="card-matches">${matches}${moreTag}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Click handlers
+  grid.querySelectorAll('.doc-card').forEach(card => {
+    card.addEventListener('click', e => {
+      // Don't open modal if clicking a match link
+      if (e.target.closest('.match-tag')) return;
+      const idx = parseInt(card.dataset.idx);
+      openModal(filtered[idx]);
+    });
+  });
+}
+
+/* ────────── Modal ────────── */
+function openModal(doc) {
+  const overlay = document.getElementById('modal-overlay');
+  document.getElementById('modal-title').textContent = doc.title || doc.filename;
+
+  // Image
+  const imgDiv = document.getElementById('modal-image');
+  if (doc.thumb) {
+    imgDiv.innerHTML = `<img src="${doc.thumb}" alt="${esc(doc.title)}">`;
+  } else {
+    imgDiv.innerHTML = `<div class="no-image">${typeIcon(doc.type)}</div>`;
+  }
+
+  // Details
+  const det = document.getElementById('modal-details');
+  let html = '';
+
+  // Meta
+  html += '<div class="section-label">Details</div>';
+  html += '<div class="meta-row">';
+  html += `<div class="meta-item"><strong>Type:</strong> ${doc.type || '—'}</div>`;
+  if (doc.seq != null) html += `<div class="meta-item"><strong>Seq:</strong> #${doc.seq}</div>`;
+  html += '</div>';
+  html += `<div class="filename-text">${esc(doc.filename)}</div>`;
+
+  // Matched people
+  if (doc.matches && doc.matches.length > 0) {
+    html += '<div class="section-label">Matched People</div>';
+    html += '<ul class="match-list">';
+    doc.matches.forEach(m => {
+      const verBadge = m.verified ? '<span class="verified-badge">✓</span>' : '';
+      html += `<li class="match-item">
+        <a class="match-name" href="/ancestry.html#person-${m.person_id}">${esc(m.name)}</a>
+        ${verBadge}
+        <span class="match-conf">${(m.confidence * 100).toFixed(0)}% via ${m.match_type}</span>
+      </li>`;
+    });
+    html += '</ul>';
+  }
+
+  // OCR text
+  if (doc.ocr_text && doc.ocr_text.length > 10) {
+    html += '<div class="section-label">OCR Text</div>';
+    html += `<div class="ocr-box">${esc(doc.ocr_text)}</div>`;
+  } else {
+    html += '<div class="section-label">OCR Text</div>';
+    html += '<div class="ocr-box" style="color:#bbb; font-style:italic;">No text extracted</div>';
+  }
+
+  det.innerHTML = html;
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+/* ────────── Util ────────── */
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>
