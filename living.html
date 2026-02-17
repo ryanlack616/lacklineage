@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lack Lineage — The Living Moment</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #1a1714;
+  --bg2: #242018;
+  --fg: #e8e2d8;
+  --fg2: #9e9688;
+  --accent: #c9a84c;
+  --male: #5b8abd;
+  --female: #bd5b7a;
+  --unknown: #888;
+  --border: #3a352e;
+  --font: 'Georgia', 'Times New Roman', serif;
+  --mono: 'Consolas', 'Monaco', monospace;
+}
+html, body { height: 100%; overflow: hidden; }
+body { font-family: var(--font); color: var(--fg); background: var(--bg); }
+
+/* ── Header ── */
+header {
+  background: #2a2520;
+  color: #f8f6f1;
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  z-index: 10;
+}
+header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
+header h1 span { font-weight: 300; opacity: 0.6; }
+header h1 a { color: inherit; text-decoration: none; }
+nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+nav a {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #f8f6f1;
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+nav a:hover, nav a.active {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.4);
+}
+nav a.active { font-weight: bold; }
+
+/* ── Canvas area ── */
+.canvas-wrap {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+canvas { display: block; width: 100%; height: 100%; }
+
+/* ── Controls ── */
+.controls {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: linear-gradient(transparent, rgba(26,23,20,0.95) 30%);
+  padding: 2rem 2rem 1.5rem;
+}
+.year-display {
+  text-align: center;
+  margin-bottom: 0.8rem;
+}
+.year-num {
+  font-family: var(--mono);
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+.year-stat {
+  font-size: 0.9rem;
+  color: var(--fg2);
+  margin-top: 0.2rem;
+}
+.year-stat strong { color: var(--fg); }
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.slider-row input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  outline: none;
+}
+.slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(201,168,76,0.4);
+}
+.slider-row input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: none;
+}
+.slider-row .year-label {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--fg2);
+  min-width: 3rem;
+}
+.btn-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+.btn-row button {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-row button:hover { border-color: var(--accent); color: var(--accent); }
+.btn-row button.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+/* ── Tooltip ── */
+.tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: #2a2520;
+  color: var(--fg);
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  max-width: 260px;
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.15s;
+  border: 1px solid var(--border);
+}
+.tooltip .name { font-weight: bold; }
+.tooltip .dates { color: var(--fg2); font-size: 0.75rem; }
+.tooltip .place { color: var(--fg2); font-style: italic; font-size: 0.75rem; }
+
+/* ── Info panel ── */
+.info-panel {
+  position: fixed;
+  top: 60px;
+  right: 1rem;
+  z-index: 10;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  font-size: 0.78rem;
+  color: var(--fg2);
+  max-width: 220px;
+  line-height: 1.6;
+}
+.info-panel h3 { color: var(--accent); font-size: 0.85rem; margin-bottom: 0.4rem; }
+.person-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+}
+.person-list .person-item {
+  padding: 0.15rem 0;
+  cursor: pointer;
+  transition: color 0.1s;
+}
+.person-list .person-item:hover { color: var(--accent); }
+.person-list .person-item .age { color: var(--fg2); font-family: var(--mono); font-size: 0.7rem; }
+
+/* ── Historical events ── */
+.event-banner {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(201,168,76,0.15);
+  border: 1px solid rgba(201,168,76,0.3);
+  color: var(--accent);
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  text-align: center;
+  max-width: 500px;
+}
+
+@media (max-width: 700px) {
+  .info-panel { display: none; }
+  .year-num { font-size: 2rem; }
+  .controls { padding: 1rem 1rem 1rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Lack <span>Lineage</span></a></h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/tree.html">Tree</a>
+    <a href="/ancestry.html">Ancestry</a>
+    <a href="/documents.html">Documents</a>
+  </nav>
+</header>
+
+<canvas id="canvas"></canvas>
+
+<div class="tooltip" id="tooltip"></div>
+<div class="event-banner" id="event-banner"></div>
+
+<div class="info-panel" id="info-panel">
+  <h3>The Living Moment</h3>
+  <p>Scrub through time. Each dot is a person alive in this year.</p>
+  <p>Birth: fade in. Death: fade out.</p>
+  <div id="alive-summary"></div>
+  <div class="person-list" id="person-list"></div>
+</div>
+
+<div class="controls">
+  <div class="year-display">
+    <div class="year-num" id="year-num">1800</div>
+    <div class="year-stat" id="year-stat"></div>
+  </div>
+  <div class="slider-row">
+    <span class="year-label" id="min-label">1453</span>
+    <input type="range" id="year-slider" min="1453" max="2026" value="1800">
+    <span class="year-label" id="max-label">2026</span>
+  </div>
+  <div class="btn-row">
+    <button id="btn-play">&#9654; Play</button>
+    <button id="btn-speed" data-speed="1">1x</button>
+    <button id="btn-births">Births</button>
+    <button id="btn-deaths">Deaths</button>
+  </div>
+</div>
+
+<script>
+// ── Data ──
+let people = [];
+let currentYear = 1800;
+let isPlaying = false;
+let playSpeed = 1; // years per frame tick
+let playInterval = null;
+let showBirths = false;
+let showDeaths = false;
+let hoveredPerson = null;
+
+// ── Historical events overlay ──
+const historicalEvents = {
+  1492: 'Columbus reaches the Americas',
+  1607: 'Jamestown colony founded',
+  1620: 'Mayflower lands at Plymouth',
+  1776: 'American Declaration of Independence',
+  1789: 'French Revolution begins',
+  1803: 'Louisiana Purchase',
+  1812: 'War of 1812 begins',
+  1845: 'Irish Potato Famine begins',
+  1848: 'Revolutions across Europe',
+  1861: 'American Civil War begins',
+  1865: 'Civil War ends',
+  1869: 'Transcontinental railroad completed',
+  1914: 'World War I begins',
+  1918: 'World War I ends / Spanish Flu',
+  1929: 'Great Depression begins',
+  1939: 'World War II begins',
+  1945: 'World War II ends',
+  1969: 'Moon landing',
+  2001: 'September 11 attacks',
+};
+
+// ── Canvas ──
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+let width, height;
+let positions = []; // computed dot positions
+
+function resize() {
+  const headerH = document.querySelector('header').offsetHeight;
+  width = window.innerWidth;
+  height = window.innerHeight - headerH;
+  canvas.width = width * devicePixelRatio;
+  canvas.height = height * devicePixelRatio;
+  canvas.style.width = width + 'px';
+  canvas.style.height = height + 'px';
+  canvas.style.marginTop = headerH + 'px';
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  layoutAndDraw();
+}
+
+// ── Load data ──
+async function loadData() {
+  const resp = await fetch('/data/timeline.json');
+  people = await resp.json();
+  
+  // Estimate death year for people with birth but no death
+  // Assume ~75 year lifespan, but cap at current year
+  for (const p of people) {
+    if (!p.death_year && p.birth_year) {
+      // If born before 1940 and no death recorded, assume they died
+      if (p.birth_year < 1940) {
+        p.death_year_est = p.birth_year + 75;
+      } else {
+        // Could still be alive
+        p.death_year_est = null; // alive
+      }
+    }
+  }
+  
+  // Set slider range
+  const years = people.map(p => p.birth_year).filter(Boolean);
+  const minY = Math.min(...years);
+  const maxY = 2026;
+  document.getElementById('year-slider').min = minY;
+  document.getElementById('year-slider').max = maxY;
+  document.getElementById('min-label').textContent = minY;
+  document.getElementById('max-label').textContent = maxY;
+  
+  resize();
+}
+
+// ── Who is alive in a given year? ──
+function getAlive(year) {
+  return people.filter(p => {
+    if (!p.birth_year || p.birth_year > year) return false;
+    const dy = p.death_year || p.death_year_est;
+    if (dy && dy < year) return false;
+    return true;
+  });
+}
+
+// For year events (births/deaths in that specific year)
+function getBirths(year) {
+  return people.filter(p => p.birth_year === year);
+}
+function getDeaths(year) {
+  return people.filter(p => {
+    const dy = p.death_year || p.death_year_est;
+    return dy === year;
+  });
+}
+
+// ── Layout: arrange alive people as dots ──
+function layoutAndDraw() {
+  const alive = getAlive(currentYear);
+  const births = getBirths(currentYear);
+  const deaths = getDeaths(currentYear);
+  
+  // Sort by birth year for consistent placement
+  alive.sort((a, b) => a.birth_year - b.birth_year);
+  
+  // Compute grid positions
+  const padding = 40;
+  const controlsH = 180;
+  const infoW = 240;
+  const availW = width - padding * 2 - infoW;
+  const availH = height - padding - controlsH;
+  
+  const n = alive.length;
+  if (n === 0) {
+    positions = [];
+    draw();
+    updateStats(alive, births, deaths);
+    return;
+  }
+  
+  // Calculate dot size based on count
+  const maxDots = 800;
+  const dotR = Math.max(2, Math.min(6, Math.sqrt((availW * availH) / (n * 12))));
+  const spacing = dotR * 2.8;
+  const cols = Math.max(1, Math.floor(availW / spacing));
+  
+  positions = alive.map((p, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = padding + col * spacing + spacing / 2;
+    const y = padding + row * spacing + spacing / 2;
+    const age = currentYear - p.birth_year;
+    
+    // Fade effect: just born = more transparent, about to die = dimmer
+    let alpha = 1;
+    const dy = p.death_year || p.death_year_est;
+    if (p.birth_year === currentYear) alpha = 0.4; // just arriving
+    else if (dy && dy === currentYear) alpha = 0.3; // about to leave
+    else if (dy && (dy - currentYear) <= 2) alpha = 0.5;
+    else if (age <= 1) alpha = 0.6;
+    
+    return { ...p, x, y, r: dotR, alpha, age };
+  });
+  
+  draw();
+  updateStats(alive, births, deaths);
+}
+
+// ── Draw ──
+function draw() {
+  ctx.clearRect(0, 0, width, height);
+  
+  // Draw faint year text in background
+  ctx.save();
+  ctx.font = `bold ${Math.min(height * 0.5, 400)}px Georgia`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  ctx.fillText(currentYear, width / 2, height / 2 - 40);
+  ctx.restore();
+  
+  // Draw dots
+  for (const p of positions) {
+    let color;
+    if (showBirths && p.birth_year === currentYear) {
+      color = '#4caf50'; // green for newborns
+    } else if (showDeaths && (p.death_year === currentYear || p.death_year_est === currentYear)) {
+      color = '#f44336'; // red for dying
+    } else if (p.sex === 'M') {
+      color = '#5b8abd';
+    } else if (p.sex === 'F') {
+      color = '#bd5b7a';
+    } else {
+      color = '#888';
+    }
+    
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.globalAlpha = p.alpha;
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    
+    // Highlight hovered
+    if (hoveredPerson && hoveredPerson.id === p.id) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r + 3, 0, Math.PI * 2);
+      ctx.strokeStyle = '#c9a84c';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }
+}
+
+// ── Update stats display ──
+function updateStats(alive, births, deaths) {
+  const male = alive.filter(p => p.sex === 'M').length;
+  const female = alive.filter(p => p.sex === 'F').length;
+  
+  let statHtml = `<strong>${alive.length}</strong> people alive`;
+  if (births.length > 0) statHtml += ` · <span style="color:#4caf50">${births.length} born</span>`;
+  if (deaths.length > 0) statHtml += ` · <span style="color:#f44336">${deaths.length} died</span>`;
+  document.getElementById('year-stat').innerHTML = statHtml;
+  
+  // Summary in info panel
+  const avgAge = alive.length > 0 
+    ? Math.round(alive.reduce((s, p) => s + (currentYear - p.birth_year), 0) / alive.length)
+    : 0;
+  document.getElementById('alive-summary').innerHTML = `
+    <p style="margin-top:0.5rem"><strong>${alive.length}</strong> alive · avg age <strong>${avgAge}</strong></p>
+    <p style="font-size:0.72rem">${male} male · ${female} female</p>
+  `;
+  
+  // Person list (show oldest first, max 20)
+  const sorted = [...alive].sort((a, b) => a.birth_year - b.birth_year).slice(0, 25);
+  document.getElementById('person-list').innerHTML = sorted.map(p => {
+    const age = currentYear - p.birth_year;
+    return `<div class="person-item" data-id="${p.id}">
+      ${p.name || 'Unknown'} <span class="age">${age}</span>
+    </div>`;
+  }).join('');
+  
+  // Historical event
+  const banner = document.getElementById('event-banner');
+  if (historicalEvents[currentYear]) {
+    banner.textContent = `${currentYear}: ${historicalEvents[currentYear]}`;
+    banner.style.opacity = '1';
+  } else {
+    banner.style.opacity = '0';
+  }
+}
+
+// ── Slider ──
+const slider = document.getElementById('year-slider');
+slider.addEventListener('input', function() {
+  currentYear = parseInt(this.value);
+  document.getElementById('year-num').textContent = currentYear;
+  layoutAndDraw();
+});
+
+// ── Play/pause ──
+document.getElementById('btn-play').addEventListener('click', function() {
+  if (isPlaying) {
+    stopPlay();
+  } else {
+    startPlay();
+  }
+});
+
+function startPlay() {
+  isPlaying = true;
+  document.getElementById('btn-play').innerHTML = '&#9646;&#9646; Pause';
+  document.getElementById('btn-play').classList.add('active');
+  
+  const maxYear = parseInt(slider.max);
+  playInterval = setInterval(() => {
+    currentYear += playSpeed;
+    if (currentYear > maxYear) {
+      currentYear = parseInt(slider.min);
+    }
+    slider.value = currentYear;
+    document.getElementById('year-num').textContent = currentYear;
+    layoutAndDraw();
+  }, 80);
+}
+
+function stopPlay() {
+  isPlaying = false;
+  clearInterval(playInterval);
+  document.getElementById('btn-play').innerHTML = '&#9654; Play';
+  document.getElementById('btn-play').classList.remove('active');
+}
+
+// Speed button
+document.getElementById('btn-speed').addEventListener('click', function() {
+  const speeds = [1, 2, 5, 10];
+  const idx = speeds.indexOf(playSpeed);
+  playSpeed = speeds[(idx + 1) % speeds.length];
+  this.textContent = playSpeed + 'x';
+  if (isPlaying) {
+    stopPlay();
+    startPlay();
+  }
+});
+
+// Birth/death highlight buttons
+document.getElementById('btn-births').addEventListener('click', function() {
+  showBirths = !showBirths;
+  this.classList.toggle('active', showBirths);
+  draw();
+});
+document.getElementById('btn-deaths').addEventListener('click', function() {
+  showDeaths = !showDeaths;
+  this.classList.toggle('active', showDeaths);
+  draw();
+});
+
+// ── Mouse interaction ──
+canvas.addEventListener('mousemove', function(e) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  
+  let found = null;
+  for (const p of positions) {
+    const dx = p.x - mx, dy = p.y - my;
+    if (dx * dx + dy * dy < (p.r + 4) * (p.r + 4)) {
+      found = p;
+      break;
+    }
+  }
+  
+  if (found !== hoveredPerson) {
+    hoveredPerson = found;
+    draw();
+    
+    if (found) {
+      const age = currentYear - found.birth_year;
+      const dy = found.death_year || found.death_year_est;
+      let dateStr = `b. ${found.birth_year}`;
+      if (found.death_year) dateStr += ` — d. ${found.death_year}`;
+      else if (!found.death_year_est) dateStr += ' — living';
+      
+      tooltip.innerHTML = `
+        <div class="name">${found.name || 'Unknown'}</div>
+        <div class="dates">${dateStr} (age ${age})</div>
+        ${found.birth_place ? `<div class="place">${found.birth_place}</div>` : ''}
+      `;
+      tooltip.style.opacity = '1';
+      tooltip.style.left = (e.clientX + 15) + 'px';
+      tooltip.style.top = (e.clientY - 10) + 'px';
+    } else {
+      tooltip.style.opacity = '0';
+    }
+  } else if (found) {
+    tooltip.style.left = (e.clientX + 15) + 'px';
+    tooltip.style.top = (e.clientY - 10) + 'px';
+  }
+});
+
+canvas.addEventListener('mouseleave', function() {
+  hoveredPerson = null;
+  tooltip.style.opacity = '0';
+  draw();
+});
+
+// Click on person in list → navigate to tree
+document.getElementById('person-list').addEventListener('click', function(e) {
+  const item = e.target.closest('.person-item');
+  if (item) {
+    window.open(`/tree.html?root=${item.dataset.id}`, '_blank');
+  }
+});
+
+// Keyboard: arrow keys to scrub, space to play/pause
+document.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === ' ' || e.key === 'k') {
+    e.preventDefault();
+    if (isPlaying) stopPlay(); else startPlay();
+  }
+  if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    currentYear = Math.min(parseInt(slider.max), currentYear + (e.shiftKey ? 10 : 1));
+    slider.value = currentYear;
+    document.getElementById('year-num').textContent = currentYear;
+    layoutAndDraw();
+  }
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    currentYear = Math.max(parseInt(slider.min), currentYear - (e.shiftKey ? 10 : 1));
+    slider.value = currentYear;
+    document.getElementById('year-num').textContent = currentYear;
+    layoutAndDraw();
+  }
+});
+
+// ── Resize ──
+window.addEventListener('resize', resize);
+
+// ── Init ──
+loadData();
+</script>
+</body>
+</html>

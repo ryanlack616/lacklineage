@@ -36,8 +36,9 @@ header {
   align-items: center;
   gap: 2rem;
 }
-header h1 { font-size: 1.1rem; letter-spacing: 0.05em; }
+header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
 header h1 span { font-weight: 300; opacity: 0.6; }
+header h1 a { color: inherit; text-decoration: none; }
 nav { display: flex; gap: 0.5rem; }
 nav a {
   background: transparent;
@@ -49,7 +50,8 @@ nav a {
   text-decoration: none;
   transition: all 0.15s;
 }
-nav a:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+nav a:hover, nav a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+nav a.active { font-weight: bold; }
 
 /* ── Main ── */
 main {
@@ -144,13 +146,26 @@ footer {
   color: var(--fg2);
   border-top: 1px solid var(--border);
 }
+
+@media (max-width: 600px) {
+  header { padding: 0.75rem 1rem; gap: 0.75rem; flex-wrap: wrap; }
+  nav { gap: 0.3rem; }
+  nav a { padding: 0.25rem 0.5rem; font-size: 0.7rem; }
+  main { padding: 2rem 1rem 2rem; }
+  h2 { font-size: 1.5rem; }
+  .subtitle { font-size: 0.95rem; }
+  .stats { grid-template-columns: 1fr; gap: 0.6rem; }
+  .stat .n { font-size: 1.4rem; }
+  .piece-list .desc { display: none; }
+}
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Lack <span>Lineage</span></h1>
+  <h1><a href=\"/\">Lack <span>Lineage</span></a></h1>
   <nav>
+    <a href="/" class="active">Dashboard</a>
     <a href="/graph.html">Graph</a>
     <a href="/tree.html">Tree</a>
     <a href="/ancestry.html">Ancestry</a>
@@ -160,8 +175,8 @@ footer {
 
 <main>
   <h2>LACK</h2>
-  <p class="subtitle">
-    A family database. 2,152 people across five centuries.
+  <p class="subtitle" id="subtitle">
+    A family database. <span id="sub-count">1,251</span> people across five centuries.
     What we know, what we don't, and the shape of forgetting.
   </p>
 
@@ -216,6 +231,27 @@ footer {
         </a>
       </li>
       <li>
+        <a href="/living.html">
+          <span class="icon">⏳</span>
+          <span class="title">The Living Moment</span>
+          <span class="desc">Who was alive when</span>
+        </a>
+      </li>
+      <li>
+        <a href="/surnames.html">
+          <span class="icon">🔤</span>
+          <span class="title">Surname Directory</span>
+          <span class="desc">Browse by family name</span>
+        </a>
+      </li>
+      <li>
+        <a href="/related.html">
+          <span class="icon">🔗</span>
+          <span class="title">How Am I Related?</span>
+          <span class="desc">Find connection paths</span>
+        </a>
+      </li>
+      <li>
         <a href="/visualizations.html">
           <span class="icon">◈</span>
           <span class="title">Thirteen Ways to See a Family</span>
@@ -245,6 +281,7 @@ fetch('/data/stats.json')
     document.getElementById('s-people').textContent = s.total_people.toLocaleString();
     document.getElementById('s-surnames').textContent = s.unique_surnames.toLocaleString();
     document.getElementById('s-rels').textContent = s.total_relationships.toLocaleString();
+    document.getElementById('sub-count').textContent = s.total_people.toLocaleString();
     if (s.confidence) {
       document.getElementById('confidence-stats').style.display = 'grid';
       document.getElementById('s-avg-conf').textContent = s.confidence.average + '%';

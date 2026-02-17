@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lack Lineage — How Am I Related?</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8f6f1;
+  --bg2: #fff;
+  --fg: #2a2520;
+  --fg2: #6b6560;
+  --accent: #8b6914;
+  --accent2: #c9a84c;
+  --border: #e0dbd3;
+  --male: #5b8abd;
+  --female: #bd5b7a;
+  --font: 'Georgia', 'Times New Roman', serif;
+}
+body { font-family: var(--font); color: var(--fg); background: var(--bg); min-height: 100vh; }
+
+/* ── Header ── */
+header {
+  background: #2a2520;
+  color: #f8f6f1;
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
+header h1 span { font-weight: 300; opacity: 0.6; }
+header h1 a { color: inherit; text-decoration: none; }
+nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+nav a {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #f8f6f1;
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+nav a:hover, nav a.active {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.4);
+}
+nav a.active { font-weight: bold; }
+
+/* ── Main ── */
+main { max-width: 800px; margin: 0 auto; padding: 2rem; }
+.page-title {
+  font-size: 1.8rem;
+  color: var(--accent);
+  margin-bottom: 0.3rem;
+}
+.page-subtitle {
+  color: var(--fg2);
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+}
+
+/* ── Search boxes ── */
+.search-pair {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.person-picker {
+  flex: 1;
+  min-width: 250px;
+  position: relative;
+}
+.person-picker label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--fg2);
+  margin-bottom: 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.person-picker input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font);
+  font-size: 1rem;
+  background: var(--bg2);
+  color: var(--fg);
+  transition: border-color 0.15s;
+}
+.person-picker input:focus { outline: none; border-color: var(--accent2); }
+.person-picker input.selected { border-color: var(--accent); background: #faf7f0; }
+.picker-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 0 0 8px 8px;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 20;
+  display: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.picker-dropdown .option {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.picker-dropdown .option:hover { background: #f0ece4; }
+.picker-dropdown .option .oname { font-weight: bold; }
+.picker-dropdown .option .ometa { color: var(--fg2); font-size: 0.75rem; }
+
+.connect-arrow {
+  font-size: 1.5rem;
+  color: var(--fg2);
+  padding-top: 1.5rem;
+  align-self: center;
+}
+
+.find-btn {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto 2rem;
+  padding: 0.7rem 1rem;
+  font-family: var(--font);
+  font-size: 1rem;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.find-btn:hover { background: var(--accent2); border-color: var(--accent2); }
+.find-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Result ── */
+.result { margin-top: 1rem; }
+.result-msg {
+  text-align: center;
+  font-size: 1rem;
+  color: var(--fg2);
+  padding: 2rem 0;
+}
+.result-msg.error { color: #c0392b; }
+.result-msg em { font-style: italic; color: var(--accent); }
+
+.relationship-summary {
+  text-align: center;
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  color: var(--fg);
+  line-height: 1.6;
+}
+.relationship-summary strong { color: var(--accent); }
+
+/* ── Path chain ── */
+.path-chain {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 500px;
+  margin: 0 auto;
+}
+.path-node {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+.path-node:hover {
+  border-color: var(--accent2);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.path-node.endpoint {
+  border-color: var(--accent);
+  background: #faf7f0;
+  border-width: 2px;
+}
+.path-node .avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.path-node .avatar.male { background: rgba(91,138,189,0.15); color: var(--male); }
+.path-node .avatar.female { background: rgba(189,91,122,0.15); color: var(--female); }
+.path-node .avatar.unknown { background: rgba(136,136,136,0.15); color: var(--unknown); }
+.path-node .pinfo .pname { font-weight: bold; font-size: 0.9rem; }
+.path-node .pinfo .pdates { color: var(--fg2); font-size: 0.75rem; }
+
+.path-edge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0;
+  color: var(--fg2);
+  font-size: 0.75rem;
+}
+.path-edge .edge-line {
+  width: 2px;
+  height: 20px;
+  background: var(--accent2);
+  margin: 0 0.5rem;
+}
+.path-edge .edge-label {
+  background: var(--bg);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-style: italic;
+}
+
+@media (max-width: 600px) {
+  header { padding: 0.75rem 1rem; gap: 1rem; flex-wrap: wrap; }
+  main { padding: 1rem; }
+  .page-title { font-size: 1.3rem; }
+  .search-pair { flex-direction: column; }
+  .connect-arrow { text-align: center; padding: 0.5rem 0; transform: rotate(90deg); }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Lack <span>Lineage</span></a></h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/tree.html">Tree</a>
+    <a href="/ancestry.html">Ancestry</a>
+    <a href="/documents.html">Documents</a>
+  </nav>
+</header>
+
+<main>
+  <h2 class="page-title">How Am I Related?</h2>
+  <p class="page-subtitle">Find the relationship path between any two people in the family tree</p>
+  
+  <div class="search-pair">
+    <div class="person-picker" id="picker-a">
+      <label>Person A</label>
+      <input type="text" placeholder="Start typing a name..." id="input-a" autocomplete="off">
+      <div class="picker-dropdown" id="dropdown-a"></div>
+    </div>
+    <div class="connect-arrow">&#8596;</div>
+    <div class="person-picker" id="picker-b">
+      <label>Person B</label>
+      <input type="text" placeholder="Start typing a name..." id="input-b" autocomplete="off">
+      <div class="picker-dropdown" id="dropdown-b"></div>
+    </div>
+  </div>
+  
+  <button class="find-btn" id="find-btn" disabled>Find Relationship</button>
+  
+  <div class="result" id="result"></div>
+</main>
+
+<script>
+let nodes = [];
+let links = [];
+let adj = {};        // adjacency list: id -> [{id, type, direction}]
+let nodeMap = {};    // id -> node
+let selectedA = null;
+let selectedB = null;
+
+async function loadData() {
+  const resp = await fetch('/data/graph-all.json');
+  const data = await resp.json();
+  nodes = data.nodes || [];
+  links = data.links || [];
+  
+  // Build node map
+  for (const n of nodes) nodeMap[n.id] = n;
+  
+  // Build adjacency list (bidirectional)
+  adj = {};
+  for (const n of nodes) adj[n.id] = [];
+  for (const link of links) {
+    const s = typeof link.source === 'object' ? link.source.id : link.source;
+    const t = typeof link.target === 'object' ? link.target.id : link.target;
+    adj[s].push({ id: t, type: link.type, direction: 'forward' });
+    adj[t].push({ id: s, type: link.type, direction: 'reverse' });
+  }
+}
+
+// ── Search / autocomplete ──
+function setupPicker(inputId, dropdownId, onSelect) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  let debounce = null;
+  
+  input.addEventListener('input', () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => {
+      const q = input.value.trim().toLowerCase();
+      if (q.length < 2) { dropdown.style.display = 'none'; return; }
+      
+      const matches = nodes
+        .filter(n => n.name && n.name.toLowerCase().includes(q))
+        .sort((a, b) => {
+          // Prefer starts-with matches
+          const aStart = a.name.toLowerCase().startsWith(q) ? 0 : 1;
+          const bStart = b.name.toLowerCase().startsWith(q) ? 0 : 1;
+          return aStart - bStart || a.name.localeCompare(b.name);
+        })
+        .slice(0, 15);
+      
+      if (matches.length === 0) {
+        dropdown.style.display = 'none';
+        return;
+      }
+      
+      dropdown.innerHTML = matches.map(n => {
+        const dates = n.birth_year ? `b. ${n.birth_year}` : '';
+        const place = n.birth_place || '';
+        const meta = [dates, place].filter(Boolean).join(' · ');
+        return `<div class="option" data-id="${n.id}">
+          <div class="oname">${n.name}</div>
+          ${meta ? `<div class="ometa">${meta}</div>` : ''}
+        </div>`;
+      }).join('');
+      dropdown.style.display = 'block';
+      
+      dropdown.querySelectorAll('.option').forEach(opt => {
+        opt.addEventListener('click', () => {
+          const id = parseInt(opt.dataset.id);
+          const node = nodeMap[id];
+          input.value = node.name;
+          input.classList.add('selected');
+          dropdown.style.display = 'none';
+          onSelect(node);
+          updateFindButton();
+        });
+      });
+    }, 150);
+  });
+  
+  input.addEventListener('focus', () => {
+    if (input.classList.contains('selected')) {
+      input.select();
+    }
+  });
+  
+  // Clear selection on new typing
+  input.addEventListener('keydown', () => {
+    if (input.classList.contains('selected')) {
+      input.classList.remove('selected');
+      onSelect(null);
+      updateFindButton();
+    }
+  });
+  
+  // Close dropdown on outside click
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#' + inputId) && !e.target.closest('#' + dropdownId)) {
+      dropdown.style.display = 'none';
+    }
+  });
+}
+
+function updateFindButton() {
+  document.getElementById('find-btn').disabled = !(selectedA && selectedB);
+}
+
+setupPicker('input-a', 'dropdown-a', node => { selectedA = node; });
+setupPicker('input-b', 'dropdown-b', node => { selectedB = node; });
+
+// ── BFS shortest path ──
+function findPath(startId, endId) {
+  if (startId === endId) return [startId];
+  
+  const visited = new Set([startId]);
+  const queue = [[startId]];
+  const edgeMap = {}; // store edge info for path reconstruction
+  
+  while (queue.length > 0) {
+    const path = queue.shift();
+    const current = path[path.length - 1];
+    
+    for (const neighbor of (adj[current] || [])) {
+      if (visited.has(neighbor.id)) continue;
+      visited.add(neighbor.id);
+      
+      const newPath = [...path, neighbor.id];
+      // Store edge between current -> neighbor.id
+      const edgeKey = current + '->' + neighbor.id;
+      edgeMap[edgeKey] = { type: neighbor.type, direction: neighbor.direction };
+      
+      if (neighbor.id === endId) {
+        return { path: newPath, edges: edgeMap };
+      }
+      queue.push(newPath);
+    }
+  }
+  
+  return null; // no path
+}
+
+// ── Describe relationship edge ──
+function describeEdge(fromNode, toNode, edgeInfo) {
+  if (edgeInfo.type === 'spouse') return 'spouse';
+  
+  // parent_child: original direction is parent -> child
+  if (edgeInfo.direction === 'forward') {
+    // from is parent of to
+    return fromNode.sex === 'F' ? 'mother' : 'father';
+  } else {
+    // from is child of to (reverse means we go child -> parent)
+    return toNode.sex === 'F' ? 'daughter' : 'son';
+  }
+}
+
+// ── Generate relationship summary ──
+function summarizeRelationship(pathNodes, edges) {
+  if (pathNodes.length === 1) return 'Same person!';
+  if (pathNodes.length === 2) {
+    const edge = edges[pathNodes[0] + '->' + pathNodes[1]];
+    if (edge.type === 'spouse') return 'Spouses';
+    if (edge.direction === 'forward') return 'Parent → Child';
+    return 'Child → Parent';
+  }
+  
+  // Count parent/child hops and spouse hops
+  let parentUp = 0, parentDown = 0, spouseHops = 0;
+  for (let i = 0; i < pathNodes.length - 1; i++) {
+    const edge = edges[pathNodes[i] + '->' + pathNodes[i + 1]];
+    if (edge.type === 'spouse') { spouseHops++; continue; }
+    // "forward" in original data = parent -> child
+    // "reverse" in our adj = we go from child to parent
+    if (edge.direction === 'reverse') parentUp++;   // going up to parent
+    else parentDown++;                                // going down to child
+  }
+  
+  const steps = pathNodes.length - 1;
+  
+  // Direct ancestor/descendant
+  if (spouseHops === 0 && parentDown === 0 && parentUp > 0) {
+    const gen = parentUp;
+    if (gen === 1) return 'Parent';
+    if (gen === 2) return 'Grandparent';
+    if (gen === 3) return 'Great-grandparent';
+    return `${gen - 2}x great-grandparent`;
+  }
+  if (spouseHops === 0 && parentUp === 0 && parentDown > 0) {
+    const gen = parentDown;
+    if (gen === 1) return 'Child';
+    if (gen === 2) return 'Grandchild';
+    if (gen === 3) return 'Great-grandchild';
+    return `${gen - 2}x great-grandchild`;
+  }
+  
+  // Siblings
+  if (spouseHops === 0 && parentUp === 1 && parentDown === 1) return 'Siblings';
+  
+  // Cousin calculations
+  if (spouseHops === 0 && parentUp > 0 && parentDown > 0) {
+    const minGen = Math.min(parentUp, parentDown);
+    const diff = Math.abs(parentUp - parentDown);
+    if (minGen === 1 && diff > 0) {
+      if (parentUp > parentDown) return `${diff === 1 ? '' : diff + 'x '}great-aunt/uncle`;
+      return `${diff === 1 ? '' : diff + 'x '}great-niece/nephew`;
+    }
+    if (minGen >= 2) {
+      const cousinNum = minGen - 1;
+      const removed = diff;
+      let desc = cousinNum === 1 ? '1st cousin' : cousinNum === 2 ? '2nd cousin' : cousinNum === 3 ? '3rd cousin' : `${cousinNum}th cousin`;
+      if (removed > 0) desc += ` ${removed}x removed`;
+      return desc;
+    }
+  }
+  
+  return `${steps}-step relationship${spouseHops > 0 ? ' (through marriage)' : ''}`;
+}
+
+// ── Find button ──
+document.getElementById('find-btn').addEventListener('click', () => {
+  if (!selectedA || !selectedB) return;
+  
+  const result = findPath(selectedA.id, selectedB.id);
+  const el = document.getElementById('result');
+  
+  if (!result) {
+    el.innerHTML = `<div class="result-msg error">No connection found between <em>${selectedA.name}</em> and <em>${selectedB.name}</em>. They may be in disconnected branches of the tree.</div>`;
+    return;
+  }
+  
+  const { path, edges } = result;
+  
+  if (path.length === 1) {
+    el.innerHTML = `<div class="result-msg">That's the same person!</div>`;
+    return;
+  }
+  
+  // Summary
+  const summary = summarizeRelationship(path, edges);
+  let html = `<div class="relationship-summary">
+    <strong>${selectedA.name}</strong> and <strong>${selectedB.name}</strong><br>
+    are <strong>${summary}</strong> · ${path.length - 1} step${path.length > 2 ? 's' : ''} apart
+  </div>`;
+  
+  // Path chain
+  html += '<div class="path-chain">';
+  for (let i = 0; i < path.length; i++) {
+    const node = nodeMap[path[i]];
+    const isEndpoint = i === 0 || i === path.length - 1;
+    const sexClass = node.sex === 'M' ? 'male' : node.sex === 'F' ? 'female' : 'unknown';
+    const icon = node.sex === 'M' ? '&#9794;' : node.sex === 'F' ? '&#9792;' : '?';
+    const dates = node.birth_year ? `b. ${node.birth_year}` : '';
+    const place = node.birth_place || '';
+    const meta = [dates, place].filter(Boolean).join(' · ');
+    
+    html += `<div class="path-node ${isEndpoint ? 'endpoint' : ''}" onclick="window.open('/tree.html?root=${node.id}','_blank')">
+      <div class="avatar ${sexClass}">${icon}</div>
+      <div class="pinfo">
+        <div class="pname">${node.name || 'Unknown'}</div>
+        ${meta ? `<div class="pdates">${meta}</div>` : ''}
+      </div>
+    </div>`;
+    
+    // Edge label
+    if (i < path.length - 1) {
+      const edge = edges[path[i] + '->' + path[i + 1]];
+      const label = describeEdge(nodeMap[path[i]], nodeMap[path[i + 1]], edge);
+      html += `<div class="path-edge">
+        <div class="edge-line"></div>
+        <span class="edge-label">${label}</span>
+        <div class="edge-line"></div>
+      </div>`;
+    }
+  }
+  html += '</div>';
+  
+  el.innerHTML = html;
+});
+
+// ── Keyboard shortcut: Enter to find ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && selectedA && selectedB) {
+    document.getElementById('find-btn').click();
+  }
+});
+
+loadData();
+</script>
+</body>
+</html>

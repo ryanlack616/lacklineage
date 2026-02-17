@@ -17,7 +17,7 @@
     background: #faf8f5;
     max-width: 720px;
     margin: 0 auto;
-    padding: 60px 32px 80px;
+    padding: 100px 32px 80px;
   }
 
   h1 {
@@ -152,10 +152,50 @@
     body { font-size: 17px; padding: 32px 20px 60px; }
     h1 { font-size: 1.8em; }
     .big-number { font-size: 1.6em; }
+    .letter-nav { flex-wrap: wrap; }
   }
+
+  /* ── Nav bar ── */
+  .letter-nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: #2a2520;
+    color: #f8f6f1;
+    padding: 0.75rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    z-index: 100;
+    font-family: 'Georgia', 'Times New Roman', serif;
+  }
+  .letter-nav .logo {
+    font-size: 1.1rem; font-weight: 700; letter-spacing: 0.05em;
+    text-decoration: none; color: #f8f6f1; white-space: nowrap;
+  }
+  .letter-nav .logo span { font-weight: 300; opacity: 0.6; }
+  .letter-nav nav { display: flex; gap: 0.5rem; }
+  .letter-nav nav a {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #f8f6f1; text-decoration: none;
+    padding: 0.3rem 0.7rem; border-radius: 6px;
+    font-size: 0.8rem; transition: all 0.15s;
+  }
+  .letter-nav nav a:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
 </style>
 </head>
 <body>
+
+<div class="letter-nav">
+  <a href="/" class="logo">Lack <span>Lineage</span></a>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/tree.html">Tree</a>
+    <a href="/ancestry.html">Ancestry</a>
+    <a href="/documents.html">Documents</a>
+  </nav>
+</div>
 
 <h1>Dear George,</h1>
 

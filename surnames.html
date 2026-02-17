@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lack Lineage — Surnames</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8f6f1;
+  --bg2: #fff;
+  --fg: #2a2520;
+  --fg2: #6b6560;
+  --accent: #8b6914;
+  --accent2: #c9a84c;
+  --border: #e0dbd3;
+  --font: 'Georgia', 'Times New Roman', serif;
+  --mono: 'Consolas', 'Monaco', monospace;
+}
+body { font-family: var(--font); color: var(--fg); background: var(--bg); min-height: 100vh; }
+
+/* ── Header ── */
+header {
+  background: #2a2520;
+  color: #f8f6f1;
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
+header h1 span { font-weight: 300; opacity: 0.6; }
+header h1 a { color: inherit; text-decoration: none; }
+nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+nav a {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #f8f6f1;
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+nav a:hover, nav a.active {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.4);
+}
+nav a.active { font-weight: bold; }
+
+/* ── Main ── */
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+.page-title {
+  font-size: 1.8rem;
+  margin-bottom: 0.3rem;
+  color: var(--accent);
+}
+.page-subtitle {
+  color: var(--fg2);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Search & controls ── */
+.controls-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+.search-box {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  background: var(--bg2);
+  color: var(--fg);
+}
+.search-box:focus {
+  outline: none;
+  border-color: var(--accent2);
+}
+.sort-btns {
+  display: flex;
+  gap: 0.3rem;
+}
+.sort-btns button {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--fg2);
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sort-btns button:hover { border-color: var(--accent2); }
+.sort-btns button.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.view-btns {
+  display: flex;
+  gap: 0.3rem;
+}
+.view-btns button {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--fg2);
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.view-btns button:hover { border-color: var(--accent2); }
+.view-btns button.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* ── Letter index ── */
+.letter-index {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  margin-bottom: 1.5rem;
+}
+.letter-index a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: var(--fg2);
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  transition: all 0.15s;
+}
+.letter-index a:hover { border-color: var(--accent2); color: var(--accent); }
+.letter-index a.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.letter-index a.disabled { opacity: 0.3; pointer-events: none; }
+
+/* ── Stats bar ── */
+.stats-bar {
+  font-size: 0.8rem;
+  color: var(--fg2);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.stats-bar strong { color: var(--fg); }
+
+/* ── Grid view ── */
+.surname-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.6rem;
+}
+.surname-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.surname-card:hover {
+  border-color: var(--accent2);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transform: translateY(-1px);
+}
+.surname-card .name {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--fg);
+}
+.surname-card .count {
+  font-size: 0.8rem;
+  color: var(--fg2);
+  margin-top: 0.2rem;
+}
+.surname-card .bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--accent2);
+  transition: width 0.3s;
+}
+
+/* ── List view ── */
+.surname-list { display: none; }
+.surname-list.active { display: block; }
+.surname-grid.hidden { display: none; }
+
+.surname-list table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.surname-list th {
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--fg2);
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+}
+.surname-list th:hover { color: var(--accent); }
+.surname-list td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.surname-list tr:hover { background: rgba(139,105,20,0.05); }
+.surname-list tr { cursor: pointer; }
+.surname-list .count-cell {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--fg2);
+}
+.surname-list .bar-cell {
+  width: 120px;
+}
+.surname-list .mini-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--accent2);
+  opacity: 0.6;
+}
+
+/* ── Person drawer ── */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.drawer-overlay.open { opacity: 1; pointer-events: auto; }
+.drawer {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 380px;
+  max-width: 90vw;
+  height: 100vh;
+  background: var(--bg2);
+  z-index: 101;
+  overflow-y: auto;
+  transition: right 0.3s ease;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+  padding: 1.5rem;
+}
+.drawer.open { right: 0; }
+.drawer-close {
+  position: sticky;
+  top: 0;
+  float: right;
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: var(--fg2);
+  cursor: pointer;
+  padding: 0.3rem;
+}
+.drawer-close:hover { color: var(--fg); }
+.drawer h2 {
+  font-size: 1.4rem;
+  color: var(--accent);
+  margin-bottom: 0.3rem;
+}
+.drawer .drawer-count {
+  font-size: 0.85rem;
+  color: var(--fg2);
+  margin-bottom: 1rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+.drawer .person-link {
+  display: block;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: var(--fg);
+  font-size: 0.85rem;
+  transition: color 0.1s;
+}
+.drawer .person-link:hover { color: var(--accent); }
+.drawer .person-link .meta {
+  color: var(--fg2);
+  font-size: 0.75rem;
+}
+.drawer .link-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+.drawer .link-row a {
+  font-size: 0.8rem;
+  color: var(--accent);
+  text-decoration: none;
+  border: 1px solid var(--accent2);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+.drawer .link-row a:hover { background: var(--accent); color: #fff; }
+
+@media (max-width: 600px) {
+  header { padding: 0.75rem 1rem; gap: 1rem; flex-wrap: wrap; }
+  main { padding: 1rem; }
+  .page-title { font-size: 1.3rem; }
+  .surname-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .bar-cell { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Lack <span>Lineage</span></a></h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/tree.html">Tree</a>
+    <a href="/ancestry.html">Ancestry</a>
+    <a href="/documents.html">Documents</a>
+  </nav>
+</header>
+
+<main>
+  <h2 class="page-title">Surname Directory</h2>
+  <p class="page-subtitle">Browse the family names in our genealogy database</p>
+  
+  <div class="controls-row">
+    <input type="text" class="search-box" id="search" placeholder="Search surnames..." autofocus>
+    <div class="sort-btns">
+      <button data-sort="alpha" class="active">A–Z</button>
+      <button data-sort="count">By Count</button>
+    </div>
+    <div class="view-btns">
+      <button data-view="grid" class="active">Grid</button>
+      <button data-view="list">List</button>
+    </div>
+  </div>
+  
+  <div class="letter-index" id="letter-index"></div>
+  
+  <div class="stats-bar" id="stats-bar"></div>
+  
+  <div class="surname-grid" id="surname-grid"></div>
+  
+  <div class="surname-list" id="surname-list">
+    <table>
+      <thead>
+        <tr>
+          <th data-col="surname">Surname</th>
+          <th data-col="count">People</th>
+          <th class="bar-cell"></th>
+        </tr>
+      </thead>
+      <tbody id="surname-tbody"></tbody>
+    </table>
+  </div>
+</main>
+
+<!-- Person drawer -->
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<div class="drawer" id="drawer">
+  <button class="drawer-close" id="drawer-close">&times;</button>
+  <h2 id="drawer-surname"></h2>
+  <div class="drawer-count" id="drawer-count"></div>
+  <div id="drawer-people"></div>
+</div>
+
+<script>
+let surnames = [];
+let people = [];
+let currentSort = 'alpha'; // alpha | count
+let currentView = 'grid';
+let currentLetter = null;
+let maxCount = 1;
+
+async function loadData() {
+  const [sResp, pResp] = await Promise.all([
+    fetch('/data/surnames.json'),
+    fetch('/data/people.json')
+  ]);
+  surnames = await sResp.json();
+  
+  // Normalize: merge case variants
+  const merged = {};
+  for (const s of surnames) {
+    const key = s.surname.trim().replace(/\s+/g, ' ');
+    // Use title-case as canonical
+    const canonical = key.charAt(0).toUpperCase() + key.slice(1);
+    if (!merged[canonical.toLowerCase()]) {
+      merged[canonical.toLowerCase()] = { surname: canonical, count: s.count };
+    } else {
+      merged[canonical.toLowerCase()].count += s.count;
+      // Prefer the nicer-looking name
+      if (canonical.length > 1 && canonical[1] !== canonical[1].toUpperCase()) {
+        merged[canonical.toLowerCase()].surname = canonical;
+      }
+    }
+  }
+  surnames = Object.values(merged);
+  maxCount = Math.max(...surnames.map(s => s.count));
+  
+  // Load people for drawer
+  const pd = await pResp.json();
+  // people.json could be an object with an array, or flat array
+  people = Array.isArray(pd) ? pd : (pd.people || []);
+  
+  buildLetterIndex();
+  render();
+}
+
+function buildLetterIndex() {
+  const letters = new Set(surnames.map(s => {
+    const ch = s.surname.charAt(0).toUpperCase();
+    return ch.match(/[A-Z]/) ? ch : '#';
+  }));
+  
+  const el = document.getElementById('letter-index');
+  let html = '<a href="#" data-letter="" class="active">All</a>';
+  for (let i = 65; i <= 90; i++) {
+    const ch = String.fromCharCode(i);
+    const has = letters.has(ch);
+    html += `<a href="#" data-letter="${ch}" class="${has ? '' : 'disabled'}">${ch}</a>`;
+  }
+  if (letters.has('#')) {
+    html += '<a href="#" data-letter="#">#</a>';
+  }
+  el.innerHTML = html;
+  
+  el.addEventListener('click', e => {
+    e.preventDefault();
+    const a = e.target.closest('a');
+    if (!a || a.classList.contains('disabled')) return;
+    el.querySelectorAll('a').forEach(x => x.classList.remove('active'));
+    a.classList.add('active');
+    currentLetter = a.dataset.letter || null;
+    render();
+  });
+}
+
+function getFiltered() {
+  let list = [...surnames];
+  
+  // Filter by search
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  if (q) {
+    list = list.filter(s => s.surname.toLowerCase().includes(q));
+  }
+  
+  // Filter by letter
+  if (currentLetter) {
+    if (currentLetter === '#') {
+      list = list.filter(s => !s.surname.charAt(0).match(/[A-Za-z]/));
+    } else {
+      list = list.filter(s => s.surname.charAt(0).toUpperCase() === currentLetter);
+    }
+  }
+  
+  // Sort
+  if (currentSort === 'alpha') {
+    list.sort((a, b) => a.surname.localeCompare(b.surname));
+  } else {
+    list.sort((a, b) => b.count - a.count || a.surname.localeCompare(b.surname));
+  }
+  
+  return list;
+}
+
+function render() {
+  const list = getFiltered();
+  
+  // Stats
+  const total = list.reduce((s, x) => s + x.count, 0);
+  document.getElementById('stats-bar').innerHTML =
+    `Showing <strong>${list.length}</strong> surnames · <strong>${total}</strong> people`;
+  
+  // Grid
+  const gridEl = document.getElementById('surname-grid');
+  gridEl.innerHTML = list.map(s => {
+    const pct = Math.max(5, (s.count / maxCount) * 100);
+    return `<div class="surname-card" data-surname="${s.surname}">
+      <div class="name">${s.surname}</div>
+      <div class="count">${s.count} ${s.count === 1 ? 'person' : 'people'}</div>
+      <div class="bar" style="width: ${pct}%"></div>
+    </div>`;
+  }).join('');
+  
+  // List
+  document.getElementById('surname-tbody').innerHTML = list.map(s => {
+    const pct = Math.max(3, (s.count / maxCount) * 100);
+    return `<tr data-surname="${s.surname}">
+      <td>${s.surname}</td>
+      <td class="count-cell">${s.count}</td>
+      <td class="bar-cell"><div class="mini-bar" style="width: ${pct}%"></div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Sort buttons ──
+document.querySelectorAll('.sort-btns button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sort-btns button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSort = btn.dataset.sort;
+    render();
+  });
+});
+
+// ── View buttons ──
+document.querySelectorAll('.view-btns button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.view-btns button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentView = btn.dataset.view;
+    document.getElementById('surname-grid').classList.toggle('hidden', currentView !== 'grid');
+    document.getElementById('surname-list').classList.toggle('active', currentView === 'list');
+  });
+});
+
+// ── Search ──
+document.getElementById('search').addEventListener('input', () => {
+  // Clear letter filter when searching
+  if (document.getElementById('search').value) {
+    currentLetter = null;
+    document.querySelectorAll('.letter-index a').forEach(a => a.classList.remove('active'));
+    document.querySelector('.letter-index a[data-letter=""]').classList.add('active');
+  }
+  render();
+});
+
+// ── Click surname ──
+document.addEventListener('click', e => {
+  const card = e.target.closest('.surname-card, .surname-list tr[data-surname]');
+  if (card && card.dataset.surname) {
+    openDrawer(card.dataset.surname);
+  }
+});
+
+// ── Drawer ──
+function openDrawer(surname) {
+  document.getElementById('drawer-surname').textContent = surname;
+  
+  // Find matching people
+  const matches = people.filter(p => {
+    const pSurname = p.surname || p.last_name || '';
+    return pSurname.toLowerCase() === surname.toLowerCase() ||
+           (p.name && p.name.toLowerCase().includes(surname.toLowerCase()));
+  });
+  
+  document.getElementById('drawer-count').textContent =
+    `${matches.length} ${matches.length === 1 ? 'person' : 'people'} found`;
+  
+  const pe = document.getElementById('drawer-people');
+  if (matches.length === 0) {
+    pe.innerHTML = '<p style="color:var(--fg2); font-size:0.85rem">No individual records found for this surname. Try viewing in the tree.</p>';
+  } else {
+    pe.innerHTML = matches.map(p => {
+      const name = p.name || `${p.given_name || ''} ${p.surname || ''}`.trim() || 'Unknown';
+      const birth = p.birth_year || p.birth_date || '';
+      const death = p.death_year || p.death_date || '';
+      const dates = birth ? `${birth}${death ? ' – ' + death : ''}` : '';
+      const place = p.birth_place || '';
+      return `<a class="person-link" href="/tree.html?root=${p.id}" target="_blank">
+        ${name}
+        <span class="meta">${[dates, place].filter(Boolean).join(' · ')}</span>
+      </a>`;
+    }).join('');
+  }
+  
+  // Add view links
+  pe.innerHTML += `
+    <div class="link-row">
+      <a href="/tree.html?root=${matches.length > 0 ? matches[0].id : 1}" target="_blank">View in Tree</a>
+      <a href="/graph.html" target="_blank">View in Graph</a>
+    </div>
+  `;
+  
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+}
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
+
+document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+document.getElementById('drawer-overlay').addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDrawer();
+});
+
+// ── Keyboard: / to focus search ──
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement !== document.getElementById('search')) {
+    e.preventDefault();
+    document.getElementById('search').focus();
+  }
+});
+
+loadData();
+</script>
+</body>
+</html>

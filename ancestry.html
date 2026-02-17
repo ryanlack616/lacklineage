@@ -474,6 +474,14 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
 }
 .sel-count:empty { opacity: 0; }
 .marquee { fill: rgba(230,126,34,0.12); stroke: #e67e22; stroke-width: 1.5; stroke-dasharray: 5 3; pointer-events: none; }
+
+@media (max-width: 600px) {
+  header { padding: 0.5rem 0.75rem; gap: 0.5rem; flex-wrap: wrap; }
+  nav a { padding: 0.2rem 0.45rem; font-size: 0.65rem; }
+  .search-input { width: 120px; font-size: 0.75rem; }
+  .breadcrumb { font-size: 0.65rem; padding: 0.2rem 0.5rem; }
+  .detail-panel { width: 85vw; min-width: unset; }
+}
 </style>
 </head>
 <body>

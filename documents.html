@@ -25,33 +25,40 @@
 html, body { height: 100%; }
 body { font-family: var(--font); color: var(--text); background: var(--bg); }
 
-/* ── Top bar ── */
+/* ── Header (unified dark bar) ── */
 .topbar {
-  background: linear-gradient(180deg, #3a7232 0%, #2d5f27 100%);
-  color: #fff;
-  height: 52px;
+  background: #2a2520;
+  color: #f8f6f1;
+  height: auto;
+  padding: 0.75rem 2rem;
   display: flex;
   align-items: center;
-  padding: 0 1.2rem;
-  gap: 1rem;
+  gap: 2rem;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 .topbar .logo {
-  font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em;
-  white-space: nowrap; text-decoration: none; color: #fff;
+  font-size: 1.1rem; font-weight: 700; letter-spacing: 0.05em;
+  white-space: nowrap; text-decoration: none; color: #f8f6f1;
+  font-family: 'Georgia', 'Times New Roman', serif;
 }
-.topbar .logo span { font-weight: 300; opacity: 0.7; }
-.topbar nav { display: flex; gap: 0.15rem; margin-left: 1rem; }
+.topbar .logo span { font-weight: 300; opacity: 0.6; }
+.topbar nav { display: flex; gap: 0.5rem; }
 .topbar nav a {
-  color: rgba(255,255,255,0.8); text-decoration: none;
-  padding: 0.4rem 0.8rem; border-radius: 4px 4px 0 0;
-  font-size: 0.82rem; transition: all 0.15s;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #f8f6f1; text-decoration: none;
+  padding: 0.3rem 0.7rem; border-radius: 6px;
+  font-size: 0.8rem; font-family: 'Georgia', 'Times New Roman', serif;
+  transition: all 0.15s;
 }
-.topbar nav a:hover { color: #fff; background: rgba(255,255,255,0.12); }
-.topbar nav a.active { color: #fff; background: rgba(255,255,255,0.2); font-weight: 600; }
+.topbar nav a:hover, .topbar nav a.active {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.4);
+}
+.topbar nav a.active { font-weight: bold; }
 
 /* ── Filter bar ── */
 .filter-bar {

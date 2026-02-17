@@ -1099,8 +1099,15 @@ async function showDetail(personId) {
       html += '</ul></div>';
     }
 
-    // Re-root button
-    html += `<div class="detail-section"><button onclick="navigateTo(${data.id})">View tree from this person</button></div>`;
+    // Re-root button + cross-links
+    html += `<div class="detail-section">
+      <button onclick="navigateTo(${data.id})" style="width:100%;margin-bottom:0.5rem">View tree from this person</button>
+      <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+        <a href="/ancestry.html?root=${data.id}" target="_blank" style="flex:1;text-align:center;display:block;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.75rem;text-decoration:none;color:var(--fg2);transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--fg2)'">Ancestry</a>
+        <a href="/graph.html" target="_blank" style="flex:1;text-align:center;display:block;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.75rem;text-decoration:none;color:var(--fg2);transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--fg2)'">Graph</a>
+        <a href="/related.html" target="_blank" style="flex:1;text-align:center;display:block;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.75rem;text-decoration:none;color:var(--fg2);transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--fg2)'">Related?</a>
+      </div>
+    </div>`;
 
     content.innerHTML = html;
   } catch (err) {
