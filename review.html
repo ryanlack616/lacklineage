@@ -582,6 +582,7 @@ function renderDetail(doc) {
       <div class="image-panel" id="image-panel">
         ${doc.thumb
           ? `<img id="doc-img" src="/api/documents/${doc.id}/image" alt="${esc(doc.title)}" style="transform:scale(${zoomLevel})"
+              data-lightbox data-lb-title="${esc(doc.title)}"
               onerror="this.src='${doc.thumb}'">`
           : `<div class="no-img">${typeIcon(doc.type)}</div>`}
         <div class="zoom-controls">
@@ -837,6 +838,7 @@ function esc(s) {
   return d.innerHTML;
 }
 </script>
+<script src="/data/lightbox.js"></script>
 <script src="/data/help-widget.js"></script>
 <script>
 initHelp({

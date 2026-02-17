@@ -612,7 +612,7 @@ function renderGrid() {
   grid.innerHTML = pageItems.map((doc, pi) => {
     const i = start + pi;
     const thumbHtml = doc.thumb
-      ? `<img class="thumb" src="${encThumb(doc.thumb)}" alt="${esc(doc.title)}" loading="lazy">`
+      ? `<img class="thumb" src="${encThumb(doc.thumb)}" alt="${esc(doc.title)}" loading="lazy" data-lightbox data-lb-title="${esc(doc.title)}">`
       : `<div class="thumb-placeholder">${typeIcon(doc.type)}</div>`;
 
     const typeClass = 'type-' + (doc.type || 'other');
@@ -703,7 +703,7 @@ function openModal(doc) {
   // Image
   const imgDiv = document.getElementById('modal-image');
   if (doc.thumb) {
-    imgDiv.innerHTML = `<img src="${encThumb(doc.thumb)}" alt="${esc(doc.title)}">`;
+    imgDiv.innerHTML = `<img src="${encThumb(doc.thumb)}" alt="${esc(doc.title)}" data-lightbox data-lb-title="${esc(doc.title)}">`;
   } else {
     imgDiv.innerHTML = `<div class="no-image">${typeIcon(doc.type)}</div>`;
   }
@@ -776,6 +776,7 @@ function encThumb(path) {
   return path.split('/').map(s => encodeURIComponent(s)).join('/');
 }
 </script>
+<script src="/data/lightbox.js"></script>
 <script src="/data/help-widget.js"></script>
 <script>
 initHelp({

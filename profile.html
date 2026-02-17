@@ -1012,7 +1012,7 @@ function renderGallery(p) {
     const badgeCls = 'badge-' + (type in DOC_ICONS ? type : 'other');
     const imgSrc   = d.thumb || d.filepath;
     const thumb    = imgSrc
-      ? `<img class="gal-thumb" src="${encP(imgSrc)}" loading="lazy"
+      ? `<img class="gal-thumb" src="${encP(imgSrc)}" loading="lazy" data-lightbox data-lb-title="${esc(caption)}"
               onerror="this.outerHTML='<div class=\\'gal-placeholder\\'>${icon}</div>'">`
       : `<div class="gal-placeholder">${icon}</div>`;
     const conf    = d.match_confidence!=null ? `${(d.match_confidence*100).toFixed(0)}%` : '';
@@ -1169,7 +1169,7 @@ function openModal(doc) {
 
   // Image
   const imgSrc = doc.thumb || doc.filepath;
-  if (imgSrc) html += `<img src="${encP(imgSrc)}" alt="Document image">`;
+  if (imgSrc) html += `<img src="${encP(imgSrc)}" alt="Document image" data-lightbox data-lb-title="${esc(title)}">`;
 
   // OCR text
   if (doc.ocr_excerpt) {
@@ -1404,6 +1404,7 @@ window.addEventListener('popstate', () => {
   }
 });
 </script>
+<script src="/data/lightbox.js"></script>
 <script src="/data/help-widget.js"></script>
 <script>
 initHelp({

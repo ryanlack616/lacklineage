@@ -731,7 +731,7 @@ function renderDocuments(p) {
     const imgSrc = d.filepath ? encPath(d.filepath) : null;
     return `<div class="doc-thumb" title="${esc(label)}">
       ${imgSrc
-        ? `<img src="${imgSrc}" loading="lazy" onerror="this.outerHTML='<div class=\\'doc-thumb-placeholder\\'>${icon}</div>'">`
+        ? `<img src="${imgSrc}" loading="lazy" data-lightbox data-lb-title="${esc(label)}" onerror="this.outerHTML='<div class=\\'doc-thumb-placeholder\\'>${icon}</div>'">`
         : `<div class="doc-thumb-placeholder">${icon}</div>`}
       <div class="doc-thumb-label">${esc(label)}</div>
     </div>`;
@@ -946,6 +946,7 @@ function encPath(p) {
   return p.replace(/\\/g, '/').split('/').map(s => encodeURIComponent(s)).join('/');
 }
 </script>
+<script src="/data/lightbox.js"></script>
 <script src="/data/help-widget.js"></script>
 <script>
 initHelp({
