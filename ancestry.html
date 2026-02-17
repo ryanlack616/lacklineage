@@ -29,42 +29,48 @@
 html, body { height: 100%; overflow: hidden; }
 body { font-family: var(--font); color: var(--text); background: var(--bg); }
 
-/* ── Top bar (Ancestry-style green bar) ── */
+/* ── Header (unified dark bar) ── */
 .topbar {
-  background: #2d5f27;
-  background: linear-gradient(180deg, #3a7232 0%, #2d5f27 100%);
-  color: #fff;
-  height: 52px;
+  background: #2a2520;
+  color: #f8f6f1;
+  height: auto;
+  padding: 0.75rem 2rem;
   display: flex;
   align-items: center;
-  padding: 0 1.2rem;
-  gap: 1rem;
+  gap: 2rem;
   z-index: 100;
   position: relative;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 .topbar .logo {
   font-size: 1.1rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.05em;
   white-space: nowrap;
   text-decoration: none;
-  color: #fff;
+  color: #f8f6f1;
+  font-family: 'Georgia', 'Times New Roman', serif;
 }
-.topbar .logo span { font-weight: 300; opacity: 0.7; }
+.topbar .logo span { font-weight: 300; opacity: 0.6; }
 
 /* Nav tabs */
-.topbar nav { display: flex; gap: 0.15rem; margin-left: 1rem; }
+.topbar nav { display: flex; gap: 0.5rem; }
 .topbar nav a {
-  color: rgba(255,255,255,0.8);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #f8f6f1;
   text-decoration: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: 4px 4px 0 0;
-  font-size: 0.82rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-family: 'Georgia', 'Times New Roman', serif;
   transition: all 0.15s;
 }
-.topbar nav a:hover { color: #fff; background: rgba(255,255,255,0.12); }
-.topbar nav a.active { color: #fff; background: rgba(255,255,255,0.2); font-weight: 600; }
+.topbar nav a:hover, .topbar nav a.active {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.4);
+}
+.topbar nav a.active { font-weight: bold; }
 
 /* Search in topbar */
 .topbar-search {
@@ -74,18 +80,18 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
 .topbar-search input {
   width: 240px;
   padding: 0.4rem 0.8rem 0.4rem 2rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 0.82rem;
-  font-family: var(--font);
-  background: rgba(255,255,255,0.2);
-  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  background: rgba(255,255,255,0.1);
+  color: #f8f6f1;
   outline: none;
   transition: all 0.2s;
 }
-.topbar-search input::placeholder { color: rgba(255,255,255,0.6); }
-.topbar-search input:focus { background: rgba(255,255,255,0.95); color: var(--text); width: 300px; }
-.topbar-search input:focus::placeholder { color: var(--text3); }
+.topbar-search input::placeholder { color: rgba(255,255,255,0.5); }
+.topbar-search input:focus { background: rgba(255,255,255,0.95); color: #2a2520; width: 300px; border-color: rgba(255,255,255,0.6); }
+.topbar-search input:focus::placeholder { color: #999; }
 .topbar-search .search-icon {
   position: absolute;
   left: 0.6rem;
@@ -198,6 +204,12 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
   border: 2px solid var(--accent);
   background: var(--accent-light);
 }
+.person-card.selected {
+  outline: 3px solid #e67e22;
+  outline-offset: -1px;
+  box-shadow: 0 0 0 4px rgba(230,126,34,0.25), var(--shadow-hover) !important;
+}
+.person-card.dragging { opacity: 0.85; }
 
 /* Avatar silhouette */
 .card-avatar {
@@ -454,6 +466,14 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
   animation: spin 0.7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+.sel-count {
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: rgba(230,126,34,0.9); color: #fff; padding: 0.3rem 0.9rem;
+  border-radius: 20px; font-size: 0.78rem; font-weight: 600; z-index: 50;
+  pointer-events: none; transition: opacity 0.2s;
+}
+.sel-count:empty { opacity: 0; }
+.marquee { fill: rgba(230,126,34,0.12); stroke: #e67e22; stroke-width: 1.5; stroke-dasharray: 5 3; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -492,7 +512,10 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
   <button id="btn-zoomin" title="Zoom in">+</button>
   <button id="btn-zoomout" title="Zoom out">−</button>
   <button id="btn-fit" title="Fit to view">⊡</button>
+  <button id="btn-orient" title="Switch to vertical view">⬍</button>
+  <button id="btn-reset" title="Reset card positions">↺</button>
 </div>
+<div class="sel-count" id="sel-count"></div>
 
 <!-- Loading overlay -->
 <div class="loading-overlay" id="loading">
@@ -532,6 +555,13 @@ let depth = DEFAULT_DEPTH;
 let history = [];
 let treeData = null;
 let svg, gMain, zoomBehavior;
+let orientation = 'horizontal';
+let selectedNodes = new Set();
+let currentNodes = [];
+let currentLinks = [];
+let dragState = null;
+let clickTimer = null;
+let marqueeState = null;   // {rect, sx, sy} for rectangle selection
 
 // ═══════════════════════════════════════════
 // HELPERS
@@ -581,8 +611,52 @@ function initCanvas() {
 
   zoomBehavior = d3.zoom()
     .scaleExtent([0.1, 2.5])
+    .filter(event => !event.shiftKey)   // shift+drag = marquee, not pan
     .on('zoom', (event) => gMain.attr('transform', event.transform));
   svg.call(zoomBehavior);
+
+  // ── Marquee rectangle selection (shift+drag on background) ──
+  svg.on('mousedown.marquee', function(event) {
+    if (!event.shiftKey) return;
+    if (event.button !== 0) return;
+    event.preventDefault();
+    const pt = getSVGPointFromSVG(event);
+    const rect = gMain.append('rect').attr('class', 'marquee')
+      .attr('x', pt.x).attr('y', pt.y).attr('width', 0).attr('height', 0);
+    marqueeState = { rect, sx: pt.x, sy: pt.y };
+  });
+  svg.on('mousemove.marquee', function(event) {
+    if (!marqueeState) return;
+    event.preventDefault();
+    const pt = getSVGPointFromSVG(event);
+    const x = Math.min(marqueeState.sx, pt.x);
+    const y = Math.min(marqueeState.sy, pt.y);
+    const w = Math.abs(pt.x - marqueeState.sx);
+    const h = Math.abs(pt.y - marqueeState.sy);
+    marqueeState.rect.attr('x', x).attr('y', y).attr('width', w).attr('height', h);
+  });
+  svg.on('mouseup.marquee', function(event) {
+    if (!marqueeState) return;
+    const pt = getSVGPointFromSVG(event);
+    const x1 = Math.min(marqueeState.sx, pt.x);
+    const y1 = Math.min(marqueeState.sy, pt.y);
+    const x2 = Math.max(marqueeState.sx, pt.x);
+    const y2 = Math.max(marqueeState.sy, pt.y);
+    marqueeState.rect.remove();
+    marqueeState = null;
+
+    // Select cards that overlap the rectangle
+    if (!event.ctrlKey && !event.metaKey) selectedNodes.clear();
+    for (const nd of currentNodes) {
+      if (nd.empty) continue;
+      const cx = nd.x + CARD_W / 2;
+      const cy = nd.y + CARD_H / 2;
+      if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
+        selectedNodes.add(nd.id);
+      }
+    }
+    updateSelectionVisuals();
+  });
 }
 
 // ═══════════════════════════════════════════
@@ -594,80 +668,76 @@ function initCanvas() {
 // ═══════════════════════════════════════════
 
 function layoutPedigree(data, maxGens) {
-  // Flatten tree into positioned nodes
   const nodes = [];
   const links = [];
+  const isVert = orientation === 'vertical';
 
-  // Total height based on deepest generation
-  const leafCount = Math.pow(2, maxGens - 1);
-  const totalH = leafCount * (CARD_H + V_GAP);
-
-  function place(node, gen, yMin, yMax) {
-    if (!node) return null;
-    const yMid = (yMin + yMax) / 2;
-    const x = gen * (CARD_W + H_GAP);
-    const y = yMid - CARD_H / 2;
-
-    const positioned = {
-      ...node,
-      x, y,
-      yMid,
-      gen,
-      hasHiddenParents: !!(node._parents && node._parents.length > 0)
-    };
-    nodes.push(positioned);
-
-    // parents array
-    const parents = node.parents || [];
-    // In a pedigree, index 0 = father (top), index 1 = mother (bottom)
-    // but we just take them in order
-    if (parents.length > 0 || gen < maxGens - 1) {
-      const father = parents[0] || null;
-      const mother = parents[1] || null;
-
-      const halfH = (yMax - yMin) / 2;
-
-      if (father) {
-        const fNode = place(father, gen + 1, yMin, yMin + halfH);
-        if (fNode) links.push({ source: positioned, target: fNode });
-      } else if (gen < maxGens - 1) {
-        // Empty slot for father
-        const ey = (yMin + yMin + halfH) / 2 - CARD_H / 2;
-        const ex = (gen + 1) * (CARD_W + H_GAP);
-        nodes.push({ id: `empty-f-${node.id}-${gen}`, empty: true, x: ex, y: ey, yMid: ey + CARD_H / 2, gen: gen + 1 });
-      }
-
-      if (mother) {
-        const mNode = place(mother, gen + 1, yMin + halfH, yMax);
-        if (mNode) links.push({ source: positioned, target: mNode });
-      } else if (gen < maxGens - 1) {
-        const ey = (yMin + halfH + yMax) / 2 - CARD_H / 2;
-        const ex = (gen + 1) * (CARD_W + H_GAP);
-        nodes.push({ id: `empty-m-${node.id}-${gen}`, empty: true, x: ex, y: ey, yMid: ey + CARD_H / 2, gen: gen + 1 });
-      }
-    }
-
-    return positioned;
-  }
-
-  // Determine actual maxGens from data
   function treeDepth(n, d = 0) {
     if (!n) return d;
     const parents = n.parents || [];
     let maxD = d;
-    for (const p of parents) {
-      maxD = Math.max(maxD, treeDepth(p, d + 1));
-    }
+    for (const p of parents) maxD = Math.max(maxD, treeDepth(p, d + 1));
     return maxD;
   }
 
   const actualDepth = Math.min(treeDepth(data) + 1, maxGens);
+  // Slot size along the spread axis
+  const slotSize = isVert ? (CARD_W + 24) : (CARD_H + V_GAP);
+  const genStep  = isVert ? (CARD_H + 60) : (CARD_W + H_GAP);
   const actualLeaves = Math.pow(2, actualDepth - 1);
-  const actualH = actualLeaves * (CARD_H + V_GAP);
+  const totalSpan = actualLeaves * slotSize;
 
-  place(data, 0, 0, actualH);
+  function place(node, gen, spanMin, spanMax) {
+    if (!node) return null;
+    const spanMid = (spanMin + spanMax) / 2;
+    let x, y, yMid;
+    if (isVert) {
+      x = spanMid - CARD_W / 2;
+      y = -gen * genStep;
+      yMid = y + CARD_H / 2;
+    } else {
+      x = gen * genStep;
+      y = spanMid - CARD_H / 2;
+      yMid = spanMid;
+    }
 
-  return { nodes, links, totalW: actualDepth * (CARD_W + H_GAP), totalH: actualH };
+    const positioned = { ...node, x, y, yMid, gen,
+      hasHiddenParents: !!(node._parents && node._parents.length > 0) };
+    nodes.push(positioned);
+
+    const parents = node.parents || [];
+    if (parents.length > 0 || gen < actualDepth - 1) {
+      const father = parents[0] || null;
+      const mother = parents[1] || null;
+      const halfSpan = (spanMax - spanMin) / 2;
+
+      if (father) {
+        const fNode = place(father, gen + 1, spanMin, spanMin + halfSpan);
+        if (fNode) links.push({ source: positioned, target: fNode });
+      } else if (gen < actualDepth - 1) {
+        let ex, ey;
+        if (isVert) { ex = (spanMin + spanMin + halfSpan)/2 - CARD_W/2; ey = -(gen+1)*genStep; }
+        else { ex = (gen+1)*genStep; ey = (spanMin + spanMin + halfSpan)/2 - CARD_H/2; }
+        nodes.push({ id: `empty-f-${node.id}-${gen}`, empty: true, x: ex, y: ey, yMid: ey + CARD_H/2, gen: gen+1 });
+      }
+
+      if (mother) {
+        const mNode = place(mother, gen + 1, spanMin + halfSpan, spanMax);
+        if (mNode) links.push({ source: positioned, target: mNode });
+      } else if (gen < actualDepth - 1) {
+        let ex, ey;
+        if (isVert) { ex = (spanMin + halfSpan + spanMax)/2 - CARD_W/2; ey = -(gen+1)*genStep; }
+        else { ex = (gen+1)*genStep; ey = (spanMin + halfSpan + spanMax)/2 - CARD_H/2; }
+        nodes.push({ id: `empty-m-${node.id}-${gen}`, empty: true, x: ex, y: ey, yMid: ey + CARD_H/2, gen: gen+1 });
+      }
+    }
+    return positioned;
+  }
+
+  place(data, 0, 0, totalSpan);
+  const totalW = isVert ? totalSpan : actualDepth * genStep;
+  const totalH = isVert ? actualDepth * genStep : totalSpan;
+  return { nodes, links, totalW, totalH };
 }
 
 // ═══════════════════════════════════════════
@@ -702,105 +772,237 @@ async function loadAndRender() {
 
 function render(data) {
   gMain.selectAll('*').remove();
+  selectedNodes.clear();
+  currentNodes = [];
+  currentLinks = [];
 
   const layout = layoutPedigree(data, depth);
-  const { nodes, links, totalW, totalH } = layout;
+  currentNodes = layout.nodes;
+  currentLinks = layout.links;
+  const isVert = orientation === 'vertical';
+  const genStep = isVert ? (CARD_H + 60) : (CARD_W + H_GAP);
 
   // ── Generation labels ──
-  const gensUsed = new Set(nodes.map(n => n.gen));
+  const gensUsed = [...new Set(currentNodes.map(n => n.gen))];
   for (const gen of gensUsed) {
-    const x = gen * (CARD_W + H_GAP) + CARD_W / 2;
-    gMain.append('text')
-      .attr('class', 'gen-label')
-      .attr('x', x)
-      .attr('y', -20)
-      .attr('text-anchor', 'middle')
-      .text(GEN_LABELS[gen] || `Gen ${gen}`);
+    if (isVert) {
+      const minX = currentNodes.filter(n => n.gen === gen && !n.empty)
+        .reduce((m, n) => Math.min(m, n.x), Infinity);
+      gMain.append('text').attr('class', 'gen-label')
+        .attr('x', (minX === Infinity ? 0 : minX) - 20)
+        .attr('y', -gen * genStep + CARD_H / 2)
+        .attr('text-anchor', 'end').attr('dominant-baseline', 'middle')
+        .text(GEN_LABELS[gen] || `Gen ${gen}`);
+    } else {
+      gMain.append('text').attr('class', 'gen-label')
+        .attr('x', gen * genStep + CARD_W / 2).attr('y', -20)
+        .attr('text-anchor', 'middle')
+        .text(GEN_LABELS[gen] || `Gen ${gen}`);
+    }
   }
 
   // ── Connection lines ──
-  const lineGroup = gMain.append('g').attr('class', 'connections');
-  for (const link of links) {
-    const sx = link.source.x + CARD_W;
-    const sy = link.source.yMid;
-    const tx = link.target.x;
-    const ty = link.target.yMid;
-    const mx = sx + (tx - sx) * 0.5;
+  gMain.append('g').attr('class', 'connections');
+  updateLines();
 
-    lineGroup.append('path')
-      .attr('d', `M${sx},${sy} C${mx},${sy} ${mx},${ty} ${tx},${ty}`)
-      .attr('fill', 'none')
-      .attr('stroke', 'var(--line-color)')
-      .attr('stroke-width', 2)
-      .attr('opacity', 0.7);
-  }
-
-  // ── Person cards ──
+  // ── Cards ──
   const cardGroup = gMain.append('g').attr('class', 'cards');
 
-  for (const node of nodes) {
-    if (node.empty) {
-      // Empty/dashed slot
-      const fo = cardGroup.append('foreignObject')
-        .attr('x', node.x)
-        .attr('y', node.y)
-        .attr('width', CARD_W)
-        .attr('height', CARD_H);
-
-      const div = fo.append('xhtml:div')
-        .attr('class', 'empty-slot');
-      div.html(`<span>Add Father/Mother</span>`);
-      continue;
-    }
-
-    const isRoot = node.gen === 0;
+  // Empty slots
+  for (const node of currentNodes.filter(n => n.empty)) {
     const fo = cardGroup.append('foreignObject')
-      .attr('x', node.x)
-      .attr('y', node.y)
-      .attr('width', CARD_W)
-      .attr('height', CARD_H)
-      .style('overflow', 'visible');
-
-    const sexCls = sexClass(node.sex);
-    const avCls = node.sex === 'M' ? 'male-av' : node.sex === 'F' ? 'female-av' : '';
-
-    const card = fo.append('xhtml:div')
-      .attr('class', `person-card ${sexCls} ${isRoot ? 'root-card' : ''}`)
-      .attr('data-id', node.id);
-
-    card.html(`
-      <div class="card-avatar ${avCls}">${avatarSvg(node.sex)}</div>
-      <div class="card-info">
-        <div class="card-name" title="${node.name || 'Unknown'}">${node.name || 'Unknown'}</div>
-        <div class="card-dates">${lifespan(node)}</div>
-      </div>
-      <div class="confidence-dot tier-${node.confidence_tier || 'speculative'}" title="Confidence: ${node.confidence || 0}% (${(node.confidence_tier || 'speculative').toUpperCase()})"></div>
-    `);
-
-    // Click → navigate to this person as new root
-    card.on('click', function(event) {
-      event.stopPropagation();
-      if (event.shiftKey || event.ctrlKey) {
-        // Shift/Ctrl+click → show detail modal
-        showModal(node.id);
-      } else {
-        navigateTo(node.id, node.name);
-      }
-    });
-
-    // Right-click → detail modal
-    card.on('contextmenu', function(event) {
-      event.preventDefault();
-      showModal(node.id);
-    });
-
-    // Double-click → detail modal
-    card.on('dblclick', function(event) {
-      event.preventDefault();
-      event.stopPropagation();
-      showModal(node.id);
-    });
+      .attr('x', node.x).attr('y', node.y)
+      .attr('width', CARD_W).attr('height', CARD_H);
+    fo.append('xhtml:div').attr('class', 'empty-slot')
+      .html('<span>Unknown</span>');
   }
+
+  // Person cards via D3 data join (enables drag)
+  const realNodes = currentNodes.filter(n => !n.empty);
+  const cardFOs = cardGroup.selectAll('.card-fo')
+    .data(realNodes, d => d.id)
+    .join('foreignObject')
+    .attr('class', 'card-fo')
+    .attr('data-node-id', d => d.id)
+    .attr('x', d => d.x).attr('y', d => d.y)
+    .attr('width', CARD_W).attr('height', CARD_H)
+    .style('overflow', 'visible');
+
+  cardFOs.each(function(d) {
+    const isRoot = d.gen === 0;
+    const sexCls = sexClass(d.sex);
+    const avCls = d.sex === 'M' ? 'male-av' : d.sex === 'F' ? 'female-av' : '';
+    d3.select(this).append('xhtml:div')
+      .attr('class', `person-card ${sexCls} ${isRoot ? 'root-card' : ''}`)
+      .attr('data-id', d.id)
+      .html(`
+        <div class="card-avatar ${avCls}">${avatarSvg(d.sex)}</div>
+        <div class="card-info">
+          <div class="card-name" title="${d.name || 'Unknown'}">${d.name || 'Unknown'}</div>
+          <div class="card-dates">${lifespan(d)}</div>
+        </div>
+        <div class="confidence-dot tier-${d.confidence_tier || 'speculative'}" title="Confidence: ${d.confidence || 0}% (${(d.confidence_tier || 'speculative').toUpperCase()})"></div>
+      `);
+  });
+
+  // ── Drag behaviour ──
+  cardFOs.call(d3.drag()
+    .on('start', dragStarted)
+    .on('drag', dragged)
+    .on('end', dragEnded)
+  );
+
+  // ── Click = select / Dbl-click = navigate ──
+  cardFOs.on('click', function(event, d) {
+    event.stopPropagation();
+    clearTimeout(clickTimer);
+    const ctrl = event.ctrlKey || event.metaKey;
+    const shift = event.shiftKey;
+    clickTimer = setTimeout(() => {
+      if (ctrl) {
+        if (selectedNodes.has(d.id)) selectedNodes.delete(d.id);
+        else selectedNodes.add(d.id);
+      } else if (shift) {
+        selectedNodes.add(d.id);
+      } else {
+        selectedNodes.clear();
+        selectedNodes.add(d.id);
+      }
+      updateSelectionVisuals();
+    }, 220);
+  });
+
+  cardFOs.on('dblclick', function(event, d) {
+    event.stopPropagation();
+    event.preventDefault();
+    clearTimeout(clickTimer);
+    navigateTo(d.id, d.name);
+  });
+
+  cardFOs.on('contextmenu', function(event, d) {
+    event.preventDefault();
+    showModal(d.id);
+  });
+
+  // Deselect on background click
+  svg.on('click.select', function(event) {
+    if (event.target === svg.node() || event.target.tagName === 'svg') {
+      selectedNodes.clear();
+      updateSelectionVisuals();
+    }
+  });
+
+  updateSelectionVisuals();
+}
+
+// ═══════════════════════════════════════════
+// DRAG & SELECT
+// ═══════════════════════════════════════════
+
+function getSVGPoint(sourceEvent) {
+  const pt = svg.node().createSVGPoint();
+  pt.x = sourceEvent.clientX;
+  pt.y = sourceEvent.clientY;
+  const ctm = gMain.node().getScreenCTM();
+  return ctm ? pt.matrixTransform(ctm.inverse()) : pt;
+}
+
+// Same as getSVGPoint but takes a raw MouseEvent (not d3.drag sourceEvent)
+function getSVGPointFromSVG(event) {
+  const pt = svg.node().createSVGPoint();
+  pt.x = event.clientX;
+  pt.y = event.clientY;
+  const ctm = gMain.node().getScreenCTM();
+  return ctm ? pt.matrixTransform(ctm.inverse()) : pt;
+}
+
+function dragStarted(event, d) {
+  event.sourceEvent.stopPropagation();
+  // Auto-select if not in selection
+  if (!selectedNodes.has(d.id)) {
+    selectedNodes.clear();
+    selectedNodes.add(d.id);
+    updateSelectionVisuals();
+  }
+  const pt = getSVGPoint(event.sourceEvent);
+  dragState = { starts: new Map(), sx: pt.x, sy: pt.y };
+  for (const nd of currentNodes) {
+    if (selectedNodes.has(nd.id)) {
+      dragState.starts.set(nd.id, { x: nd.x, y: nd.y, yMid: nd.yMid });
+    }
+  }
+  // Visual feedback
+  for (const id of selectedNodes) {
+    gMain.select(`[data-node-id="${id}"]`).select('.person-card').classed('dragging', true);
+  }
+}
+
+function dragged(event, d) {
+  if (!dragState) return;
+  const pt = getSVGPoint(event.sourceEvent);
+  const dx = pt.x - dragState.sx;
+  const dy = pt.y - dragState.sy;
+  for (const [id, start] of dragState.starts) {
+    const nd = currentNodes.find(n => n.id === id);
+    if (!nd) continue;
+    nd.x = start.x + dx;
+    nd.y = start.y + dy;
+    nd.yMid = start.yMid + dy;
+    gMain.select(`[data-node-id="${id}"]`).attr('x', nd.x).attr('y', nd.y);
+  }
+  updateLines();
+}
+
+function dragEnded(event, d) {
+  dragState = null;
+  gMain.selectAll('.person-card.dragging').classed('dragging', false);
+}
+
+function updateLines() {
+  const lineGroup = gMain.select('.connections');
+  if (lineGroup.empty()) return;
+  const isVert = orientation === 'vertical';
+  lineGroup.selectAll('path')
+    .data(currentLinks)
+    .join('path')
+    .attr('d', link => {
+      const s = link.source, t = link.target;
+      if (isVert) {
+        const sx = s.x + CARD_W/2, sy = s.y;
+        const tx = t.x + CARD_W/2, ty = t.y + CARD_H;
+        const my = sy + (ty - sy) * 0.5;
+        return `M${sx},${sy} C${sx},${my} ${tx},${my} ${tx},${ty}`;
+      } else {
+        const sx = s.x + CARD_W, sy = s.yMid;
+        const tx = t.x, ty = t.yMid;
+        const mx = sx + (tx - sx) * 0.5;
+        return `M${sx},${sy} C${mx},${sy} ${mx},${ty} ${tx},${ty}`;
+      }
+    })
+    .attr('fill', 'none')
+    .attr('stroke', 'var(--line-color)')
+    .attr('stroke-width', 2)
+    .attr('opacity', 0.7);
+}
+
+function updateSelectionVisuals() {
+  gMain.selectAll('.card-fo').each(function(d) {
+    d3.select(this).select('.person-card').classed('selected', selectedNodes.has(d.id));
+  });
+  const el = document.getElementById('sel-count');
+  if (el) el.textContent = selectedNodes.size > 0 ? `${selectedNodes.size} selected` : '';
+}
+
+function toggleOrientation() {
+  orientation = orientation === 'horizontal' ? 'vertical' : 'horizontal';
+  const btn = document.getElementById('btn-orient');
+  btn.textContent = orientation === 'horizontal' ? '⬍' : '⬌';
+  btn.title = orientation === 'horizontal' ? 'Switch to vertical view' : 'Switch to horizontal view';
+  if (treeData) { render(treeData); setTimeout(fitToView, 50); }
+}
+
+function resetPositions() {
+  if (treeData) { render(treeData); setTimeout(fitToView, 50); }
 }
 
 // ═══════════════════════════════════════════
@@ -1039,6 +1241,11 @@ document.getElementById('btn-fit').addEventListener('click', fitToView);
 
 document.getElementById('btn-back').addEventListener('click', goBack);
 document.getElementById('btn-home').addEventListener('click', goHome);
+document.getElementById('btn-orient').addEventListener('click', toggleOrientation);
+document.getElementById('btn-reset').addEventListener('click', resetPositions);
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { selectedNodes.clear(); updateSelectionVisuals(); }
+});
 
 document.getElementById('modal-close').addEventListener('click', () =>
   document.getElementById('modal-overlay').classList.remove('show'));
