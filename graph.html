@@ -360,6 +360,7 @@ canvas#canvas:active { cursor: grabbing; }
   <h3>
     Family Graph
     <button id="resetBtn" title="Reset view">Reset</button>
+    <button id="recenterBtn" title="Fit all nodes on screen">Recenter</button>
   </h3>
 
   <div class="ctrl-row search-wrap">
@@ -1332,6 +1333,27 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   userLinkDist = null; userCharge = null; userGravity = null; userCollPad = 1;
   clearFocus();
 });
+
+document.getElementById('recenterBtn').addEventListener('click', () => {
+  if (!nodes.length) return;
+  const pad = 40;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  nodes.forEach(n => {
+    const r = nodeRadius(n);
+    if (n.x - r < x0) x0 = n.x - r;
+    if (n.y - r < y0) y0 = n.y - r;
+    if (n.x + r > x1) x1 = n.x + r;
+    if (n.y + r > y1) y1 = n.y + r;
+  });
+  const bw = x1 - x0, bh = y1 - y0;
+  if (bw <= 0 || bh <= 0) return;
+  const k = Math.min((width - pad * 2) / bw, (height - pad * 2) / bh, 10);
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  const tx = width / 2 - cx * k, ty = height / 2 - cy * k;
+  d3.select(canvas).transition().duration(600)
+    .call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(k));
+});
+
 document.getElementById('focusClear').addEventListener('click', clearFocus);
 
 function updateLegend() {
