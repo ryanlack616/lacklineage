@@ -437,11 +437,9 @@ svg:active { cursor: grabbing; }
   <h1><a href="/">Lack <span>Lineage</span></a></h1>
   <nav>
     <a href="/">Dashboard</a>
+    <a href="/search.html">Search</a>
     <a href="/graph.html">Graph</a>
     <a href="/tree.html" class="active">Tree</a>
-    <a href="/ancestry.html">Ancestry</a>
-    <a href="/documents.html">Documents</a>
-    <a href="/profile.html">Profile</a>
   </nav>
   <div class="header-search">
     <input type="text" id="search-input" placeholder="Find person… (/)" autocomplete="off">
@@ -668,10 +666,101 @@ function initSVG() {
 
   zoom = d3.zoom()
     .scaleExtent([0.05, 3])
+    .filter(event => {
+      // Allow scroll-wheel zoom always; block left-click pan (we use it for marquee)
+      if (event.type === 'wheel') return true;
+      if (event.type === 'mousedown' && event.button === 0) return false;
+      // Middle-click pan is fine
+      return !event.ctrlKey;
+    })
     .on('zoom', (event) => {
       g.attr('transform', event.transform);
     });
   svg.call(zoom);
+  // Allow middle-click drag to pan
+  svg.on('mousedown.zoom', function(event) {
+    if (event.button === 1) {
+      event.preventDefault();
+    }
+  });
+
+  // ── Marquee rectangle selection (left-click drag on background) ──
+  svg.on('mousedown.marquee', function(event) {
+    if (event.button !== 0) return;
+    // Only start marquee if clicking on empty SVG background
+    if (event.target !== svg.node() && event.target.tagName !== 'svg') return;
+    event.preventDefault();
+    const pt = getSVGPoint(event);
+    const rect = g.append('rect').attr('class', 'marquee')
+      .attr('x', pt.x).attr('y', pt.y).attr('width', 0).attr('height', 0);
+    marqueeState = { rect, sx: pt.x, sy: pt.y };
+  });
+  svg.on('mousemove.marquee', function(event) {
+    if (!marqueeState) return;
+    event.preventDefault();
+    const pt = getSVGPoint(event);
+    const x = Math.min(marqueeState.sx, pt.x);
+    const y = Math.min(marqueeState.sy, pt.y);
+    const w = Math.abs(pt.x - marqueeState.sx);
+    const h = Math.abs(pt.y - marqueeState.sy);
+    marqueeState.rect.attr('x', x).attr('y', y).attr('width', w).attr('height', h);
+  });
+  svg.on('mouseup.marquee', function(event) {
+    if (!marqueeState) return;
+    const pt = getSVGPoint(event);
+    const x1 = Math.min(marqueeState.sx, pt.x);
+    const y1 = Math.min(marqueeState.sy, pt.y);
+    const x2 = Math.max(marqueeState.sx, pt.x);
+    const y2 = Math.max(marqueeState.sy, pt.y);
+    marqueeState.rect.remove();
+    marqueeState = null;
+
+    // Only select if dragged a meaningful distance
+    if (Math.abs(x2 - x1) < 5 && Math.abs(y2 - y1) < 5) return;
+
+    if (!event.ctrlKey && !event.metaKey) selectedNodes.clear();
+    for (const nd of allRenderedNodes) {
+      const cx = nd.y;  // node center x (d3 tree uses y for horizontal)
+      const cy = nd.x;  // node center y
+      if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
+        selectedNodes.add(nd.data.id);
+      }
+    }
+    updateSelectionVisuals();
+  });
+
+  // Deselect on background click (only if no drag happened)
+  svg.on('click.deselect', function(event) {
+    if (event.target === svg.node() || event.target.tagName === 'svg') {
+      if (selectedNodes.size > 0) {
+        selectedNodes.clear();
+        updateSelectionVisuals();
+      }
+    }
+  });
+}
+
+// ── SVG coordinate helper ──
+function getSVGPoint(event) {
+  const pt = svg.node().createSVGPoint();
+  pt.x = event.clientX;
+  pt.y = event.clientY;
+  const ctm = g.node().getScreenCTM();
+  return ctm ? pt.matrixTransform(ctm.inverse()) : pt;
+}
+
+// ── Selection visuals ──
+function updateSelectionVisuals() {
+  g.selectAll('.node').each(function(d) {
+    d3.select(this).classed('selected', selectedNodes.has(d.data.id));
+  });
+  const badge = document.getElementById('selection-badge');
+  if (selectedNodes.size > 0) {
+    badge.textContent = `${selectedNodes.size} selected`;
+    badge.classList.add('visible');
+  } else {
+    badge.classList.remove('visible');
+  }
 }
 
 // ── Fetch tree data ──
@@ -855,13 +944,66 @@ function renderFromRoot(root, direction) {
       return '−';
     });
 
-  // Click to expand/collapse
+  // Store rendered nodes for marquee selection
+  allRenderedNodes = root.descendants();
+
+  // ── Drag behaviour ──
+  nodes.call(d3.drag()
+    .on('start', function(event, d) {
+      event.sourceEvent.stopPropagation();
+      if (!selectedNodes.has(d.data.id)) {
+        if (!event.sourceEvent.ctrlKey && !event.sourceEvent.metaKey) selectedNodes.clear();
+        selectedNodes.add(d.data.id);
+        updateSelectionVisuals();
+      }
+      const pt = getSVGPoint(event.sourceEvent);
+      dragState = { starts: new Map(), sx: pt.x, sy: pt.y };
+      for (const nd of allRenderedNodes) {
+        if (selectedNodes.has(nd.data.id)) {
+          dragState.starts.set(nd.data.id, { x: nd.x, y: nd.y });
+        }
+      }
+      for (const id of selectedNodes) {
+        g.selectAll('.node').filter(dd => dd.data.id === id).classed('dragging', true);
+      }
+    })
+    .on('drag', function(event, d) {
+      if (!dragState) return;
+      const pt = getSVGPoint(event.sourceEvent);
+      const dx = pt.x - dragState.sx;
+      const dy = pt.y - dragState.sy;
+      for (const [id, start] of dragState.starts) {
+        const nd = allRenderedNodes.find(n => n.data.id === id);
+        if (!nd) continue;
+        nd.x = start.x + dy;  // d3 tree: x is vertical
+        nd.y = start.y + dx;  // d3 tree: y is horizontal
+        g.selectAll('.node').filter(dd => dd.data.id === id)
+          .attr('transform', `translate(${nd.y - NODE_W/2}, ${nd.x - NODE_H/2})`);
+      }
+      // Update links
+      linkGroup.selectAll('path').data(linkData)
+        .attr('d', dd => linkPath(dd, direction));
+    })
+    .on('end', function(event, d) {
+      dragState = null;
+      g.selectAll('.node.dragging').classed('dragging', false);
+    })
+  );
+
+  // Click to expand/collapse or select
   nodes.on('click', function(event, d) {
     event.stopPropagation();
     if (event.shiftKey) {
       // Shift+click = re-root on this person
       currentRoot = d.data.id;
       loadAndRender();
+      return;
+    }
+    if (event.ctrlKey || event.metaKey) {
+      // Ctrl+click = toggle selection
+      if (selectedNodes.has(d.data.id)) selectedNodes.delete(d.data.id);
+      else selectedNodes.add(d.data.id);
+      updateSelectionVisuals();
       return;
     }
     if (d.data._children || d.children) {
@@ -889,7 +1031,7 @@ function renderFromRoot(root, direction) {
     }
     const hidden = d.data._children ? d.data._children.length : 0;
     if (hidden) html += `<div class="spouse-info">${hidden} hidden ${currentMode === 'ancestors' ? 'ancestors' : 'descendants'}</div>`;
-    html += `<div class="spouse-info" style="margin-top:0.3rem;opacity:0.5">Click to expand/collapse<br>Shift+click to re-root<br>Right-click for details</div>`;
+    html += `<div class="spouse-info" style="margin-top:0.3rem;opacity:0.5">Click to expand · Ctrl+click to select<br>Shift+click to re-root · Right-click for details<br>Drag to move selected nodes</div>`;
     tip.innerHTML = html;
     tip.style.opacity = '1';
     tip.style.left = (event.clientX + 15) + 'px';
@@ -919,6 +1061,9 @@ function renderFromRoot(root, direction) {
     linkGroup.selectAll('path').classed('link-highlight', false);
   });
 
+  // Apply selection visuals if any nodes are still selected
+  updateSelectionVisuals();
+
   // Save root ref for re-render on collapse toggle
   root._direction = direction;
   window._currentRoot = root;
@@ -934,12 +1079,20 @@ function rerender(direction) {
   });
 }
 
-// Recursive link path generator using cubic bezier
+// Link path generator — supports curved, straight, step
 function linkPath(d, direction) {
   const sx = d.source.y + (direction === 1 ? NODE_W/2 : -NODE_W/2);
   const sy = d.source.x;
   const tx = d.target.y + (direction === 1 ? -NODE_W/2 : NODE_W/2);
   const ty = d.target.x;
+  if (currentLineStyle === 'straight') {
+    return `M${sx},${sy} L${tx},${ty}`;
+  }
+  if (currentLineStyle === 'step') {
+    const mx = (sx + tx) / 2;
+    return `M${sx},${sy} H${mx} V${ty} H${tx}`;
+  }
+  // curved (default)
   const mx = (sx + tx) / 2;
   return `M${sx},${sy} C${mx},${sy} ${mx},${ty} ${tx},${ty}`;
 }
@@ -976,6 +1129,9 @@ function renderDualTree(data) {
   // Render both
   renderHalf(ancestorRoot, -1, 'ancestor');
   renderHalf(descendantRoot, 1, 'descendant');
+
+  // Store all rendered nodes for marquee
+  allRenderedNodes = [...ancestorRoot.descendants(), ...descendantRoot.descendants()];
 
   // Stats
   let totalNodes = 0;
@@ -1096,7 +1252,7 @@ function renderHalf(root, direction, className) {
     }
     const hidden = d.data._children ? d.data._children.length : 0;
     if (hidden) html += `<div class="spouse-info">${hidden} hidden nodes</div>`;
-    html += `<div class="spouse-info" style="margin-top:0.3rem;opacity:0.5">Shift+click to re-root<br>Right-click for details</div>`;
+    html += `<div class="spouse-info" style="margin-top:0.3rem;opacity:0.5">Ctrl+click to select · Drag to move<br>Shift+click to re-root · Right-click for details</div>`;
     tip.innerHTML = html;
     tip.style.opacity = '1';
     tip.style.left = (event.clientX + 15) + 'px';
@@ -1111,9 +1267,70 @@ function renderHalf(root, direction, className) {
     document.getElementById('tooltip').style.opacity = '0';
   });
 
-  // Click to re-root
+  // ── Drag behaviour ──
+  const linkData = root.links();
+  nodes.call(d3.drag()
+    .on('start', function(event, d) {
+      event.sourceEvent.stopPropagation();
+      if (!selectedNodes.has(d.data.id)) {
+        if (!event.sourceEvent.ctrlKey && !event.sourceEvent.metaKey) selectedNodes.clear();
+        selectedNodes.add(d.data.id);
+        updateSelectionVisuals();
+      }
+      const pt = getSVGPoint(event.sourceEvent);
+      dragState = { starts: new Map(), sx: pt.x, sy: pt.y };
+      for (const nd of allRenderedNodes) {
+        if (selectedNodes.has(nd.data.id)) {
+          dragState.starts.set(nd.data.id, { x: nd.x, y: nd.y });
+        }
+      }
+      for (const id of selectedNodes) {
+        g.selectAll('.node').filter(dd => dd.data.id === id).classed('dragging', true);
+      }
+    })
+    .on('drag', function(event, d) {
+      if (!dragState) return;
+      const pt = getSVGPoint(event.sourceEvent);
+      const dx = pt.x - dragState.sx;
+      const dy = pt.y - dragState.sy;
+      for (const [id, start] of dragState.starts) {
+        const nd = allRenderedNodes.find(n => n.data.id === id);
+        if (!nd) continue;
+        nd.x = start.x + dy;
+        nd.y = start.y + dx;
+        g.selectAll('.node').filter(dd => dd.data.id === id)
+          .attr('transform', `translate(${nd.y - NODE_W/2}, ${nd.x - NODE_H/2})`);
+      }
+      // Update all links in both halves
+      g.selectAll('.link').each(function() {
+        const pathEl = d3.select(this);
+        const linkDatum = pathEl.datum();
+        if (linkDatum) {
+          const dir = linkDatum.source.y <= 0 ? -1 : 1;
+          pathEl.attr('d', linkPath(linkDatum, dir));
+        }
+      });
+    })
+    .on('end', function(event, d) {
+      dragState = null;
+      g.selectAll('.node.dragging').classed('dragging', false);
+    })
+  );
+
+  // Click to select or re-root
   nodes.on('click', function(event, d) {
     event.stopPropagation();
+    if (event.ctrlKey || event.metaKey) {
+      if (selectedNodes.has(d.data.id)) selectedNodes.delete(d.data.id);
+      else selectedNodes.add(d.data.id);
+      updateSelectionVisuals();
+      return;
+    }
+    if (event.shiftKey) {
+      currentRoot = d.data.id;
+      loadAndRender();
+      return;
+    }
     currentRoot = d.data.id;
     loadAndRender();
   });
@@ -1123,6 +1340,8 @@ function renderHalf(root, direction, className) {
     event.preventDefault();
     showDetail(d.data.id);
   });
+
+  updateSelectionVisuals();
 }
 
 // ── Detail panel ──
@@ -1270,18 +1489,47 @@ searchResults.addEventListener('click', function(event) {
 
 // Hide search results on click outside
 document.addEventListener('click', function(e) {
-  if (!e.target.closest('.search-wrap')) {
+  if (!e.target.closest('.header-search')) {
     searchResults.style.display = 'none';
   }
 });
 
+// ── Options toggle ──
+const optionsToggle = document.getElementById('options-toggle');
+const controlsPanel = document.getElementById('controls-panel');
+optionsToggle.addEventListener('click', () => {
+  controlsPanel.classList.toggle('collapsed');
+  optionsToggle.classList.toggle('open');
+});
+
 // ── Mode buttons ──
-document.querySelectorAll('.mode-group button').forEach(btn => {
+document.querySelectorAll('.mode-group button[data-mode]').forEach(btn => {
   btn.addEventListener('click', function() {
-    document.querySelectorAll('.mode-group button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mode-group button[data-mode]').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
     currentMode = this.dataset.mode;
     loadAndRender();
+  });
+});
+
+// ── Line style buttons ──
+document.querySelectorAll('.mode-group button[data-line]').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.mode-group button[data-line]').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    currentLineStyle = this.dataset.line;
+    // Re-render links without full reload
+    const dir = currentMode === 'ancestors' ? -1 : 1;
+    g.selectAll('.link').each(function() {
+      const pathEl = d3.select(this);
+      const linkDatum = pathEl.datum();
+      if (linkDatum) {
+        const linkDir = currentMode === 'both'
+          ? (linkDatum.source.y <= 0 ? -1 : 1)
+          : dir;
+        pathEl.attr('d', linkPath(linkDatum, linkDir));
+      }
+    });
   });
 });
 
@@ -1308,13 +1556,18 @@ document.getElementById('btn-reset').addEventListener('click', () => {
   currentRoot = DEFAULT_ROOT;
   currentMode = 'ancestors';
   currentDepth = DEFAULT_DEPTH;
+  currentLineStyle = 'curved';
   depthRange.value = DEFAULT_DEPTH;
   document.getElementById('depth-val').textContent = DEFAULT_DEPTH;
-  document.querySelectorAll('.mode-group button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.mode-group button[data-mode]').forEach(b => b.classList.remove('active'));
   document.querySelector('.mode-group button[data-mode="ancestors"]').classList.add('active');
+  document.querySelectorAll('.mode-group button[data-line]').forEach(b => b.classList.remove('active'));
+  document.querySelector('.mode-group button[data-line="curved"]').classList.add('active');
   searchInput.value = '';
   searchResults.style.display = 'none';
   document.getElementById('detail-panel').classList.remove('open');
+  selectedNodes.clear();
+  updateSelectionVisuals();
   loadAndRender().then(() => setTimeout(fitToView, 100));
 });
 document.getElementById('btn-collapse-all').addEventListener('click', () => {
@@ -1409,11 +1662,15 @@ document.addEventListener('keydown', (e) => {
     searchInput.focus();
     searchInput.select();
   }
-  // Escape to close panels
+  // Escape to close panels and clear selection
   if (e.key === 'Escape') {
     document.getElementById('detail-panel').classList.remove('open');
     searchResults.style.display = 'none';
     searchInput.blur();
+    if (selectedNodes.size > 0) {
+      selectedNodes.clear();
+      updateSelectionVisuals();
+    }
   }
   // Home key to reset to George
   if (e.key === 'Home' && !e.ctrlKey && document.activeElement !== searchInput) {
@@ -1427,19 +1684,23 @@ document.addEventListener('keydown', (e) => {
 <script>
 initHelp({
   title: 'Tree Explorer',
-  intro: 'An interactive collapsible tree view. Browse ancestors, descendants, or both directions from any person. Expand and collapse branches to explore the family structure.',
+  intro: 'An interactive collapsible tree view. Browse ancestors, descendants, or both directions from any person. Drag nodes to rearrange, select multiple with marquee, and explore the family structure.',
   keyboard: [
     { key: '/', action: 'Focus the search bar' },
-    { key: 'Escape', action: 'Close detail panel and search results' },
+    { key: 'Escape', action: 'Close panels, clear selection' },
     { key: 'Home', action: 'Reset to George l Lack as root' },
     { key: '?', action: 'Toggle this help panel' }
   ],
   mouse: [
     { key: 'Left-click node', action: 'Expand or collapse that branch' },
+    { key: 'Ctrl + Left-click node', action: 'Toggle node in/out of selection' },
     { key: 'Shift + Left-click node', action: 'Re-root the tree on that person' },
     { key: 'Right-click node', action: 'Open detail panel' },
+    { key: 'Drag node', action: 'Move selected node(s) — lines follow' },
+    { key: 'Drag background', action: 'Draw selection rectangle (marquee)' },
+    { key: 'Ctrl + Release marquee', action: 'Add marquee nodes to existing selection' },
     { key: 'Hover node', action: 'Show tooltip with name, dates, spouse' },
-    { key: 'Drag background', action: 'Pan the canvas' },
+    { key: 'Middle-click drag', action: 'Pan the canvas' },
     { key: 'Scroll wheel', action: 'Zoom in/out' }
   ],
   sections: [
@@ -1450,15 +1711,29 @@ initHelp({
         <li><strong>Descendants</strong> — Shows children, grandchildren, etc. fanning to the right</li>
         <li><strong>Both</strong> — Ancestors go left, descendants go right from the root</li>
       </ul>
-      <p>Switch modes using the buttons in the toolbar. The tree re-renders immediately.</p>
+      <p>Switch modes using the buttons in the Options panel.</p>
+    ` },
+    { title: 'Selection & Dragging', icon: '✋', html: `
+      <p><strong>Ctrl+click</strong> a node to select it (highlighted). Ctrl+click again to deselect. <strong>Drag</strong> any selected node to reposition all selected nodes — connection lines update in real time.</p>
+      <p>To select multiple nodes at once, <strong>left-click and drag</strong> on empty space to draw a selection rectangle. Any node whose center falls inside gets selected.</p>
+      <p>Hold <strong>Ctrl</strong> when releasing the rectangle to add to an existing selection instead of replacing it.</p>
+      <p>Press <strong>Escape</strong> or click empty space to deselect all.</p>
     ` },
     { title: 'Expanding & Collapsing', icon: '🌳', html: `
       <p><strong>Click</strong> any node to toggle its children visible/hidden. A <code>+N</code> badge shows how many hidden children exist.</p>
       <p>Use <strong>Collapse All</strong> to close every branch, or <strong>Expand All</strong> to open them. Branches beyond depth 4 auto-collapse on first load for performance.</p>
-      <p>Each node shows a maximum of 10 children — if more exist, a summary node indicates the overflow.</p>
+    ` },
+    { title: 'Line Styles', icon: '〰️', html: `
+      <p>In the Options panel, choose between three line styles:</p>
+      <ul>
+        <li><strong>Curved</strong> — Smooth bezier curves (default)</li>
+        <li><strong>Straight</strong> — Direct diagonal lines</li>
+        <li><strong>Step</strong> — Right-angle step connectors</li>
+      </ul>
+      <p>Line style changes apply instantly without reloading the tree.</p>
     ` },
     { title: 'Depth Slider', icon: '📏', html: `
-      <p>The depth slider (1–14) controls how many generations to load. Increasing depth fetches more data from the API and may take a moment for large trees.</p>
+      <p>The depth slider (1–14) controls how many generations to load. Increasing depth fetches more data and may take a moment for large trees.</p>
       <p>The default depth is 6 generations.</p>
     ` },
     { title: 'Detail Panel', icon: '📋', html: `
@@ -1484,7 +1759,7 @@ initHelp({
       </ul>
     ` },
     { title: 'Search', icon: '🔍', html: `
-      <p>Press <strong>/</strong> or click the search bar to find anyone by name. Select a result to navigate to them as the new tree root.</p>
+      <p>Press <strong>/</strong> or click the search bar in the header to find anyone by name. Select a result to navigate to them as the new tree root.</p>
     ` }
   ]
 });
