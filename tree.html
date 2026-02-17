@@ -180,12 +180,14 @@ svg:active { cursor: grabbing; }
   fill: var(--bg2);
   stroke-width: 2;
   cursor: pointer;
-  transition: fill 0.15s;
+  transition: fill 0.15s, stroke-width 0.15s;
 }
-.node rect:hover { fill: #f5f0e5; }
+.node rect:hover { fill: #f5f0e5; stroke-width: 2.5; }
+.node.root-node rect { stroke-width: 3; filter: drop-shadow(0 0 4px rgba(139,105,20,0.25)); }
 .node text { pointer-events: none; font-family: var(--font); }
 .node .node-name { font-size: 11px; font-weight: bold; fill: var(--fg); }
 .node .node-dates { font-size: 9px; fill: var(--fg2); }
+.node .node-place { font-size: 8px; fill: var(--fg2); font-style: italic; opacity: 0.7; }
 .node .node-spouse { font-size: 8.5px; fill: var(--fg2); font-style: italic; }
 .node .expand-indicator {
   font-size: 10px;
@@ -193,16 +195,41 @@ svg:active { cursor: grabbing; }
   font-weight: bold;
   cursor: pointer;
 }
+.node .confidence-dot {
+  pointer-events: none;
+}
 
 /* ── Links ── */
 .link {
   fill: none;
   stroke: var(--border);
   stroke-width: 1.5;
+  transition: stroke 0.2s, stroke-width 0.2s;
 }
 .link-highlight {
   stroke: var(--accent);
   stroke-width: 2.5;
+}
+
+/* ── Confidence legend ── */
+.conf-legend {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+  flex-wrap: wrap;
+}
+.conf-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.68rem;
+  color: var(--fg2);
+}
+.conf-swatch {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 /* ── Detail panel ── */
@@ -330,6 +357,7 @@ svg:active { cursor: grabbing; }
     <a href="/graph.html">Graph</a>
     <a href="/tree.html" class="active">Tree</a>
     <a href="/ancestry.html">Ancestry</a>
+    <a href="/documents.html">Documents</a>
   </nav>
 </header>
 
@@ -356,6 +384,13 @@ svg:active { cursor: grabbing; }
   <button id="btn-fit">Fit to view</button>
 
   <div class="stat" id="stat-info"></div>
+
+  <div class="conf-legend">
+    <div class="conf-legend-item"><span class="conf-swatch" style="background:#2d9a2d"></span>High</div>
+    <div class="conf-legend-item"><span class="conf-swatch" style="background:#c9a100"></span>Medium</div>
+    <div class="conf-legend-item"><span class="conf-swatch" style="background:#d47a1a"></span>Low</div>
+    <div class="conf-legend-item"><span class="conf-swatch" style="background:#c44"></span>Speculative</div>
+  </div>
 </div>
 
 <!-- Tooltip -->
@@ -392,7 +427,7 @@ svg:active { cursor: grabbing; }
 <script src="/data/lineage-shim.js"></script>
 <script>
 // ── Constants ──
-const NODE_W = 150, NODE_H = 56, NODE_RX = 6;
+const NODE_W = 160, NODE_H = 60, NODE_RX = 6;
 const LEVEL_GAP_H = 200;  // horizontal gap between generations
 const NODE_GAP_V = 8;     // vertical gap between sibling nodes
 const DEFAULT_ROOT = 1; // George l Lack — 10 gens up, deepest connected tree
@@ -636,11 +671,29 @@ function renderFromRoot(root, direction) {
     .attr('stroke', d => sexColor(d.data.sex))
     .attr('fill', d => sexFill(d.data.sex));
 
+  // Root node highlight
+  nodes.filter(d => d.depth === 0).classed('root-node', true);
+
+  // Confidence dot (top-right corner)
+  nodes.append('circle')
+    .attr('class', 'confidence-dot')
+    .attr('cx', NODE_W - 8)
+    .attr('cy', 8)
+    .attr('r', 3.5)
+    .attr('fill', d => {
+      const tier = d.data.confidence_tier || 'speculative';
+      if (tier === 'high') return '#2d9a2d';
+      if (tier === 'medium') return '#c9a100';
+      if (tier === 'low') return '#d47a1a';
+      return '#c44';
+    })
+    .attr('opacity', 0.8);
+
   // Name text
   nodes.append('text')
     .attr('class', 'node-name')
     .attr('x', NODE_W / 2)
-    .attr('y', 16)
+    .attr('y', 15)
     .attr('text-anchor', 'middle')
     .text(d => {
       const name = d.data.name || 'Unknown';
@@ -651,15 +704,30 @@ function renderFromRoot(root, direction) {
   nodes.append('text')
     .attr('class', 'node-dates')
     .attr('x', NODE_W / 2)
-    .attr('y', 30)
+    .attr('y', 27)
     .attr('text-anchor', 'middle')
     .text(d => lifespan(d));
+
+  // Birthplace text (short)
+  nodes.append('text')
+    .attr('class', 'node-place')
+    .attr('x', NODE_W / 2)
+    .attr('y', 38)
+    .attr('text-anchor', 'middle')
+    .text(d => {
+      if (!d.data.birth_place) return '';
+      const place = d.data.birth_place;
+      // Show just city/state or first 22 chars
+      const parts = place.split(',').map(s => s.trim());
+      const short = parts.length >= 2 ? parts[0] + ', ' + parts[1] : parts[0];
+      return short.length > 22 ? short.slice(0, 20) + '…' : short;
+    });
 
   // Spouse text
   nodes.append('text')
     .attr('class', 'node-spouse')
     .attr('x', NODE_W / 2)
-    .attr('y', 42)
+    .attr('y', 49)
     .attr('text-anchor', 'middle')
     .text(d => {
       if (!d.data.spouses || d.data.spouses.length === 0) return '';
@@ -713,7 +781,7 @@ function renderFromRoot(root, direction) {
     let html = `<div class="name">${d.data.name || 'Unknown'}</div>`;
     const ls = lifespan(d);
     if (ls) html += `<div class="dates">${ls}</div>`;
-    if (d.data.birth) html += `<div class="place">${d.data.birth}</div>`;
+    if (d.data.birth_place) html += `<div class="place">${d.data.birth_place}</div>`;
     if (d.data.spouses && d.data.spouses.length > 0) {
       html += `<div class="spouse-info">Spouse: ${d.data.spouses.map(s => s.name).join(', ')}</div>`;
     }
@@ -754,11 +822,14 @@ function renderFromRoot(root, direction) {
   window._currentRoot = root;
 }
 
-// Re-render tree from treeData
+// Re-render tree from treeData with smooth crossfade
 function rerender(direction) {
-  g.selectAll('*').remove();
-  const root = d3.hierarchy(treeData, d => d.children);
-  renderFromRoot(root, direction);
+  g.transition().duration(120).style('opacity', 0).on('end', () => {
+    g.selectAll('*').remove();
+    const root = d3.hierarchy(treeData, d => d.children);
+    renderFromRoot(root, direction);
+    g.style('opacity', 0).transition().duration(200).style('opacity', 1);
+  });
 }
 
 // Recursive link path generator using cubic bezier
@@ -839,10 +910,28 @@ function renderHalf(root, direction, className) {
     .attr('stroke', d => sexColor(d.data.sex))
     .attr('fill', d => sexFill(d.data.sex));
 
+  // Root node highlight (depth 0 in either half)
+  nodes.filter(d => d.depth === 0).classed('root-node', true);
+
+  // Confidence dot
+  nodes.append('circle')
+    .attr('class', 'confidence-dot')
+    .attr('cx', NODE_W - 8)
+    .attr('cy', 8)
+    .attr('r', 3.5)
+    .attr('fill', d => {
+      const tier = d.data.confidence_tier || 'speculative';
+      if (tier === 'high') return '#2d9a2d';
+      if (tier === 'medium') return '#c9a100';
+      if (tier === 'low') return '#d47a1a';
+      return '#c44';
+    })
+    .attr('opacity', 0.8);
+
   nodes.append('text')
     .attr('class', 'node-name')
     .attr('x', NODE_W / 2)
-    .attr('y', 16)
+    .attr('y', 15)
     .attr('text-anchor', 'middle')
     .text(d => {
       const name = d.data.name || 'Unknown';
@@ -852,14 +941,27 @@ function renderHalf(root, direction, className) {
   nodes.append('text')
     .attr('class', 'node-dates')
     .attr('x', NODE_W / 2)
-    .attr('y', 30)
+    .attr('y', 27)
     .attr('text-anchor', 'middle')
     .text(d => lifespan(d));
+
+  // Birthplace
+  nodes.append('text')
+    .attr('class', 'node-place')
+    .attr('x', NODE_W / 2)
+    .attr('y', 38)
+    .attr('text-anchor', 'middle')
+    .text(d => {
+      if (!d.data.birth_place) return '';
+      const parts = d.data.birth_place.split(',').map(s => s.trim());
+      const short = parts.length >= 2 ? parts[0] + ', ' + parts[1] : parts[0];
+      return short.length > 22 ? short.slice(0, 20) + '…' : short;
+    });
 
   nodes.append('text')
     .attr('class', 'node-spouse')
     .attr('x', NODE_W / 2)
-    .attr('y', 42)
+    .attr('y', 49)
     .attr('text-anchor', 'middle')
     .text(d => {
       if (!d.data.spouses || d.data.spouses.length === 0) return '';
@@ -886,10 +988,13 @@ function renderHalf(root, direction, className) {
     let html = `<div class="name">${d.data.name || 'Unknown'}</div>`;
     const ls = lifespan(d);
     if (ls) html += `<div class="dates">${ls}</div>`;
+    if (d.data.birth_place) html += `<div class="place">${d.data.birth_place}</div>`;
     if (d.data.spouses && d.data.spouses.length > 0) {
       html += `<div class="spouse-info">Spouse: ${d.data.spouses.map(s => s.name).join(', ')}</div>`;
     }
-    html += `<div class="spouse-info" style="margin-top:0.3rem;opacity:0.5">Shift+click to re-root</div>`;
+    const hidden = d.data._children ? d.data._children.length : 0;
+    if (hidden) html += `<div class="spouse-info">${hidden} hidden nodes</div>`;
+    html += `<div class="spouse-info" style="margin-top:0.3rem;opacity:0.5">Shift+click to re-root<br>Right-click for details</div>`;
     tip.innerHTML = html;
     tip.style.opacity = '1';
     tip.style.left = (event.clientX + 15) + 'px';
@@ -939,6 +1044,14 @@ async function showDetail(personId) {
     if (data.death_date || data.death_place)
       html += `<p>Died: ${data.death_date || '?'} ${data.death_place ? '— ' + data.death_place : ''}</p>`;
     if (data.sex) html += `<p>Sex: ${data.sex === 'M' ? 'Male' : data.sex === 'F' ? 'Female' : data.sex}</p>`;
+    if (data.confidence_tier) {
+      const tierColors = { high: '#2d9a2d', medium: '#c9a100', low: '#d47a1a', speculative: '#c44' };
+      const color = tierColors[data.confidence_tier] || '#999';
+      html += `<p>Confidence: <span style="color:${color};font-weight:600">${data.confidence_tier}</span>`;
+      if (data.confidence != null) html += ` (${data.confidence})`;
+      if (data.source_count) html += ` &middot; ${data.source_count} source${data.source_count !== 1 ? 's' : ''}`;
+      html += '</p>';
+    }
     html += '</div>';
 
     // Parents
@@ -1174,6 +1287,28 @@ loadAndRender().then(() => {
 window.addEventListener('popstate', () => {
   readURL();
   loadAndRender().then(() => setTimeout(fitToView, 100));
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  // / to focus search
+  if (e.key === '/' && !e.ctrlKey && !e.metaKey && document.activeElement !== searchInput) {
+    e.preventDefault();
+    searchInput.focus();
+    searchInput.select();
+  }
+  // Escape to close panels
+  if (e.key === 'Escape') {
+    document.getElementById('detail-panel').classList.remove('open');
+    searchResults.style.display = 'none';
+    searchInput.blur();
+  }
+  // Home key to reset to George
+  if (e.key === 'Home' && !e.ctrlKey && document.activeElement !== searchInput) {
+    e.preventDefault();
+    currentRoot = DEFAULT_ROOT;
+    loadAndRender().then(() => setTimeout(fitToView, 100));
+  }
 });
 </script>
 </body>
