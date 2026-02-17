@@ -63,6 +63,42 @@ nav a {
 }
 nav a:hover, nav a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
 nav a.active { font-weight: bold; }
+.header-right { margin-left: auto; display: flex; align-items: center; }
+.maint-btn {
+  background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--bg);
+  padding: 0.3rem 0.65rem; border-radius: 6px; font-size: 0.85rem;
+  cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.35rem;
+}
+.maint-btn:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+.maint-btn .maint-label { font-size: 0.75rem; font-family: var(--sans); }
+.pw-overlay {
+  display: none; position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.55); align-items: center; justify-content: center;
+}
+.pw-overlay.open { display: flex; }
+.pw-box {
+  background: var(--bg); border-radius: 12px; padding: 2rem 2.5rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3); text-align: center;
+  max-width: 340px; width: 90%;
+}
+.pw-box h3 { margin: 0 0 0.3rem; font-size: 1.1rem; color: var(--fg); }
+.pw-box p { font-size: 0.8rem; color: var(--fg2); margin: 0 0 1.2rem; }
+.pw-box input {
+  width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border);
+  border-radius: 8px; font-size: 0.95rem; font-family: var(--mono);
+  text-align: center; box-sizing: border-box;
+}
+.pw-box input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(139,105,20,0.15); }
+.pw-box .pw-err { color: #c0392b; font-size: 0.78rem; margin-top: 0.5rem; min-height: 1.2em; }
+.pw-box .pw-actions { display: flex; gap: 0.75rem; margin-top: 1rem; justify-content: center; }
+.pw-box button {
+  padding: 0.5rem 1.4rem; border-radius: 8px; font-size: 0.85rem; cursor: pointer;
+  font-family: var(--sans); border: 1px solid var(--border); transition: all 0.15s;
+}
+.pw-box .pw-cancel { background: #fff; color: var(--fg); }
+.pw-box .pw-cancel:hover { background: #f0ede6; }
+.pw-box .pw-submit { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+.pw-box .pw-submit:hover { background: var(--accent2); }
 
 /* ── Main ── */
 main {
@@ -170,6 +206,7 @@ footer {
   header { padding: 0.75rem 1rem; gap: 0.75rem; flex-wrap: wrap; }
   nav { gap: 0.3rem; }
   nav a { padding: 0.25rem 0.5rem; font-size: 0.7rem; }
+  .maint-btn .maint-label { display: none; }
   main { padding: 2rem 1rem 2rem; }
   h2 { font-size: 1.5rem; }
   .subtitle { font-size: 0.95rem; }
@@ -313,7 +350,33 @@ footer {
     <a href="/atlas.html">Atlas</a>
     <a href="/rivers.html">Rivers</a>
   </nav>
+  <div class="header-right">
+    <button class="maint-btn" onclick="document.getElementById('pw-modal').classList.add('open')" title="Dad's Desk — Maintenance">
+      🔧 <span class="maint-label">Maintenance</span>
+    </button>
+  </div>
 </header>
+
+<div id="pw-modal" class="pw-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="pw-box">
+    <h3>🔒 Dad's Desk</h3>
+    <p>Enter the password to access maintenance tools</p>
+    <input type="password" id="pw-input" placeholder="Password" autocomplete="off">
+    <div class="pw-err" id="pw-err"></div>
+    <div class="pw-actions">
+      <button class="pw-cancel" onclick="document.getElementById('pw-modal').classList.remove('open')">Cancel</button>
+      <button class="pw-submit" onclick="checkMaintPw()">Enter</button>
+    </div>
+  </div>
+</div>
+<script>
+function checkMaintPw(){
+  var v=document.getElementById('pw-input').value;
+  if(v==='lack2026'){sessionStorage.setItem('dad-auth','1');window.location.href='/admin.html';}
+  else{document.getElementById('pw-err').textContent='Wrong password — try again';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();}
+}
+document.getElementById('pw-input').addEventListener('keydown',function(e){if(e.key==='Enter')checkMaintPw();});
+</script>
 
 <main>
   <img src="img/logo-header.svg" alt="LACK" style="height:16rem; margin: 0 auto 2rem; display:block;">
@@ -385,7 +448,7 @@ footer {
         <span class="dash-title">Places</span>
         <span class="dash-desc">Precision map — pinpointed towns to lost homelands, German heritage glow, migration arcs</span>
       </a>
-      <a href="/admin.html" class="dash-card locked">
+      <a href="javascript:void(0)" class="dash-card locked" onclick="document.getElementById('pw-modal').classList.add('open')">
         <span class="dash-icon">✏️</span>
         <span class="dash-title">Edit / Update</span>
         <span class="dash-desc">Dad's desk — review, correct, and annotate records</span>

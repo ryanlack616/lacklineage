@@ -355,12 +355,26 @@ nav a.active { font-weight: bold; }
     <a href="/globe.html">Globe</a>
     <a href="/atlas.html">Atlas</a>
     <a href="/rivers.html">Rivers</a>
-    <a href="/admin.html" class="active">Admin</a>
   </nav>
   <div class="header-right">
     <span class="dad-badge">★ Dad's Desk</span>
   </div>
 </header>
+
+<script>
+if(sessionStorage.getItem('dad-auth')!=='1'){
+  document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;font-family:Georgia,serif;color:#2a2520">' +
+    '<h2 style="margin:0 0 0.5rem">🔒 Access Required</h2>' +
+    '<p style="color:#6b5d4f;margin:0 0 1.5rem;font-size:0.9rem">Enter the password to access Dad\'s Desk</p>' +
+    '<input type="password" id="gate-pw" placeholder="Password" autocomplete="off" style="padding:0.6rem 1rem;border:1px solid #d5cdbf;border-radius:8px;font-size:1rem;text-align:center;font-family:Consolas,monospace;width:220px">' +
+    '<div id="gate-err" style="color:#c0392b;font-size:0.78rem;margin-top:0.5rem;min-height:1.2em"></div>' +
+    '<button onclick="if(document.getElementById(\'gate-pw\').value===\'lack2026\'){sessionStorage.setItem(\'dad-auth\',\'1\');location.reload();}else{document.getElementById(\'gate-err\').textContent=\'Wrong password\';document.getElementById(\'gate-pw\').value=\'\';document.getElementById(\'gate-pw\').focus();}" style="margin-top:0.75rem;padding:0.5rem 2rem;background:#8b6914;color:#fff;border:none;border-radius:8px;font-size:0.9rem;cursor:pointer;font-weight:600">Enter</button>' +
+    '<a href="/" style="margin-top:1.5rem;font-size:0.8rem;color:#8b6914">← Back to Home</a></div>';
+  document.getElementById('gate-pw').addEventListener('keydown',function(e){
+    if(e.key==='Enter')document.querySelector('button').click();
+  });
+}
+</script>
 
 <div class="app">
 
