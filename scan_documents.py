@@ -52,7 +52,7 @@ THUMB_QUALITY = 82                # JPEG quality
 
 # Vision AI (Ollama + MiniCPM-o 4.5)
 OLLAMA_URL = "http://127.0.0.1:11434"
-VISION_MODEL = "openbmb/minicpm-o4.5"
+VISION_MODEL = "minicpm-v:latest"
 VISION_MAX_PX = 1800              # resize images before sending to model
 VISION_PROMPT = """Analyze this genealogy document image. Extract ALL of the following information you can find:
 
@@ -860,7 +860,7 @@ def progress_bar(current, total, t0, width=40, extra=""):
     """Render a terminal progress bar with ETA."""
     pct = current / total if total else 1
     filled = int(width * pct)
-    bar = "█" * filled + "░" * (width - filled)
+    bar = "#" * filled + "-" * (width - filled)
     elapsed = time.time() - t0
     rate = current / elapsed if elapsed > 0 else 0
     remaining = (total - current) / rate if rate > 0 else 0
