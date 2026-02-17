@@ -14,9 +14,10 @@
   --fg2: #6b6360;
   --accent: #8b6914;
   --accent2: #a07d2a;
+  --red: #b85450;
   --border: #d8d2c8;
   --radius: 6px;
-  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow: 0 2px 8px rgba(0,0,0,0.12);
   --font: 'Georgia', 'Times New Roman', serif;
   --mono: 'Consolas', 'Monaco', monospace;
 }
@@ -31,111 +32,189 @@ header {
   display: flex;
   align-items: center;
   gap: 2rem;
-  z-index: 10;
+  z-index: 100;
+  position: relative;
 }
-header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
-header h1 span { font-weight: 300; opacity: 0.6; }
-header h1 a { color: inherit; text-decoration: none; }
-nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-nav a {
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.2);
-  color: var(--bg);
-  padding: 0.3rem 0.7rem;
-  border-radius: var(--radius);
-  font-family: var(--font);
-  font-size: 0.8rem;
+header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.5px; }
+header h1 a { color: var(--bg); text-decoration: none; }
+header h1 span { color: var(--accent2); }
+header nav { display: flex; gap: 1.5rem; }
+header nav a {
+  color: rgba(248,246,241,0.6);
   text-decoration: none;
-  transition: all 0.15s;
+  font-size: 0.85rem;
+  letter-spacing: 0.3px;
+  transition: color 0.2s;
 }
-nav a:hover, nav a.active {
-  background: rgba(255,255,255,0.15);
-  border-color: rgba(255,255,255,0.4);
-}
-nav a.active { font-weight: bold; }
+header nav a:hover, header nav a.active { color: var(--bg); }
 
-/* ── Controls ── */
+/* ── Controls panel ── */
 .controls {
-  position: fixed;
-  top: 60px;
-  left: 1rem;
-  z-index: 5;
+  position: absolute;
+  top: 70px;
+  left: 16px;
   background: var(--bg2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1rem;
+  padding: 16px;
+  z-index: 50;
+  width: 260px;
   box-shadow: var(--shadow);
-  font-size: 0.8rem;
-  max-width: 240px;
-  max-height: calc(100vh - 80px);
-  overflow-y: auto;
+  font-size: 0.82rem;
 }
-.controls h3 { font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--accent); }
-.controls label { display: block; margin: 0.4rem 0 0.15rem; color: var(--fg2); }
-.controls select, .controls input[type="range"] {
-  width: 100%;
-  font-family: var(--font);
-  font-size: 0.8rem;
-  padding: 0.2rem 0.4rem;
-  border: 1px solid var(--border);
+.controls h3 {
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.controls h3 button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--fg2);
+  padding: 2px 6px;
   border-radius: 3px;
 }
-.controls .stat { margin-top: 0.6rem; color: var(--fg2); line-height: 1.4; }
-.controls .stat strong { color: var(--fg); }
-.controls button {
-  margin-top: 0.5rem;
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  padding: 0.35rem 0.7rem;
-  border-radius: var(--radius);
-  cursor: pointer;
-  font-family: var(--font);
-  font-size: 0.8rem;
+.controls h3 button:hover { background: var(--border); }
+.ctrl-row { margin-bottom: 10px; }
+.ctrl-row label {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--fg2);
+  margin-bottom: 4px;
+}
+.ctrl-row select, .ctrl-row input[type="text"] {
   width: 100%;
-}
-.controls button:hover { background: var(--accent2); }
-
-/* ── Tooltip ── */
-.tooltip {
-  position: fixed;
-  pointer-events: none;
-  background: var(--fg);
-  color: var(--bg);
-  padding: 0.6rem 0.9rem;
-  border-radius: var(--radius);
-  font-size: 0.8rem;
-  line-height: 1.5;
-  max-width: 280px;
-  z-index: 20;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-.tooltip .name { font-weight: bold; font-size: 0.9rem; }
-.tooltip .dates { opacity: 0.7; }
-.tooltip .place { opacity: 0.7; font-style: italic; }
-.tooltip .rel { margin-top: 0.3rem; opacity: 0.5; font-size: 0.75rem; }
-
-/* ── Canvas ── */
-canvas { display: block; cursor: grab; }
-canvas:active { cursor: grabbing; }
-
-/* ── Legend ── */
-.legend {
-  position: fixed;
-  bottom: 1rem;
-  left: 1rem;
-  z-index: 5;
-  background: var(--bg2);
+  padding: 6px 8px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 0.7rem 1rem;
-  font-size: 0.75rem;
-  display: flex;
-  gap: 1.2rem;
-  box-shadow: var(--shadow);
+  font-family: var(--font);
+  font-size: 0.82rem;
+  background: var(--bg);
+  color: var(--fg);
 }
-.legend-item { display: flex; align-items: center; gap: 0.4rem; }
+.ctrl-row select:focus, .ctrl-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.ctrl-row .range-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ctrl-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+  height: 4px;
+}
+.ctrl-row .range-val {
+  font-size: 0.72rem;
+  color: var(--fg2);
+  min-width: 18px;
+  text-align: right;
+}
+
+/* Search autocomplete */
+.search-wrap { position: relative; }
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  box-shadow: var(--shadow);
+  display: none;
+  z-index: 999;
+}
+.search-results .sr-item {
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+.search-results .sr-item:last-child { border-bottom: none; }
+.search-results .sr-item:hover, .search-results .sr-item.active {
+  background: var(--accent);
+  color: var(--bg);
+}
+.search-results .sr-item .sr-dates {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  margin-left: 6px;
+}
+
+/* Stats */
+.stats {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--fg2);
+  line-height: 1.6;
+}
+.stats strong { color: var(--fg); }
+
+/* Focus info bar */
+.focus-bar {
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--fg);
+  color: var(--bg);
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  z-index: 50;
+  display: none;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  white-space: nowrap;
+}
+.focus-bar .focus-name { font-weight: 600; }
+.focus-bar .focus-dates { opacity: 0.7; font-size: 0.78rem; }
+.focus-bar button {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: var(--bg);
+  padding: 4px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 0.78rem;
+}
+.focus-bar button:hover { background: rgba(255,255,255,0.25); }
+
+/* Legend */
+.legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 0.72rem;
+  z-index: 50;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  color: var(--fg2);
+}
+.legend-item { display: flex; align-items: center; gap: 5px; }
 .legend-dot {
   width: 10px;
   height: 10px;
@@ -144,16 +223,122 @@ canvas:active { cursor: grabbing; }
 }
 .legend-line {
   width: 20px;
-  height: 2px;
+  height: 0;
+  border-top: 2px solid;
   flex-shrink: 0;
 }
+.legend-line.dashed { border-top-style: dashed; }
 
-@media (max-width: 600px) {
-  header { padding: 0.75rem 1rem; gap: 0.75rem; flex-wrap: wrap; }
-  nav a { padding: 0.25rem 0.5rem; font-size: 0.7rem; }
-  .controls { padding: 0.5rem; gap: 0.4rem; }
-  .controls select, .controls button { font-size: 0.7rem; padding: 0.2rem 0.4rem; }
-  .legend { display: none; }
+/* Tooltip */
+.tooltip {
+  position: fixed;
+  background: var(--fg);
+  color: var(--bg);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 200;
+  max-width: 280px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.tooltip .t-name { font-weight: 600; font-size: 0.9rem; margin-bottom: 2px; }
+.tooltip .t-dates { opacity: 0.75; font-size: 0.78rem; }
+.tooltip .t-place { opacity: 0.6; font-size: 0.72rem; margin-top: 2px; }
+.tooltip .t-rels { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.15); font-size: 0.72rem; opacity: 0.8; }
+.tooltip .t-conf { margin-top: 4px; font-size: 0.68rem; opacity: 0.5; }
+
+/* Path result bar */
+.path-bar {
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--fg);
+  color: var(--bg);
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  font-size: 0.82rem;
+  z-index: 50;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  max-width: 90vw;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.path-bar .path-step { display: inline-flex; align-items: center; gap: 6px; }
+.path-bar .path-person {
+  background: rgba(255,255,255,0.15);
+  padding: 3px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+.path-bar .path-person:hover { background: rgba(255,255,255,0.3); }
+.path-bar .path-rel {
+  font-size: 0.68rem;
+  opacity: 0.6;
+  font-style: italic;
+}
+.path-bar .path-close {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: var(--bg);
+  padding: 2px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-left: 8px;
+  font-size: 0.75rem;
+}
+.path-bar .path-close:hover { background: rgba(255,255,255,0.3); }
+
+/* Minimap */
+.minimap {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  width: 160px;
+  height: 120px;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  z-index: 50;
+  overflow: hidden;
+  cursor: pointer;
+}
+.minimap canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* Help hint */
+.help-hint {
+  position: absolute;
+  bottom: 142px;
+  right: 16px;
+  font-size: 0.68rem;
+  color: var(--fg2);
+  opacity: 0.5;
+  z-index: 50;
+  text-align: right;
+  line-height: 1.5;
+}
+
+canvas#canvas { display: block; cursor: grab; }
+canvas#canvas:active { cursor: grabbing; }
+
+@media (max-width: 700px) {
+  header { padding: 0.5rem 1rem; gap: 1rem; }
+  header nav { gap: 0.8rem; }
+  .controls { width: 220px; left: 8px; top: 60px; padding: 12px; }
+  .legend { bottom: 8px; left: 8px; gap: 8px; font-size: 0.65rem; }
 }
 </style>
 </head>
@@ -167,151 +352,457 @@ canvas:active { cursor: grabbing; }
     <a href="/tree.html">Tree</a>
     <a href="/ancestry.html">Ancestry</a>
     <a href="/documents.html">Documents</a>
+    <a href="/profile.html">Profile</a>
   </nav>
 </header>
 
 <div class="controls" id="controls">
-  <h3>Family Graph</h3>
-  
-  <label>View</label>
-  <select id="viewMode">
-    <option value="connected">Connected only</option>
-    <option value="all">All 2,152 people</option>
-    <option value="ryan">Ryan's family</option>
-  </select>
+  <h3>
+    Family Graph
+    <button id="resetBtn" title="Reset view">Reset</button>
+  </h3>
 
-  <label>Color by</label>
-  <select id="colorMode">
-    <option value="sex">Sex</option>
-    <option value="surname">Surname</option>
-    <option value="era">Birth era</option>
-  </select>
+  <div class="ctrl-row search-wrap">
+    <label>Find Person</label>
+    <input type="text" id="searchInput" placeholder="Type a name..." autocomplete="off">
+    <div class="search-results" id="searchResults"></div>
+  </div>
 
-  <label>Link strength <span id="strengthVal">0.3</span></label>
-  <input type="range" id="linkStrength" min="0.05" max="1" step="0.05" value="0.3">
+  <div class="ctrl-row">
+    <label>View</label>
+    <select id="viewMode">
+      <option value="connected" selected>Family Network</option>
+      <option value="ryan">Ryan's Family</option>
+    </select>
+  </div>
 
-  <label>Charge <span id="chargeVal">-120</span></label>
-  <input type="range" id="charge" min="-400" max="-20" step="10" value="-120">
+  <div class="ctrl-row">
+    <label>Color by</label>
+    <select id="colorMode">
+      <option value="sex" selected>Sex</option>
+      <option value="surname">Surname</option>
+      <option value="generation">Generation from Ryan</option>
+      <option value="confidence">Confidence</option>
+    </select>
+  </div>
 
-  <button id="resetBtn">Reset positions</button>
+  <div class="ctrl-row">
+    <label>Node Size</label>
+    <div class="range-row">
+      <input type="range" id="sizeSlider" min="0.3" max="3" step="0.1" value="1">
+      <span class="range-val" id="sizeVal">1.0</span>
+    </div>
+  </div>
 
-  <div class="stat" id="stats">Loading...</div>
+  <div class="stats" id="stats"></div>
 </div>
 
-<div class="legend">
-  <div class="legend-item"><div class="legend-dot" style="background: #8b6914"></div> Male</div>
-  <div class="legend-item"><div class="legend-dot" style="background: #b85450"></div> Female</div>
-  <div class="legend-item"><div class="legend-dot" style="background: #888"></div> Unknown</div>
-  <div class="legend-item"><div class="legend-line" style="background: #8b6914"></div> Parent→Child</div>
-  <div class="legend-item"><div class="legend-line" style="background: #b85450; height: 1px; border-top: 1px dashed #b85450; background: none;"></div> Spouse</div>
+<div class="focus-bar" id="focusBar">
+  <span class="focus-name" id="focusName"></span>
+  <span class="focus-dates" id="focusDates"></span>
+  <button id="focusClear">Show All</button>
 </div>
+
+<div class="legend" id="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> Male</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Female</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#aaa"></div> Unknown</div>
+  <div class="legend-item"><div class="legend-line" style="border-color:var(--accent);opacity:0.5"></div> Parent</div>
+  <div class="legend-item"><div class="legend-line dashed" style="border-color:var(--red);opacity:0.5"></div> Spouse</div>
+</div>
+
+<div class="path-bar" id="pathBar"></div>
+
+<div class="minimap" id="minimap"><canvas id="minimapCanvas"></canvas></div>
+
+<div class="help-hint">Click to focus &middot; Double-click to navigate<br>Right-click two people: "How related?"</div>
 
 <div class="tooltip" id="tooltip"></div>
-
 <canvas id="canvas"></canvas>
 
 <script>
 // ── State ──
+let allNodes = [], allLinks = [];
 let nodes = [], links = [];
-let simulation;
+let simulation = null;
 let transform = d3.zoomIdentity;
+let hoveredNode = null, draggedNode = null, focusedNode = null;
+let degreeMap = new Map();
+let neighborMap = new Map();
+let sizeMult = 1.0; // node size multiplier from slider
+let generationMap = new Map(); // generation distance from Ryan
+let highlightedPath = null;     // array of node IDs for path display
+let pathStartNode = null;       // first node for right-click path finding
+
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const tooltip = document.getElementById('tooltip');
-let hoveredNode = null;
-let draggedNode = null;
-let width, height;
+const focusBar = document.getElementById('focusBar');
+let width = window.innerWidth, height = window.innerHeight;
 
 // ── Colors ──
-const sexColors = { M: '#8b6914', F: '#b85450', U: '#888' };
-const eraColors = [
-  [1500, '#5e4a1e'],
-  [1600, '#6b5a2e'],
-  [1700, '#7a6b3e'],
-  [1800, '#8b6914'],
-  [1850, '#a07d2a'],
-  [1900, '#b89040'],
-  [1950, '#c9a85a'],
-  [2000, '#d4b870'],
-];
-let surnameColorScale;
+const sexColors = { M: '#8b6914', F: '#b85450', U: '#999' };
+let surnameColorScale = d3.scaleOrdinal(d3.schemeTableau10);
 
-function colorBySex(d) {
-  return sexColors[d.sex] || sexColors.U;
-}
+const confColors = {
+  high: '#4a8c5c',
+  medium: '#c49a2a',
+  low: '#b85450'
+};
 
-function colorByEra(d) {
-  if (!d.birth_year) return '#ccc';
-  for (let i = eraColors.length - 1; i >= 0; i--) {
-    if (d.birth_year >= eraColors[i][0]) return eraColors[i][1];
-  }
-  return eraColors[0][1];
-}
-
-function colorBySurname(d) {
-  if (!d.surname) return '#ccc';
-  return surnameColorScale(d.surname);
-}
+// Generation from Ryan color scale
+const genScale = d3.scaleSequential(d3.interpolateViridis).domain([0, 10]);
 
 function getColor(d) {
   const mode = document.getElementById('colorMode').value;
-  if (mode === 'surname') return colorBySurname(d);
-  if (mode === 'era') return colorByEra(d);
-  return colorBySex(d);
+  if (mode === 'surname') {
+    return d.surname ? surnameColorScale(d.surname) : '#ccc';
+  }
+  if (mode === 'confidence') {
+    return confColors[d.confidence_tier] || '#999';
+  }
+  if (mode === 'generation') {
+    const gen = generationMap.get(d.id);
+    if (gen === undefined) return '#ddd';
+    return genScale(Math.min(gen, 10));
+  }
+  return sexColors[d.sex] || sexColors.U;
+}
+
+// ── Compute generation distances from Ryan ──
+function computeGenerations() {
+  generationMap = new Map();
+  const ryan = allNodes.find(n => n.id === 58) || allNodes.find(n => /ryan.*lack/i.test(n.name));
+  if (!ryan) return;
+  generationMap.set(ryan.id, 0);
+  let frontier = [ryan.id];
+  while (frontier.length) {
+    const next = [];
+    for (const nid of frontier) {
+      const gen = generationMap.get(nid);
+      for (const l of allLinks) {
+        const sid = typeof l.source === 'object' ? l.source.id : l.source;
+        const tid = typeof l.target === 'object' ? l.target.id : l.target;
+        let neighbor = null;
+        if (sid === nid) neighbor = tid;
+        else if (tid === nid) neighbor = sid;
+        if (neighbor !== null && !generationMap.has(neighbor)) {
+          generationMap.set(neighbor, gen + 1);
+          next.push(neighbor);
+        }
+      }
+    }
+    frontier = next;
+  }
+}
+
+// ── Path finding (BFS shortest path through all links) ──
+function findPathBFS(fromId, toId) {
+  if (fromId === toId) return [fromId];
+  const prev = new Map();
+  prev.set(fromId, null);
+  let frontier = [fromId];
+  while (frontier.length) {
+    const next = [];
+    for (const nid of frontier) {
+      for (const l of allLinks) {
+        const sid = typeof l.source === 'object' ? l.source.id : l.source;
+        const tid = typeof l.target === 'object' ? l.target.id : l.target;
+        let neighbor = null;
+        if (sid === nid) neighbor = tid;
+        else if (tid === nid) neighbor = sid;
+        if (neighbor !== null && !prev.has(neighbor)) {
+          prev.set(neighbor, nid);
+          if (neighbor === toId) {
+            const path = [];
+            let cur = toId;
+            while (cur !== null) { path.unshift(cur); cur = prev.get(cur); }
+            return path;
+          }
+          next.push(neighbor);
+        }
+      }
+    }
+    frontier = next;
+  }
+  return null;
+}
+
+function showPath(path) {
+  highlightedPath = path;
+  const bar = document.getElementById('pathBar');
+  let html = '<span style="font-size:0.72rem;opacity:0.7;margin-right:6px">' + path.length + ' steps:</span>';
+  for (let i = 0; i < path.length; i++) {
+    const nd = allNodes.find(n => n.id === path[i]);
+    if (!nd) continue;
+    html += `<span class="path-person" data-id="${nd.id}">${nd.name}</span>`;
+    if (i < path.length - 1) {
+      let rel = '→';
+      for (const l of allLinks) {
+        const sid = typeof l.source === 'object' ? l.source.id : l.source;
+        const tid = typeof l.target === 'object' ? l.target.id : l.target;
+        if ((sid === path[i] && tid === path[i+1]) || (tid === path[i] && sid === path[i+1])) {
+          if (l.type === 'spouse') rel = '♥';
+          else if (sid === path[i]) rel = '↓';
+          else rel = '↑';
+          break;
+        }
+      }
+      html += `<span class="path-rel">${rel}</span>`;
+    }
+  }
+  html += `<button class="path-close" onclick="clearPath()">✕</button>`;
+  bar.innerHTML = html;
+  bar.style.display = 'flex';
+  bar.querySelectorAll('.path-person').forEach(el => {
+    el.addEventListener('click', () => {
+      const nd = allNodes.find(n => n.id === parseInt(el.dataset.id));
+      if (nd) focusOnNode(nd);
+    });
+  });
+  draw();
+}
+
+function clearPath() {
+  highlightedPath = null;
+  document.getElementById('pathBar').style.display = 'none';
+  draw();
+}
+
+// ── Degree & neighbor helpers ──
+function buildMaps(nodeList, linkList) {
+  degreeMap = new Map();
+  neighborMap = new Map();
+  for (const n of nodeList) {
+    degreeMap.set(n.id, 0);
+    neighborMap.set(n.id, new Set());
+  }
+  for (const l of linkList) {
+    const sid = typeof l.source === 'object' ? l.source.id : l.source;
+    const tid = typeof l.target === 'object' ? l.target.id : l.target;
+    degreeMap.set(sid, (degreeMap.get(sid) || 0) + 1);
+    degreeMap.set(tid, (degreeMap.get(tid) || 0) + 1);
+    if (neighborMap.has(sid)) neighborMap.get(sid).add(tid);
+    if (neighborMap.has(tid)) neighborMap.get(tid).add(sid);
+  }
+}
+
+function nodeRadius(d) {
+  const deg = degreeMap.get(d.id) || 0;
+  const base = Math.max(3, Math.min(12, 3 + deg * 1.2));
+  return base * sizeMult;
+}
+
+function nodeOpacity(d) {
+  if (d.confidence_tier === 'low') return 0.55;
+  if (d.confidence_tier === 'medium') return 0.8;
+  return 1;
+}
+
+// ── Get N-hop neighborhood ──
+function getNeighborhood(nodeId, hops) {
+  const visited = new Set([nodeId]);
+  let frontier = [nodeId];
+  for (let i = 0; i < hops; i++) {
+    const next = [];
+    for (const nid of frontier) {
+      const nb = neighborMap.get(nid);
+      if (nb) for (const id of nb) {
+        if (!visited.has(id)) { visited.add(id); next.push(id); }
+      }
+    }
+    frontier = next;
+  }
+  return visited;
+}
+
+// ── Search ──
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+let searchTimeout = null;
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimeout);
+  const q = searchInput.value.trim().toLowerCase();
+  if (q.length < 2) { searchResults.style.display = 'none'; return; }
+
+  searchTimeout = setTimeout(() => {
+    const matches = allNodes
+      .filter(n => n.name.toLowerCase().includes(q))
+      .sort((a, b) => (degreeMap.get(b.id) || 0) - (degreeMap.get(a.id) || 0))
+      .slice(0, 12);
+
+    if (!matches.length) { searchResults.style.display = 'none'; return; }
+
+    searchResults.innerHTML = matches.map(n => {
+      const d = [];
+      if (n.birth_year) d.push('b.' + n.birth_year);
+      if (n.death_date) { const m = n.death_date.match(/(\d{4})/); if (m) d.push('d.' + m[1]); }
+      return `<div class="sr-item" data-id="${n.id}">${n.name}${d.length ? `<span class="sr-dates">${d.join(' — ')}</span>` : ''}</div>`;
+    }).join('');
+    searchResults.style.display = 'block';
+  }, 150);
+});
+
+searchResults.addEventListener('click', (e) => {
+  const item = e.target.closest('.sr-item');
+  if (!item) return;
+  const node = allNodes.find(n => n.id === parseInt(item.dataset.id));
+  if (node) focusOnNode(node);
+  searchInput.value = '';
+  searchResults.style.display = 'none';
+});
+
+searchInput.addEventListener('blur', () => {
+  setTimeout(() => searchResults.style.display = 'none', 200);
+});
+
+searchInput.addEventListener('keydown', (e) => {
+  const items = searchResults.querySelectorAll('.sr-item');
+  const active = searchResults.querySelector('.sr-item.active');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (!active && items.length) items[0].classList.add('active');
+    else if (active && active.nextElementSibling) { active.classList.remove('active'); active.nextElementSibling.classList.add('active'); }
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (active && active.previousElementSibling) { active.classList.remove('active'); active.previousElementSibling.classList.add('active'); }
+  } else if (e.key === 'Enter') {
+    const sel = searchResults.querySelector('.sr-item.active') || searchResults.querySelector('.sr-item');
+    if (sel) sel.click();
+  } else if (e.key === 'Escape') {
+    searchResults.style.display = 'none';
+    searchInput.blur();
+  }
+});
+
+// ── Focus on a node (2-hop neighborhood) ──
+function focusOnNode(target) {
+  // We need to rebuild maps from allNodes/allLinks first for accurate neighborhoods
+  buildMaps(allNodes, allLinks);
+
+  focusedNode = target;
+  const hood = getNeighborhood(target.id, 2);
+
+  nodes = allNodes.filter(n => hood.has(n.id)).map(n => ({
+    ...n,
+    x: width / 2 + (Math.random() - 0.5) * 300,
+    y: height / 2 + (Math.random() - 0.5) * 300
+  }));
+  const nodeIds = new Set(nodes.map(n => n.id));
+  links = allLinks.filter(l => nodeIds.has(l.source) && nodeIds.has(l.target)).map(l => ({...l}));
+
+  buildMaps(nodes, links);
+  updateStats();
+  showFocusBar(target);
+  initSimulation();
+
+  // Zoom to the focused node after layout settles
+  setTimeout(() => {
+    const tn = nodes.find(n => n.id === target.id);
+    if (tn) zoomToNode(tn);
+  }, 900);
+}
+
+function clearFocus() {
+  focusedNode = null;
+  focusBar.style.display = 'none';
+  applyView();
+}
+
+function showFocusBar(node) {
+  const d = [];
+  if (node.birth_year) d.push('b. ' + node.birth_year);
+  if (node.death_date) { const m = node.death_date.match(/(\d{4})/); if (m) d.push('d. ' + m[1]); }
+  document.getElementById('focusName').textContent = node.name;
+  document.getElementById('focusDates').textContent = d.join(' — ');
+  focusBar.style.display = 'flex';
+}
+
+function zoomToNode(node) {
+  const k = 2;
+  const tx = width / 2 - node.x * k;
+  const ty = height / 2 - node.y * k;
+  d3.select(canvas).transition().duration(600)
+    .call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(k));
 }
 
 // ── Load data ──
 async function loadGraph() {
   const viewMode = document.getElementById('viewMode').value;
-  let url = '/data/graph.json';
-  if (viewMode === 'all') url = '/data/graph-all.json';
-  else if (viewMode === 'ryan') url = '/data/graph-ryan.json';
+  const url = viewMode === 'ryan' ? '/data/graph-ryan.json' : '/data/graph.json';
 
   const res = await fetch(url);
   const data = await res.json();
 
-  // Build surname color scale
-  const surnames = [...new Set(data.nodes.map(n => n.surname).filter(Boolean))];
+  allNodes = data.nodes;
+  allLinks = data.links;
+
+  // Compute generation distances from Ryan
+  computeGenerations();
+
+  // Build surname scale from full data
+  const surnames = [...new Set(allNodes.map(n => n.surname).filter(Boolean))];
   surnames.sort((a, b) => {
-    const ac = data.nodes.filter(n => n.surname === a).length;
-    const bc = data.nodes.filter(n => n.surname === b).length;
+    const ac = allNodes.filter(n => n.surname === a).length;
+    const bc = allNodes.filter(n => n.surname === b).length;
     return bc - ac;
   });
   surnameColorScale = d3.scaleOrdinal(d3.schemeTableau10).domain(surnames);
 
-  // Convert link source/target to references
-  const nodeById = new Map(data.nodes.map(n => [n.id, n]));
-  
-  nodes = data.nodes.map(n => ({...n, x: width/2 + (Math.random()-0.5)*400, y: height/2 + (Math.random()-0.5)*400}));
-  links = data.links.filter(l => nodeById.has(l.source) && nodeById.has(l.target));
+  applyView();
+}
 
-  document.getElementById('stats').innerHTML = 
-    `<strong>${nodes.length}</strong> people<br>` +
-    `<strong>${links.filter(l=>l.type==='parent_child').length}</strong> parent-child<br>` +
-    `<strong>${links.filter(l=>l.type==='spouse').length}</strong> spouse`;
+function applyView() {
+  focusedNode = null;
+  focusBar.style.display = 'none';
 
+  nodes = allNodes.map(n => ({
+    ...n,
+    x: width / 2 + (Math.random() - 0.5) * 400,
+    y: height / 2 + (Math.random() - 0.5) * 400
+  }));
+
+  const nodeIds = new Set(nodes.map(n => n.id));
+  links = allLinks.filter(l => nodeIds.has(l.source) && nodeIds.has(l.target)).map(l => ({...l}));
+
+  buildMaps(nodes, links);
+  updateStats();
   initSimulation();
+
+  // Reset zoom
+  transform = d3.zoomIdentity;
+  d3.select(canvas).call(zoomBehavior.transform, d3.zoomIdentity);
+}
+
+function updateStats() {
+  const pc = links.filter(l => l.type === 'parent_child').length;
+  const sp = links.filter(l => l.type === 'spouse').length;
+  document.getElementById('stats').innerHTML =
+    `<strong>${nodes.length}</strong> people &middot; <strong>${pc}</strong> parent-child &middot; <strong>${sp}</strong> spouse` +
+    (focusedNode ? '<br><em>Showing 2-hop neighborhood</em>' : '');
 }
 
 // ── Simulation ──
 function initSimulation() {
-  const strength = parseFloat(document.getElementById('linkStrength').value);
-  const charge = parseFloat(document.getElementById('charge').value);
-
   if (simulation) simulation.stop();
+
+  const n = nodes.length;
+  const chargeStr = n > 500 ? -12 : n > 100 ? -35 : -80;
+  const linkDist = n > 500 ? 20 : n > 100 ? 40 : 55;
 
   simulation = d3.forceSimulation(nodes)
     .force('link', d3.forceLink(links)
       .id(d => d.id)
-      .distance(d => d.type === 'spouse' ? 30 : 60)
-      .strength(d => d.type === 'spouse' ? strength * 2 : strength))
-    .force('charge', d3.forceManyBody().strength(charge))
+      .distance(d => d.type === 'spouse' ? linkDist * 0.5 : linkDist)
+      .strength(d => d.type === 'spouse' ? 0.7 : 0.3))
+    .force('charge', d3.forceManyBody().strength(chargeStr))
     .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collision', d3.forceCollide(12))
+    .force('collision', d3.forceCollide(d => nodeRadius(d) + 1))
     .force('x', d3.forceX(width / 2).strength(0.03))
     .force('y', d3.forceY(height / 2).strength(0.03))
-    .alphaDecay(0.01)
-    .on('tick', draw);
+    .alphaDecay(0.015)
+    .on('tick', () => { draw(); drawMinimap(); });
 }
 
 // ── Drawing ──
@@ -323,36 +814,71 @@ function draw() {
 
   // Links
   for (const l of links) {
+    if (typeof l.source.x === 'undefined') continue;
     ctx.beginPath();
     ctx.moveTo(l.source.x, l.source.y);
     ctx.lineTo(l.target.x, l.target.y);
-    
     if (l.type === 'spouse') {
       ctx.setLineDash([3, 3]);
-      ctx.strokeStyle = 'rgba(184, 84, 80, 0.4)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(184, 84, 80, 0.25)';
+      ctx.lineWidth = 0.7;
     } else {
       ctx.setLineDash([]);
-      ctx.strokeStyle = 'rgba(139, 105, 20, 0.25)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(139, 105, 20, 0.12)';
+      ctx.lineWidth = 0.7;
     }
     ctx.stroke();
     ctx.setLineDash([]);
+
+    // Arrowhead on parent → child links
+    if (l.type !== 'spouse') {
+      const dx = l.target.x - l.source.x;
+      const dy = l.target.y - l.source.y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len > 10) {
+        const ux = dx / len, uy = dy / len;
+        const tr = nodeRadius(l.target);
+        const ax = l.target.x - ux * (tr + 2);
+        const ay = l.target.y - uy * (tr + 2);
+        const sz = Math.max(3, 4 / Math.max(transform.k, 0.5));
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(ax - ux * sz - uy * sz * 0.4, ay - uy * sz + ux * sz * 0.4);
+        ctx.lineTo(ax - ux * sz + uy * sz * 0.4, ay - uy * sz - ux * sz * 0.4);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(139, 105, 20, 0.3)';
+        ctx.fill();
+      }
+    }
   }
 
-  // Hovered node connections (highlight)
+  // Highlighted path overlay
+  if (highlightedPath && highlightedPath.length > 1) {
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#e63946';
+    ctx.setLineDash([]);
+    for (let i = 0; i < highlightedPath.length - 1; i++) {
+      const from = nodes.find(n => n.id === highlightedPath[i]);
+      const to = nodes.find(n => n.id === highlightedPath[i + 1]);
+      if (from && to) {
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Highlight hovered connections
   if (hoveredNode) {
-    const connected = new Set();
     for (const l of links) {
-      const sid = typeof l.source === 'object' ? l.source.id : l.source;
-      const tid = typeof l.target === 'object' ? l.target.id : l.target;
+      const sid = l.source.id ?? l.source;
+      const tid = l.target.id ?? l.target;
       if (sid === hoveredNode.id || tid === hoveredNode.id) {
-        connected.add(sid);
-        connected.add(tid);
         ctx.beginPath();
         ctx.moveTo(l.source.x, l.source.y);
         ctx.lineTo(l.target.x, l.target.y);
-        ctx.strokeStyle = l.type === 'spouse' ? 'rgba(184, 84, 80, 0.9)' : 'rgba(139, 105, 20, 0.8)';
+        ctx.strokeStyle = l.type === 'spouse' ? 'rgba(184,84,80,0.85)' : 'rgba(139,105,20,0.7)';
         ctx.lineWidth = 2;
         if (l.type === 'spouse') ctx.setLineDash([4, 4]);
         ctx.stroke();
@@ -362,38 +888,104 @@ function draw() {
   }
 
   // Nodes
+  const hoverNb = hoveredNode ? (neighborMap.get(hoveredNode.id) || new Set()) : null;
+
   for (const d of nodes) {
-    const r = (hoveredNode && hoveredNode.id === d.id) ? 7 : 5;
+    const r = nodeRadius(d);
+    const isHov = hoveredNode && hoveredNode.id === d.id;
+    const isFoc = focusedNode && focusedNode.id === d.id;
+    const drawR = isHov ? r + 2 : r;
     const color = getColor(d);
 
-    // Dim non-connected nodes when hovering
-    let alpha = 1;
-    if (hoveredNode && hoveredNode.id !== d.id) {
-      const isConnected = links.some(l => {
-        const s = typeof l.source === 'object' ? l.source.id : l.source;
-        const t = typeof l.target === 'object' ? l.target.id : l.target;
-        return (s === hoveredNode.id && t === d.id) || (t === hoveredNode.id && s === d.id);
-      });
-      alpha = isConnected ? 1 : 0.2;
+    let alpha = nodeOpacity(d);
+    if (hoveredNode && !isHov) {
+      alpha = hoverNb.has(d.id) ? alpha : alpha * 0.12;
     }
 
-    ctx.beginPath();
-    ctx.arc(d.x, d.y, r, 0, Math.PI * 2);
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = color;
-    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, drawR, 0, Math.PI * 2);
 
-    // Border
-    ctx.strokeStyle = alpha < 1 ? 'rgba(0,0,0,0.05)' : 'rgba(0,0,0,0.2)';
-    ctx.lineWidth = 0.5;
+    // Living/Deceased indicator: living = filled with green outer ring; deceased = filled normal
+    if (!d.death_date) {
+      // Living person — draw a subtle green outer ring
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.5;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, drawR + 1.5, 0, Math.PI * 2);
+      ctx.strokeStyle = '#4a8c5c';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.restore();
+      ctx.globalAlpha = alpha;
+    } else {
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    // Path highlight ring
+    if (highlightedPath && highlightedPath.includes(d.id)) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, drawR + 3, 0, Math.PI * 2);
+      ctx.strokeStyle = '#e63946';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.8;
+      ctx.stroke();
+      ctx.restore();
+      ctx.globalAlpha = alpha;
+    }
+
+    ctx.strokeStyle = isHov ? 'rgba(0,0,0,0.4)' : (isFoc ? 'rgba(139,105,20,0.6)' : 'rgba(0,0,0,0.08)');
+    ctx.lineWidth = isHov ? 1.5 : (isFoc ? 1.2 : 0.5);
     ctx.stroke();
 
-    // Label for larger zoom or hovered
-    if (transform.k > 1.5 || (hoveredNode && hoveredNode.id === d.id)) {
-      ctx.fillStyle = `rgba(42, 37, 32, ${alpha})`;
-      ctx.font = `${11 / transform.k}px Georgia`;
+    // ── Smart labels: progressively reveal info by zoom level ──
+    const k = transform.k;
+    const effR = drawR * k; // effective screen-space radius
+    const isSpecial = isHov || isFoc;
+
+    // Tier 1: Name label (zoom > 1.2, or node big enough on screen, or hovered/focused)
+    const showName = isSpecial || k > 1.2 || effR > 8;
+    // Tier 2: Dates (zoom > 2.5 or hovered/focused)
+    const showDates = isSpecial || k > 2.5;
+    // Tier 3: Place (zoom > 4 or hovered/focused)
+    const showPlace = isSpecial || k > 4;
+
+    if (showName) {
+      const fs = Math.max(8, Math.min(14, 12 / k));
+      ctx.fillStyle = `rgba(42,37,32,${alpha})`;
       ctx.textAlign = 'center';
-      ctx.fillText(d.name, d.x, d.y - r - 3);
+
+      // Name
+      ctx.font = `${isSpecial ? 'bold ' : ''}${fs}px Georgia`;
+      let labelY = d.y - drawR - 3;
+      ctx.fillText(d.name, d.x, labelY);
+
+      // Dates line
+      if (showDates && (d.birth_year || d.death_date)) {
+        const datesFs = fs * 0.78;
+        ctx.font = `${datesFs}px Georgia`;
+        ctx.fillStyle = `rgba(107,99,96,${alpha})`;
+        labelY -= datesFs + 1;
+        const parts = [];
+        if (d.birth_year) parts.push('b.' + d.birth_year);
+        if (d.death_date) { const m = d.death_date.match(/(\d{4})/); if (m) parts.push('d.' + m[1]); }
+        ctx.fillText(parts.join(' — '), d.x, labelY);
+      }
+
+      // Place line
+      if (showPlace && d.birth_place) {
+        const placeFs = fs * 0.68;
+        ctx.font = `italic ${placeFs}px Georgia`;
+        ctx.fillStyle = `rgba(107,99,96,${alpha * 0.7})`;
+        labelY -= placeFs + 1;
+        // Truncate long places
+        const place = d.birth_place.length > 30 ? d.birth_place.slice(0, 28) + '...' : d.birth_place;
+        ctx.fillText(place, d.x, labelY);
+      }
     }
 
     ctx.globalAlpha = 1;
@@ -419,14 +1011,15 @@ function resize() {
 window.addEventListener('resize', resize);
 
 // ── Zoom ──
-const zoom = d3.zoom()
+const zoomBehavior = d3.zoom()
   .scaleExtent([0.1, 10])
   .on('zoom', (event) => {
     transform = event.transform;
     draw();
+    drawMinimap();
   });
 
-d3.select(canvas).call(zoom);
+d3.select(canvas).call(zoomBehavior);
 
 // ── Mouse interaction ──
 function screenToSim(x, y) {
@@ -435,13 +1028,17 @@ function screenToSim(x, y) {
 
 function findNode(mx, my) {
   const [sx, sy] = screenToSim(mx, my);
-  const r = 8 / transform.k; // hit radius
-  for (let i = nodes.length - 1; i >= 0; i--) {
-    const d = nodes[i];
+  let closest = null, closestD = Infinity;
+  for (const d of nodes) {
     const dx = d.x - sx, dy = d.y - sy;
-    if (dx * dx + dy * dy < r * r) return d;
+    const dist = dx * dx + dy * dy;
+    const hitR = (nodeRadius(d) + 4) / transform.k;
+    if (dist < hitR * hitR && dist < closestD) {
+      closest = d;
+      closestD = dist;
+    }
   }
-  return null;
+  return closest;
 }
 
 canvas.addEventListener('mousemove', (e) => {
@@ -456,58 +1053,62 @@ canvas.addEventListener('mousemove', (e) => {
   const node = findNode(e.clientX, e.clientY);
   if (node !== hoveredNode) {
     hoveredNode = node;
+    canvas.style.cursor = node ? 'pointer' : 'grab';
     draw();
-    
-    if (node) {
-      const dates = [];
-      if (node.birth_year) dates.push(`b. ${node.birth_year}`);
-      if (node.death_date) {
-        const m = node.death_date.match(/(\d{4})/);
-        if (m) dates.push(`d. ${m[1]}`);
-      }
-
-      // Count connections
-      let parents = 0, children = 0, spouses = 0;
-      for (const l of links) {
-        const s = typeof l.source === 'object' ? l.source.id : l.source;
-        const t = typeof l.target === 'object' ? l.target.id : l.target;
-        if (l.type === 'parent_child') {
-          if (s === node.id) children++;
-          if (t === node.id) parents++;
-        }
-        if (l.type === 'spouse' && (s === node.id || t === node.id)) spouses++;
-      }
-      const relParts = [];
-      if (parents) relParts.push(`${parents} parent${parents>1?'s':''}`);
-      if (spouses) relParts.push(`${spouses} spouse${spouses>1?'s':''}`);
-      if (children) relParts.push(`${children} child${children>1?'ren':''}`);
-
-      tooltip.innerHTML = `
-        <div class="name">${node.name}</div>
-        ${dates.length ? `<div class="dates">${dates.join(' — ')}</div>` : ''}
-        ${node.birth_place ? `<div class="place">${node.birth_place}</div>` : ''}
-        ${relParts.length ? `<div class="rel">${relParts.join(', ')}</div>` : ''}
-      `;
-      tooltip.style.opacity = 1;
-      tooltip.style.left = (e.clientX + 15) + 'px';
-      tooltip.style.top = (e.clientY - 10) + 'px';
-    } else {
-      tooltip.style.opacity = 0;
-    }
+    if (node) showTooltip(node, e.clientX, e.clientY);
+    else tooltip.style.opacity = 0;
   } else if (node) {
     tooltip.style.left = (e.clientX + 15) + 'px';
     tooltip.style.top = (e.clientY - 10) + 'px';
   }
 });
 
+function showTooltip(node, mx, my) {
+  const dates = [];
+  if (node.birth_year) dates.push('b. ' + node.birth_year);
+  if (node.death_date) { const m = node.death_date.match(/(\d{4})/); if (m) dates.push('d. ' + m[1]); }
+
+  const parents = [], children = [], spouses = [];
+  for (const l of links) {
+    const s = l.source.id ?? l.source, t = l.target.id ?? l.target;
+    if (l.type === 'parent_child') {
+      if (s === node.id) { const c = nodes.find(n => n.id === t); if (c) children.push(c.name); }
+      if (t === node.id) { const p = nodes.find(n => n.id === s); if (p) parents.push(p.name); }
+    }
+    if (l.type === 'spouse') {
+      if (s === node.id) { const sp = nodes.find(n => n.id === t); if (sp) spouses.push(sp.name); }
+      if (t === node.id) { const sp = nodes.find(n => n.id === s); if (sp) spouses.push(sp.name); }
+    }
+  }
+
+  let rels = '';
+  if (parents.length) rels += 'Parents: ' + parents.join(', ') + '<br>';
+  if (spouses.length) rels += 'Spouse: ' + spouses.join(', ') + '<br>';
+  if (children.length) rels += 'Children: ' + children.join(', ');
+
+  const genDist = generationMap.has(node.id) ? generationMap.get(node.id) : null;
+  tooltip.innerHTML =
+    `<div class="t-name">${node.name}</div>` +
+    (dates.length ? `<div class="t-dates">${dates.join(' — ')}</div>` : '') +
+    (node.birth_place ? `<div class="t-place">${node.birth_place}</div>` : '') +
+    (rels ? `<div class="t-rels">${rels}</div>` : '') +
+    (genDist !== null ? `<div class="t-conf">${genDist} step${genDist !== 1 ? 's' : ''} from Ryan</div>` : '') +
+    `<div class="t-conf">${node.confidence_tier || 'unknown'} confidence (${node.confidence || '?'}%)${!node.death_date ? ' · <span style="color:#4a8c5c">living</span>' : ''}</div>`;
+  tooltip.style.opacity = 1;
+  tooltip.style.left = (mx + 15) + 'px';
+  tooltip.style.top = (my - 10) + 'px';
+}
+
+// ── Drag ──
+let mouseDownPos = null;
 canvas.addEventListener('mousedown', (e) => {
+  mouseDownPos = { x: e.clientX, y: e.clientY };
   const node = findNode(e.clientX, e.clientY);
   if (node) {
     draggedNode = node;
     draggedNode.fx = draggedNode.x;
     draggedNode.fy = draggedNode.y;
     simulation.alphaTarget(0.3).restart();
-    // Prevent zoom while dragging a node
     d3.select(canvas).on('.zoom', null);
   }
 });
@@ -518,8 +1119,70 @@ canvas.addEventListener('mouseup', () => {
     draggedNode.fy = null;
     draggedNode = null;
     simulation.alphaTarget(0);
-    // Re-enable zoom
-    d3.select(canvas).call(zoom);
+    d3.select(canvas).call(zoomBehavior);
+  }
+});
+
+// Click to focus (distinguish from drag)
+canvas.addEventListener('click', (e) => {
+  if (mouseDownPos) {
+    const dx = e.clientX - mouseDownPos.x, dy = e.clientY - mouseDownPos.y;
+    if (dx * dx + dy * dy > 25) return;
+  }
+  const node = findNode(e.clientX, e.clientY);
+  if (node) focusOnNode(node);
+});
+
+// Double-click to chain-navigate (re-focus on double-clicked node)
+canvas.addEventListener('dblclick', (e) => {
+  e.preventDefault();
+  const node = findNode(e.clientX, e.clientY);
+  if (node) {
+    focusOnNode(node);
+    // Auto-show path from Ryan
+    const ryan = allNodes.find(n => n.id === 58);
+    if (ryan && ryan.id !== node.id) {
+      const path = findPathBFS(ryan.id, node.id);
+      if (path) showPath(path);
+    }
+  }
+});
+
+// Right-click: path finding between two people
+canvas.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  const node = findNode(e.clientX, e.clientY);
+  if (!node) { pathStartNode = null; return; }
+
+  if (!pathStartNode) {
+    pathStartNode = node;
+    // Show hint in focus bar area
+    const bar = document.getElementById('pathBar');
+    bar.innerHTML = `<span style="opacity:0.8">Path from <strong>${node.name}</strong> → right-click another person</span>` +
+      `<button class="path-close" onclick="clearPath(); pathStartNode=null;">✕</button>`;
+    bar.style.display = 'flex';
+  } else {
+    const path = findPathBFS(pathStartNode.id, node.id);
+    if (path) {
+      showPath(path);
+      // Also ensure path nodes are visible: focus on the start if needed
+      const pathNodeIds = new Set(path);
+      const allVisible = path.every(id => nodes.find(n => n.id === id));
+      if (!allVisible) {
+        // Show full graph to display the path
+        clearFocus();
+        setTimeout(() => {
+          showPath(path);
+          draw();
+        }, 300);
+      }
+    } else {
+      const bar = document.getElementById('pathBar');
+      bar.innerHTML = `<span style="opacity:0.8">No connection found between <strong>${pathStartNode.name}</strong> and <strong>${node.name}</strong></span>` +
+        `<button class="path-close" onclick="clearPath()">✕</button>`;
+      bar.style.display = 'flex';
+    }
+    pathStartNode = null;
   }
 });
 
@@ -531,37 +1194,150 @@ canvas.addEventListener('mouseleave', () => {
 
 // ── Controls ──
 document.getElementById('viewMode').addEventListener('change', loadGraph);
-document.getElementById('colorMode').addEventListener('change', () => draw());
+document.getElementById('colorMode').addEventListener('change', () => { updateLegend(); draw(); });
 
-document.getElementById('linkStrength').addEventListener('input', (e) => {
-  document.getElementById('strengthVal').textContent = e.target.value;
+document.getElementById('sizeSlider').addEventListener('input', (e) => {
+  sizeMult = parseFloat(e.target.value);
+  document.getElementById('sizeVal').textContent = sizeMult.toFixed(1);
+  // Update collision force with new radii
   if (simulation) {
-    simulation.force('link').strength(d => {
-      const s = parseFloat(e.target.value);
-      return d.type === 'spouse' ? s * 2 : s;
-    });
-    simulation.alpha(0.5).restart();
+    simulation.force('collision', d3.forceCollide(d => nodeRadius(d) + 1));
+    simulation.alpha(0.3).restart();
   }
-});
-
-document.getElementById('charge').addEventListener('input', (e) => {
-  document.getElementById('chargeVal').textContent = e.target.value;
-  if (simulation) {
-    simulation.force('charge').strength(parseFloat(e.target.value));
-    simulation.alpha(0.5).restart();
-  }
+  draw();
 });
 
 document.getElementById('resetBtn').addEventListener('click', () => {
   transform = d3.zoomIdentity;
-  d3.select(canvas).call(zoom.transform, d3.zoomIdentity);
-  for (const n of nodes) {
-    n.x = width/2 + (Math.random()-0.5)*400;
-    n.y = height/2 + (Math.random()-0.5)*400;
-    n.fx = null;
-    n.fy = null;
+  d3.select(canvas).call(zoomBehavior.transform, d3.zoomIdentity);
+  clearFocus();
+});
+document.getElementById('focusClear').addEventListener('click', clearFocus);
+
+function updateLegend() {
+  const mode = document.getElementById('colorMode').value;
+  const el = document.getElementById('legend');
+  const linkLeg =
+    '<div class="legend-item"><div class="legend-line" style="border-color:var(--accent);opacity:0.5"></div> Parent</div>' +
+    '<div class="legend-item"><div class="legend-line dashed" style="border-color:var(--red);opacity:0.5"></div> Spouse</div>';
+
+  if (mode === 'confidence') {
+    el.innerHTML =
+      '<div class="legend-item"><div class="legend-dot" style="background:#4a8c5c"></div> High</div>' +
+      '<div class="legend-item"><div class="legend-dot" style="background:#c49a2a"></div> Medium</div>' +
+      '<div class="legend-item"><div class="legend-dot" style="background:#b85450"></div> Low</div>' + linkLeg;
+  } else if (mode === 'surname') {
+    const top = surnameColorScale.domain().slice(0, 5);
+    el.innerHTML = top.map(s =>
+      `<div class="legend-item"><div class="legend-dot" style="background:${surnameColorScale(s)}"></div> ${s}</div>`
+    ).join('') +
+    `<div class="legend-item" style="opacity:0.5">+${Math.max(0, surnameColorScale.domain().length - 5)} more</div>` + linkLeg;
+  } else if (mode === 'generation') {
+    el.innerHTML =
+      `<div class="legend-item"><div class="legend-dot" style="background:${genScale(0)}"></div> Ryan (0)</div>` +
+      `<div class="legend-item"><div class="legend-dot" style="background:${genScale(1)}"></div> 1 step</div>` +
+      `<div class="legend-item"><div class="legend-dot" style="background:${genScale(3)}"></div> 3 steps</div>` +
+      `<div class="legend-item"><div class="legend-dot" style="background:${genScale(6)}"></div> 6 steps</div>` +
+      `<div class="legend-item"><div class="legend-dot" style="background:${genScale(10)}"></div> 10+ steps</div>` +
+      '<div class="legend-item"><div class="legend-dot" style="background:#ddd"></div> Unconnected</div>' +
+      linkLeg;
+  } else {
+    el.innerHTML =
+      '<div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> Male</div>' +
+      '<div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Female</div>' +
+      '<div class="legend-item"><div class="legend-dot" style="background:#aaa"></div> Unknown</div>' +
+      '<div class="legend-item" style="font-size:0.62rem;opacity:0.6"><span style="display:inline-block;width:8px;height:8px;border:1.5px solid #4a8c5c;border-radius:50%;margin-right:4px"></span> Living</div>' +
+      linkLeg;
   }
-  simulation.alpha(1).restart();
+}
+
+// ── Minimap ──
+const minimapCanvas = document.getElementById('minimapCanvas');
+const minimapCtx = minimapCanvas.getContext('2d');
+
+function drawMinimap() {
+  const dpr = devicePixelRatio;
+  const mw = 160 * dpr, mh = 120 * dpr;
+  minimapCanvas.width = mw;
+  minimapCanvas.height = mh;
+  if (!nodes.length) return;
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const n of nodes) {
+    if (n.x < minX) minX = n.x;
+    if (n.x > maxX) maxX = n.x;
+    if (n.y < minY) minY = n.y;
+    if (n.y > maxY) maxY = n.y;
+  }
+  const pad = 30;
+  const rangeX = (maxX - minX + pad * 2) || 1;
+  const rangeY = (maxY - minY + pad * 2) || 1;
+  const scale = Math.min(mw / rangeX, mh / rangeY);
+  const ox = (mw - rangeX * scale) / 2;
+  const oy = (mh - rangeY * scale) / 2;
+
+  minimapCtx.clearRect(0, 0, mw, mh);
+
+  // Draw links as faint lines
+  minimapCtx.strokeStyle = 'rgba(0,0,0,0.06)';
+  minimapCtx.lineWidth = 0.5;
+  for (const l of links) {
+    if (typeof l.source.x === 'undefined') continue;
+    minimapCtx.beginPath();
+    minimapCtx.moveTo((l.source.x - minX + pad) * scale + ox, (l.source.y - minY + pad) * scale + oy);
+    minimapCtx.lineTo((l.target.x - minX + pad) * scale + ox, (l.target.y - minY + pad) * scale + oy);
+    minimapCtx.stroke();
+  }
+
+  // Draw nodes
+  for (const n of nodes) {
+    const x = (n.x - minX + pad) * scale + ox;
+    const y = (n.y - minY + pad) * scale + oy;
+    minimapCtx.beginPath();
+    minimapCtx.arc(x, y, 1.5, 0, Math.PI * 2);
+    minimapCtx.fillStyle = (highlightedPath && highlightedPath.includes(n.id)) ? '#e63946' : getColor(n);
+    minimapCtx.fill();
+  }
+
+  // Draw viewport rectangle
+  const vx1 = (0 - transform.x) / transform.k;
+  const vy1 = (0 - transform.y) / transform.k;
+  const vx2 = (width - transform.x) / transform.k;
+  const vy2 = (height - transform.y) / transform.k;
+  const rx = (vx1 - minX + pad) * scale + ox;
+  const ry = (vy1 - minY + pad) * scale + oy;
+  const rw = (vx2 - vx1) * scale;
+  const rh = (vy2 - vy1) * scale;
+
+  minimapCtx.strokeStyle = 'rgba(230, 57, 70, 0.7)';
+  minimapCtx.lineWidth = 1.5;
+  minimapCtx.strokeRect(rx, ry, rw, rh);
+}
+
+// Click on minimap to pan
+document.getElementById('minimap').addEventListener('click', (e) => {
+  if (!nodes.length) return;
+  const rect = minimapCanvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) / rect.width;
+  const my = (e.clientY - rect.top) / rect.height;
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const n of nodes) {
+    if (n.x < minX) minX = n.x;
+    if (n.x > maxX) maxX = n.x;
+    if (n.y < minY) minY = n.y;
+    if (n.y > maxY) maxY = n.y;
+  }
+  const pad = 30;
+  const rangeX = maxX - minX + pad * 2;
+  const rangeY = maxY - minY + pad * 2;
+  const simX = minX - pad + mx * rangeX;
+  const simY = minY - pad + my * rangeY;
+
+  const tx = width / 2 - simX * transform.k;
+  const ty = height / 2 - simY * transform.k;
+  d3.select(canvas).transition().duration(400)
+    .call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(transform.k));
 });
 
 // ── Init ──

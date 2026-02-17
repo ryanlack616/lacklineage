@@ -232,6 +232,7 @@ canvas { display: block; width: 100%; height: 100%; }
     <a href="/tree.html">Tree</a>
     <a href="/ancestry.html">Ancestry</a>
     <a href="/documents.html">Documents</a>
+    <a href="/profile.html">Profile</a>
   </nav>
 </header>
 
@@ -430,7 +431,7 @@ function draw() {
   
   // Draw faint year text in background
   ctx.save();
-  ctx.font = `bold ${Math.min(height * 0.5, 400)}px Georgia`;
+  ctx.font = `bold ${Math.min(height * 0.5, 400)}px Consolas, Monaco, monospace`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = 'rgba(255,255,255,0.03)';

@@ -1,2 +1,6 @@
 lineage.db
 raw-data/
+__pycache__/
+_*.py
+_*.json
+*.bak

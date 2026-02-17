@@ -380,45 +380,96 @@ def build_db(db_path, individuals, families, sources):
 
 
 # ---------------------------------------------------------------------------
-# 3b. CONFIDENCE SCORING
+# 3b. CONFIDENCE SCORING  (v2 — Feb 2026 overhaul)
 # ---------------------------------------------------------------------------
+
+def _date_quality(date_str):
+    """Return ('exact', year) | ('approx', year) | ('year', year) | (None, None).
+
+    Handles YYYY-MM-DD, DD Mon YYYY, Mon DD YYYY, YYYY, and more.
+    """
+    if not date_str:
+        return None, None
+    ds = str(date_str).strip()
+    year = extract_year(ds)
+    if not year:
+        return None, None
+    # Exact: YYYY-MM-DD
+    if re.match(r"^\d{4}-\d{2}-\d{2}$", ds):
+        return "exact", year
+    # Exact: "20 April 1877", "Feb 27 1902", "27 Jun 1844", etc.
+    if re.match(r"^\d{1,2}\s+\w+\s+\d{4}$", ds) or \
+       re.match(r"^\w+\s+\d{1,2},?\s+\d{4}$", ds) or \
+       re.match(r"^\w+\s+\d{1,2}\s+\d{4}$", ds):
+        return "exact", year
+    # Exact: YYYY-MM (month-level — close enough for genealogy)
+    if re.match(r"^\d{4}-\d{2}$", ds):
+        return "approx", year
+    # Year-only
+    if re.match(r"^\d{4}$", ds):
+        return "year", year
+    # Contains a year somewhere — treat as approx
+    return "approx", year
+
+
+def _place_specificity(place_str):
+    """Score a place string for specificity.
+
+    Returns 0-8:
+      0  — no place
+      3  — bare name (single word / country / state only)
+      5  — county-level (2 parts)
+      8  — full address (3+ comma-separated parts)
+    """
+    if not place_str or not place_str.strip():
+        return 0
+    parts = [p.strip() for p in place_str.split(",") if p.strip()]
+    if len(parts) >= 3:
+        return 8
+    elif len(parts) == 2:
+        return 5
+    else:
+        return 3
+
 
 def compute_confidence(db_path):
     """Compute per-person confidence scores (0-100) and update the DB.
 
-    Scoring rubric:
-      Name quality     (0-10):  has given name (+5), has surname (+5)
-      Birth evidence   (0-25):  exact date (+15) / approx or year (+6) / none (0)
-                                birth place (+10)
-      Death evidence   (0-15):  exact date (+10) / approx or year (+4) / none (0)
-                                death place (+5)
-      Family links     (0-20):  has parents (+8), has spouse (+6), has children (+6)
-      Source citations  (0-20):  1 source (+10), 2+ sources (+20)
-      Data consistency (0-10):  birth year exists (+5),
-                                born before died (+5)
+    v2 scoring rubric (Feb 2026):
+      Identity        (0-12):  given name (+3), surname (+3), sex known (+2),
+                                multi-word given name (+2), suffix (+2)
+      Birth evidence  (0-20):  date quality: exact (+12) / approx (+7) / year (+4)
+                                place specificity: bare (+3) / county (+5) / full (+8)
+      Death evidence  (0-12):  date quality: exact (+8) / approx (+5) / year (+3)
+                                place specificity: bare (+1) / county (+2) / full (+4)
+      Family network  (0-15):  parents known (+5), spouse known (+4),
+                                children known (+4), grandparent-connected (+2)
+      Source citations (0-15):  graduated: 1 (+4), 2-3 (+8), 4-6 (+12), 7+ (+15)
+      Documents       (0-18):  has any docs (+4), 2+ docs (+4),
+                                has certificate or obituary (+4),
+                                any doc has OCR text (+3),
+                                avg doc-match confidence ≥ 0.9 (+3)
+      Data consistency (0-8):   birth year valid (+2), death ≥ birth (+2),
+                                lifespan < 120 yrs (+2), no data red flags (+2)
 
     Tiers:
-      80-100  HIGH          — well-documented, multiple sources
-      50-79   MEDIUM        — reasonable evidence
-      20-49   LOW           — a name and a date, not much else
-      0-19    SPECULATIVE   — basically just a hint
+      75-100  HIGH          — well-documented, multiple corroborating sources
+      50-74   MEDIUM        — reasonable evidence, some gaps
+      25-49   LOW           — minimal documentation
+      0-24    SPECULATIVE   — barely more than a name
     """
     conn = sqlite3.connect(db_path)
 
     people = conn.execute(
-        "SELECT id, given_name, surname, birth_date, birth_place, "
+        "SELECT id, given_name, surname, suffix, sex, birth_date, birth_place, "
         "death_date, death_place, source_count FROM person"
     ).fetchall()
 
-    # Build family link lookups
-    # has_parents: person ids that appear as a child in some family
+    # ── Family link lookups ──────────────────────────────────────────────
     has_parents = set()
-    for row in conn.execute(
-        "SELECT child_id FROM family_child"
-    ).fetchall():
+    for row in conn.execute("SELECT child_id FROM family_child").fetchall():
         has_parents.add(row[0])
 
-    # has_spouse: person ids that appear as husb or wife
     has_spouse = set()
     for row in conn.execute(
         "SELECT husb_id FROM family WHERE husb_id IS NOT NULL "
@@ -426,7 +477,6 @@ def compute_confidence(db_path):
     ).fetchall():
         has_spouse.add(row[0])
 
-    # has_children: person ids that have children
     has_children = set()
     for row in conn.execute(
         "SELECT DISTINCT husb_id FROM family f JOIN family_child fc ON f.id = fc.family_id WHERE husb_id IS NOT NULL "
@@ -435,72 +485,143 @@ def compute_confidence(db_path):
     ).fetchall():
         has_children.add(row[0])
 
+    # Grandparent-connected: person whose parent also has a known parent
+    grandparent_connected = set()
+    parent_of = {}  # child_id -> set of parent person_ids
+    for row in conn.execute(
+        "SELECT fc.child_id, f.husb_id, f.wife_id "
+        "FROM family_child fc JOIN family f ON fc.family_id = f.id"
+    ).fetchall():
+        child_id, husb, wife = row
+        parent_of.setdefault(child_id, set())
+        if husb:
+            parent_of[child_id].add(husb)
+        if wife:
+            parent_of[child_id].add(wife)
+    for pid, parents in parent_of.items():
+        for par in parents:
+            if par in parent_of:  # parent also has known parents
+                grandparent_connected.add(pid)
+                break
+
+    # ── Document lookups ─────────────────────────────────────────────────
+    # person_id -> {doc_count, has_cert_obit, has_ocr, avg_match_conf}
+    doc_stats = {}
+    doc_rows = conn.execute(
+        "SELECT dm.person_id, COUNT(*) as cnt, "
+        "       SUM(CASE WHEN d.doc_type IN ('certificate','obituary') THEN 1 ELSE 0 END) as cert_obit, "
+        "       SUM(CASE WHEN d.ocr_text IS NOT NULL AND d.ocr_text != '' THEN 1 ELSE 0 END) as has_ocr, "
+        "       AVG(dm.confidence) as avg_conf "
+        "FROM document_match dm "
+        "JOIN document d ON dm.document_id = d.id "
+        "GROUP BY dm.person_id"
+    ).fetchall()
+    for row in doc_rows:
+        doc_stats[row[0]] = {
+            "count": row[1],
+            "cert_obit": row[2],
+            "has_ocr": row[3],
+            "avg_conf": row[4] or 0,
+        }
+
     updates = []
     tier_counts = {"high": 0, "medium": 0, "low": 0, "speculative": 0}
 
-    for pid, given, surname, birth_date, birth_place, death_date, death_place, source_count in people:
+    for pid, given, surname, suffix, sex, birth_date, birth_place, death_date, death_place, source_count in people:
         score = 0
 
-        # --- Name quality (0-10) ---
-        if given:
-            score += 5
-        if surname:
-            score += 5
+        # ── Identity (0-12) ──────────────────────────────────────────────
+        if given and given.strip():
+            score += 3
+            # Multi-word given name (e.g. "Peter Michael") → more specific
+            if len(given.strip().split()) >= 2:
+                score += 2
+        if surname and surname.strip():
+            score += 3
+        if sex:
+            score += 2
+        if suffix and suffix.strip():
+            score += 2
 
-        # --- Birth evidence (0-25) ---
-        if birth_date:
-            bd = str(birth_date)
-            # Exact date: has day+month+year (YYYY-MM-DD)
-            if re.match(r"^\d{4}-\d{2}-\d{2}$", bd):
-                score += 15
-            else:
-                # Approximate or year-only
-                score += 6
-        if birth_place:
-            score += 10
+        # ── Birth evidence (0-20) ────────────────────────────────────────
+        bq, birth_year = _date_quality(birth_date)
+        if bq == "exact":
+            score += 12
+        elif bq == "approx":
+            score += 7
+        elif bq == "year":
+            score += 4
+        score += _place_specificity(birth_place)
 
-        # --- Death evidence (0-15) ---
-        if death_date:
-            dd = str(death_date)
-            if re.match(r"^\d{4}-\d{2}-\d{2}$", dd):
-                score += 10
-            else:
-                score += 4
-        if death_place:
-            score += 5
-
-        # --- Family links (0-20) ---
-        if pid in has_parents:
+        # ── Death evidence (0-12) ────────────────────────────────────────
+        dq, death_year = _date_quality(death_date)
+        if dq == "exact":
             score += 8
+        elif dq == "approx":
+            score += 5
+        elif dq == "year":
+            score += 3
+        dp_spec = _place_specificity(death_place)
+        # Scale death place: 0→0, 3→1, 5→2, 8→4
+        score += {0: 0, 3: 1, 5: 2, 8: 4}.get(dp_spec, 0)
+
+        # ── Family network (0-15) ────────────────────────────────────────
+        if pid in has_parents:
+            score += 5
         if pid in has_spouse:
-            score += 6
+            score += 4
         if pid in has_children:
-            score += 6
+            score += 4
+        if pid in grandparent_connected:
+            score += 2
 
-        # --- Source citations (0-20) ---
+        # ── Source citations (0-15) ──────────────────────────────────────
         sc = source_count or 0
-        if sc >= 2:
-            score += 20
+        if sc >= 7:
+            score += 15
+        elif sc >= 4:
+            score += 12
+        elif sc >= 2:
+            score += 8
         elif sc == 1:
-            score += 10
+            score += 4
 
-        # --- Data consistency (0-10) ---
-        birth_year = extract_year(birth_date) if birth_date else None
-        death_year = extract_year(death_date) if death_date else None
-        if birth_year:
-            score += 5
+        # ── Documents (0-18) ─────────────────────────────────────────────
+        ds = doc_stats.get(pid)
+        if ds:
+            if ds["count"] >= 1:
+                score += 4
+            if ds["count"] >= 2:
+                score += 4
+            if ds["cert_obit"] and ds["cert_obit"] >= 1:
+                score += 4
+            if ds["has_ocr"] and ds["has_ocr"] >= 1:
+                score += 3
+            if ds["avg_conf"] >= 0.9:
+                score += 3
+
+        # ── Data consistency (0-8) ───────────────────────────────────────
+        if birth_year and 1200 <= birth_year <= 2030:
+            score += 2
         if birth_year and death_year and death_year >= birth_year:
-            score += 5
+            score += 2
+        if birth_year and death_year:
+            lifespan = death_year - birth_year
+            if 0 < lifespan < 120:
+                score += 2
+        # No red flags: name isn't suspiciously generic placeholder
+        if given and surname and given.strip().lower() not in ("unknown", "?", "nn", "child"):
+            score += 2
 
         # Clamp
         score = min(score, 100)
 
         # Tier
-        if score >= 80:
+        if score >= 75:
             tier = "high"
         elif score >= 50:
             tier = "medium"
-        elif score >= 20:
+        elif score >= 25:
             tier = "low"
         else:
             tier = "speculative"

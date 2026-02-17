@@ -17,6 +17,8 @@ Usage:
     python scan_documents.py <folder>                # scan specific folder
     python scan_documents.py --rescan                # re-scan everything
     python scan_documents.py --filename-only         # phase 1 only (no OCR)
+    python scan_documents.py --vision                # phase 3: MiniCPM-o 4.5 vision AI pass
+    python scan_documents.py --vision --rescan       # re-analyze all with vision AI
     python scan_documents.py --thumbnails-only       # just regenerate thumbnails
     python scan_documents.py --export-only           # just re-export documents.json
     python scan_documents.py --review                # review unverified matches
@@ -29,7 +31,7 @@ Requires:
     (Optional for PDF: pip install pdf2image + poppler)
 """
 
-import hashlib, json, os, re, sqlite3, sys, time
+import hashlib, json, os, re, shutil, sqlite3, sys, time
 from datetime import datetime
 from pathlib import Path
 from difflib import SequenceMatcher
@@ -47,6 +49,21 @@ RAW_DIR = SCRIPT_DIR / "raw-data"
 THUMB_DIR = SCRIPT_DIR / "data" / "thumbs"
 THUMB_WIDTH = 400                 # px, longest edge
 THUMB_QUALITY = 82                # JPEG quality
+
+# Vision AI (Ollama + MiniCPM-o 4.5)
+OLLAMA_URL = "http://127.0.0.1:11434"
+VISION_MODEL = "openbmb/minicpm-o4.5"
+VISION_MAX_PX = 1800              # resize images before sending to model
+VISION_PROMPT = """Analyze this genealogy document image. Extract ALL of the following information you can find:
+
+1. PEOPLE: List every person name mentioned (first, middle, last). Format each as "PERSON: Firstname Lastname"
+2. DATES: List every date found. Format as "DATE: YYYY-MM-DD description" (e.g. "DATE: 1923-05-14 birth")
+3. PLACES: List locations mentioned. Format as "PLACE: City, State/Country"
+4. RELATIONSHIPS: Any family relationships stated. Format as "REL: Person1 is [relationship] of Person2"
+5. DOCTYPE: What type of document is this? One of: certificate, obituary, census, military, newspaper, letter, photo, record, other
+6. SUMMARY: One sentence describing what this document is about.
+
+Be thorough. Extract every name and date visible, even if partially legible. If text is unclear, prefix with "?" to indicate uncertainty."""
 
 # Matching thresholds
 NAME_MATCH_THRESHOLD = 0.78       # minimum similarity for OCR name matches
@@ -247,6 +264,263 @@ def ocr_pdf(filepath):
 
 
 # ---------------------------------------------------------------------------
+# VISION AI — MiniCPM-o 4.5 via Ollama for deep document understanding
+# ---------------------------------------------------------------------------
+
+def vision_analyze(filepath):
+    """Send an image to MiniCPM-o 4.5 via Ollama API. Returns analysis text."""
+    import base64
+    try:
+        import urllib.request
+        from PIL import Image
+    except ImportError:
+        return ""
+
+    ext = Path(filepath).suffix.lower()
+    if ext in (".pdf", ".doc", ".docx"):
+        return ""
+
+    # Resize large images to keep inference fast
+    try:
+        img = Image.open(filepath)
+        if img.mode in ("RGBA", "P", "LA"):
+            img = img.convert("RGB")
+        elif img.mode not in ("L", "RGB"):
+            img = img.convert("RGB")
+        w, h = img.size
+        if max(w, h) > VISION_MAX_PX:
+            ratio = VISION_MAX_PX / max(w, h)
+            img = img.resize((int(w * ratio), int(h * ratio)), Image.LANCZOS)
+        import io
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=85)
+        img_bytes = buf.getvalue()
+    except Exception:
+        with open(filepath, "rb") as f:
+            img_bytes = f.read()
+
+    encoded = base64.b64encode(img_bytes).decode("utf-8")
+
+    payload = json.dumps({
+        "model": VISION_MODEL,
+        "prompt": VISION_PROMPT,
+        "stream": False,
+        "images": [encoded],
+    }).encode("utf-8")
+
+    req = urllib.request.Request(
+        f"{OLLAMA_URL}/api/generate",
+        data=payload,
+        headers={"Content-Type": "application/json"},
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+            return result.get("response", "").strip()
+    except Exception as e:
+        raise RuntimeError(f"Ollama API error: {e}")
+
+
+def parse_vision_names(vision_text):
+    """Extract person names from vision analysis output."""
+    names = []
+    for line in vision_text.split("\n"):
+        line = line.strip()
+        # "PERSON: Firstname Lastname"
+        m = re.match(r"(?:\d+\.\s*)?PERSON:\s*\??\s*(.+)", line, re.IGNORECASE)
+        if m:
+            name = clean_name(m.group(1))
+            if name and len(name) > 2:
+                names.append(name)
+    # Also try to catch names from the summary or relationship lines
+    for line in vision_text.split("\n"):
+        line = line.strip()
+        m = re.match(r"REL:\s*(.+?)\s+is\s+\w+\s+of\s+(.+)", line, re.IGNORECASE)
+        if m:
+            for raw in [m.group(1), m.group(2)]:
+                name = clean_name(raw)
+                if name and len(name) > 2:
+                    names.append(name)
+    return list(set(names))
+
+
+def parse_vision_years(vision_text):
+    """Extract years from vision analysis date lines."""
+    years = set()
+    for m in re.finditer(r"\b(1[7-9]\d{2}|20[0-3]\d)\b", vision_text):
+        years.add(int(m.group(1)))
+    return years
+
+
+def parse_vision_doctype(vision_text):
+    """Extract document type from vision analysis."""
+    for line in vision_text.split("\n"):
+        m = re.match(r"(?:\d+\.\s*)?DOCTYPE:\s*(.+)", line, re.IGNORECASE)
+        if m:
+            dtype = m.group(1).strip().lower()
+            valid = {"certificate", "obituary", "census", "military",
+                     "newspaper", "letter", "photo", "record", "other"}
+            if dtype in valid:
+                return dtype
+            # partial match
+            for v in valid:
+                if v in dtype:
+                    return v
+    return None
+
+
+# ---------------------------------------------------------------------------
+# PHASE 3: VISION AI SCAN — deep document understanding via MiniCPM-o 4.5
+# ---------------------------------------------------------------------------
+
+def scan_vision(folder, conn, people, rescan=False):
+    """Run MiniCPM-o 4.5 vision analysis on documents for deep extraction."""
+    import urllib.request
+
+    # Check Ollama is running and model is available
+    try:
+        req = urllib.request.Request(f"{OLLAMA_URL}/api/tags")
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            tags = json.loads(resp.read().decode("utf-8"))
+            models = [m["name"] for m in tags.get("models", [])]
+            if not any(VISION_MODEL in m for m in models):
+                print(f"\n  ERROR: Model '{VISION_MODEL}' not found in Ollama.")
+                print(f"  Run: ollama pull {VISION_MODEL}")
+                return
+    except Exception as e:
+        print(f"\n  ERROR: Cannot reach Ollama at {OLLAMA_URL}: {e}")
+        print("  Make sure Ollama is running (ollama serve)")
+        return
+
+    if rescan:
+        docs = conn.execute(
+            "SELECT id, filepath, filename FROM document"
+        ).fetchall()
+    else:
+        docs = conn.execute(
+            "SELECT id, filepath, filename FROM document "
+            "WHERE vision_text IS NULL OR vision_text = ''"
+        ).fetchall()
+
+    if not docs:
+        print("\n--- Phase 3 (Vision AI): No documents need analysis ---")
+        return
+
+    print(f"\n--- Phase 3: Vision AI analysis ({len(docs)} documents) ---")
+    print(f"  Model: {VISION_MODEL}")
+    t0 = time.time()
+    analyzed = 0
+    new_matches = 0
+    errors = 0
+    skipped = 0
+    upgraded_types = 0
+
+    for i, (doc_id, filepath, filename) in enumerate(docs, 1):
+        if not os.path.exists(filepath):
+            skipped += 1
+            progress_bar(i, len(docs), t0, extra=f"AI:{analyzed} match:{new_matches} err:{errors}")
+            continue
+        ext = Path(filepath).suffix.lower()
+        if ext in (".doc", ".docx", ".pdf"):
+            skipped += 1
+            progress_bar(i, len(docs), t0, extra=f"AI:{analyzed} match:{new_matches} err:{errors}")
+            continue
+
+        progress_bar(i, len(docs), t0, extra=f"AI:{analyzed} match:{new_matches} err:{errors}")
+
+        try:
+            vision_text = vision_analyze(filepath)
+        except Exception as e:
+            errors += 1
+            continue
+
+        if not vision_text:
+            continue
+
+        conn.execute(
+            "UPDATE document SET vision_text = ?, vision_date = ? WHERE id = ?",
+            (vision_text, datetime.now().isoformat(), doc_id)
+        )
+        analyzed += 1
+
+        # Upgrade doc_type if vision gives better info
+        v_dtype = parse_vision_doctype(vision_text)
+        if v_dtype:
+            current_type = conn.execute(
+                "SELECT doc_type FROM document WHERE id = ?", (doc_id,)
+            ).fetchone()[0]
+            if current_type in (None, "photo", "other") and v_dtype not in ("photo", "other"):
+                conn.execute(
+                    "UPDATE document SET doc_type = ? WHERE id = ?",
+                    (v_dtype, doc_id)
+                )
+                upgraded_types += 1
+
+        # Extract names and match
+        v_names = parse_vision_names(vision_text)
+        v_years = parse_vision_years(vision_text)
+
+        if v_names:
+            matches = match_names_to_people(v_names, people, v_years)
+            for pid, conf, snippet, _ in matches:
+                # Boost vision confidence slightly — it's more contextual than OCR regex
+                conf = min(conf + 0.05, 1.0)
+                existing = conn.execute(
+                    "SELECT confidence, match_type FROM document_match "
+                    "WHERE document_id = ? AND person_id = ?",
+                    (doc_id, pid)
+                ).fetchone()
+                if existing:
+                    if conf > existing[0]:
+                        conn.execute(
+                            "UPDATE document_match SET confidence = ?, "
+                            "snippet = ?, match_type = 'vision_auto' "
+                            "WHERE document_id = ? AND person_id = ?",
+                            (round(conf, 3), snippet, doc_id, pid)
+                        )
+                else:
+                    conn.execute(
+                        "INSERT OR REPLACE INTO document_match "
+                        "(document_id, person_id, match_type, confidence, snippet, verified) "
+                        "VALUES (?,?,?,?,?,0)",
+                        (doc_id, pid, "vision_auto", round(conf, 3), snippet)
+                    )
+                    new_matches += 1
+
+        if i % 10 == 0:
+            conn.commit()
+
+    conn.commit()
+    # Clear progress bar line
+    sys.stdout.write("\r" + " " * shutil.get_terminal_size((80, 20)).columns + "\r")
+    sys.stdout.flush()
+    elapsed = time.time() - t0
+    print(f"  Phase 3 done: {analyzed} analyzed, {new_matches} new matches, "
+          f"{upgraded_types} doc types upgraded, {errors} errors, "
+          f"{skipped} skipped ({elapsed:.0f}s)")
+
+    # Show sample analyses
+    samples = conn.execute(
+        "SELECT d.filename, d.vision_text FROM document d "
+        "WHERE d.vision_text IS NOT NULL AND d.vision_text != '' "
+        "ORDER BY RANDOM() LIMIT 5"
+    ).fetchall()
+    if samples:
+        print(f"\n{'='*60}")
+        print(f"VISION AI SAMPLE ANALYSES ({len(samples)} random)")
+        print(f"{'='*60}")
+        for fname, vtext in samples:
+            print(f"\n  {fname}")
+            for line in vtext.split("\n")[:8]:
+                line = line.strip()
+                if line:
+                    print(f"    {line}")
+            if len(vtext.split("\n")) > 8:
+                print(f"    ...")
+
+
+# ---------------------------------------------------------------------------
 # TEXT EXTRACTION — pull names and dates from OCR output
 # ---------------------------------------------------------------------------
 
@@ -419,7 +693,8 @@ def ensure_tables(conn):
         CREATE INDEX IF NOT EXISTS idx_doc_match_doc    ON document_match(document_id);
     """)
     # Add columns if missing (upgrade path)
-    for col, typedef in [("description", "TEXT"), ("has_thumb", "INTEGER DEFAULT 0"), ("seq_num", "INTEGER")]:
+    for col, typedef in [("description", "TEXT"), ("has_thumb", "INTEGER DEFAULT 0"),
+                         ("seq_num", "INTEGER"), ("vision_text", "TEXT"), ("vision_date", "TEXT")]:
         try:
             conn.execute(f"SELECT {col} FROM document LIMIT 0")
         except sqlite3.OperationalError:
@@ -581,6 +856,29 @@ def scan_filenames(folder, conn, people, rescan=False):
 # PHASE 2: OCR SCAN (slow)
 # ---------------------------------------------------------------------------
 
+def progress_bar(current, total, t0, width=40, extra=""):
+    """Render a terminal progress bar with ETA."""
+    pct = current / total if total else 1
+    filled = int(width * pct)
+    bar = "█" * filled + "░" * (width - filled)
+    elapsed = time.time() - t0
+    rate = current / elapsed if elapsed > 0 else 0
+    remaining = (total - current) / rate if rate > 0 else 0
+    if remaining >= 3600:
+        eta_str = f"{remaining/3600:.1f}h"
+    elif remaining >= 60:
+        eta_str = f"{remaining/60:.0f}m{int(remaining%60):02d}s"
+    else:
+        eta_str = f"{remaining:.0f}s"
+    cols = shutil.get_terminal_size((80, 20)).columns
+    line = f"\r  |{bar}| {pct:5.1%}  [{current}/{total}]  {rate:.1f}/s  ETA {eta_str}"
+    if extra:
+        line += f"  {extra}"
+    line = line[:cols]
+    sys.stdout.write(line)
+    sys.stdout.flush()
+
+
 def scan_ocr(folder, conn, people, rescan=False, filename_only=False):
     """OCR documents and find additional matches."""
     if filename_only:
@@ -604,23 +902,28 @@ def scan_ocr(folder, conn, people, rescan=False, filename_only=False):
     t0 = time.time()
     ocr_count = 0
     new_matches = 0
+    errors = 0
+    skipped = 0
+    # keep samples for accuracy check
+    ocr_samples = []
 
     for i, (doc_id, filepath, filename) in enumerate(docs, 1):
         if not os.path.exists(filepath):
+            skipped += 1
+            progress_bar(i, len(docs), t0, extra=f"OCR:{ocr_count} match:{new_matches} err:{errors}")
             continue
         ext = Path(filepath).suffix.lower()
         if ext in (".doc", ".docx"):
+            skipped += 1
+            progress_bar(i, len(docs), t0, extra=f"OCR:{ocr_count} match:{new_matches} err:{errors}")
             continue
 
-        if i % 50 == 0 or i == 1:
-            elapsed = time.time() - t0
-            rate = i / elapsed if elapsed > 0 else 0
-            eta = (len(docs) - i) / rate if rate > 0 else 0
-            print(f"  [{i}/{len(docs)}] ({rate:.1f}/s, ETA {eta/60:.0f}m)")
+        progress_bar(i, len(docs), t0, extra=f"OCR:{ocr_count} match:{new_matches} err:{errors}")
 
         try:
             text = ocr_image(filepath)
-        except Exception:
+        except Exception as e:
+            errors += 1
             continue
 
         if text:
@@ -629,6 +932,10 @@ def scan_ocr(folder, conn, people, rescan=False, filename_only=False):
                 (text, datetime.now().isoformat(), doc_id)
             )
             ocr_count += 1
+
+            # Collect samples for accuracy check (every ~100th doc, up to 20)
+            if len(ocr_samples) < 20 and (ocr_count % max(1, len(docs)//20) == 0 or ocr_count <= 3):
+                ocr_samples.append((filename, text[:300]))
 
             if len(text) >= MIN_TEXT_LENGTH:
                 years = extract_years(text)
@@ -663,16 +970,35 @@ def scan_ocr(folder, conn, people, rescan=False, filename_only=False):
             conn.commit()
 
     conn.commit()
+    # Clear progress bar line
+    sys.stdout.write("\r" + " " * shutil.get_terminal_size((80, 20)).columns + "\r")
+    sys.stdout.flush()
     elapsed = time.time() - t0
-    print(f"  Phase 2 done: {ocr_count} OCR'd, {new_matches} new matches ({elapsed:.0f}s)")
+    print(f"  Phase 2 done: {ocr_count} OCR'd, {new_matches} new matches, "
+          f"{errors} errors, {skipped} skipped ({elapsed:.0f}s)")
+
+    # --- Accuracy spot-check ---
+    if ocr_samples:
+        print(f"\n{'='*60}")
+        print(f"OCR ACCURACY SPOT-CHECK ({len(ocr_samples)} samples)")
+        print(f"{'='*60}")
+        for fname, text_preview in ocr_samples:
+            clean = text_preview.replace("\n", " ").strip()
+            if len(clean) > 120:
+                clean = clean[:120] + "..."
+            readable_chars = sum(1 for c in clean if c.isalnum() or c.isspace())
+            ratio = readable_chars / max(len(clean), 1)
+            quality = "GOOD" if ratio > 0.75 else ("OK" if ratio > 0.5 else "POOR")
+            print(f"\n  [{quality}] {fname}")
+            print(f"       {clean}")
 
 
 # ---------------------------------------------------------------------------
 # SCAN ENTRY POINT
 # ---------------------------------------------------------------------------
 
-def scan_folder(folder, rescan=False, filename_only=False):
-    """Two-phase scan: fast filename matching, then optional OCR."""
+def scan_folder(folder, rescan=False, filename_only=False, vision=False):
+    """Multi-phase scan: filename matching, OCR, then optional vision AI."""
     folder = Path(folder)
     if not folder.exists():
         print(f"ERROR: Folder not found: {folder}")
@@ -688,8 +1014,15 @@ def scan_folder(folder, rescan=False, filename_only=False):
     people = load_people(conn)
     print(f"Loaded {len(people)} people from database")
 
-    scan_filenames(folder, conn, people, rescan=rescan)
-    scan_ocr(folder, conn, people, rescan=rescan, filename_only=filename_only)
+    if not vision:
+        scan_filenames(folder, conn, people, rescan=rescan)
+        scan_ocr(folder, conn, people, rescan=rescan, filename_only=filename_only)
+    else:
+        # Vision-only mode: skip Phase 1 & 2 if docs already exist
+        existing = conn.execute("SELECT COUNT(*) FROM document").fetchone()[0]
+        if existing == 0:
+            scan_filenames(folder, conn, people, rescan=rescan)
+        scan_vision(folder, conn, people, rescan=rescan)
 
     # Summary
     total_docs = conn.execute("SELECT COUNT(*) FROM document").fetchone()[0]
@@ -739,7 +1072,7 @@ def export_json():
 
     docs = conn.execute(
         "SELECT d.id, d.filename, d.filepath, d.doc_type, d.description, d.ocr_text, "
-        "d.has_thumb, d.seq_num "
+        "d.has_thumb, d.seq_num, d.vision_text "
         "FROM document d ORDER BY d.seq_num, d.id"
     ).fetchall()
 
@@ -763,9 +1096,9 @@ def export_json():
         })
 
     out = []
-    for doc_id, filename, filepath, doc_type, description, ocr_text, has_thumb, seq_num in docs:
+    for doc_id, filename, filepath, doc_type, description, ocr_text, has_thumb, seq_num, vision_text in docs:
         thumb_file = Path(filename).stem + ".jpg" if has_thumb else None
-        out.append({
+        entry = {
             "id": doc_id,
             "filename": filename,
             "title": description or filename,
@@ -774,7 +1107,10 @@ def export_json():
             "thumb": f"data/thumbs/{thumb_file}" if thumb_file else None,
             "matches": match_map.get(doc_id, []),
             "seq": seq_num,
-        })
+        }
+        if vision_text:
+            entry["vision"] = vision_text[:3000]
+        out.append(entry)
 
     out_path = SCRIPT_DIR / "data" / "documents.json"
     with open(out_path, "w", encoding="utf-8") as f:
@@ -1034,7 +1370,8 @@ def main():
         folder = next((a for a in args if not a.startswith("--")), str(RAW_DIR))
         rescan = "--rescan" in args
         filename_only = "--filename-only" in args
-        scan_folder(folder, rescan=rescan, filename_only=filename_only)
+        vision = "--vision" in args
+        scan_folder(folder, rescan=rescan, filename_only=filename_only, vision=vision)
 
 
 if __name__ == "__main__":
