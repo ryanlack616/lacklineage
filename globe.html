@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Globe — Lack Lineage</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0f;
+  --fg: #e8e4dc;
+  --fg2: #9a9590;
+  --accent: #d4a832;
+  --accent2: #8b6914;
+  --border: #3a352e;
+  --font: 'Georgia', 'Times New Roman', serif;
+  --mono: 'Consolas', 'Monaco', monospace;
+  --panel-bg: rgba(10, 10, 15, 0.92);
+}
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font);
+  color: var(--fg);
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+header {
+  background: #1a1714;
+  color: #f8f6f1;
+  padding: 0.5rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  z-index: 100;
+  flex-shrink: 0;
+}
+header h1 { font-size: 1rem; letter-spacing: 0.05em; white-space: nowrap; }
+header h1 a { color: inherit; text-decoration: none; }
+nav { display: flex; gap: 0.4rem; }
+nav a {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #f8f6f1;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+nav a:hover, nav a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+nav a.active { font-weight: bold; }
+
+/* ── Globe container ── */
+#globe-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+}
+#globe-container:active { cursor: grabbing; }
+
+/* ── Sidebar panel ── */
+.panel {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  width: 320px;
+  max-height: calc(100% - 1.5rem);
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.panel-header {
+  padding: 1rem 1.2rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.panel-header h2 {
+  font-size: 1.1rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 0.3rem;
+}
+.panel-stats {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: var(--fg2);
+}
+.panel-stats .stat-val {
+  color: var(--fg);
+  font-weight: bold;
+  font-size: 0.85rem;
+}
+
+/* ── Controls ── */
+.panel-controls {
+  padding: 0.6rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.panel-controls button {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 0.3rem 0.65rem;
+  border-radius: 5px;
+  font-family: var(--font);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.panel-controls button:hover {
+  background: rgba(212,168,50,0.15);
+  border-color: var(--accent);
+}
+.panel-controls button.active {
+  background: rgba(212,168,50,0.2);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Location detail ── */
+.panel-detail {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 1.2rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.panel-detail::-webkit-scrollbar { width: 5px; }
+.panel-detail::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.detail-title {
+  font-size: 0.95rem;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+  font-weight: normal;
+}
+.detail-counts {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.72rem;
+  color: var(--fg2);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.detail-counts span { color: var(--fg); font-weight: bold; }
+
+.person-list { list-style: none; }
+.person-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.person-item a {
+  color: var(--fg);
+  text-decoration: none;
+  font-size: 0.8rem;
+  transition: color 0.15s;
+}
+.person-item a:hover { color: var(--accent); }
+.person-dates {
+  font-size: 0.7rem;
+  color: var(--fg2);
+  white-space: nowrap;
+}
+.person-type {
+  font-size: 0.6rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.person-type.birth { background: rgba(100,180,255,0.15); color: #7bb8f0; }
+.person-type.death { background: rgba(255,150,100,0.15); color: #e8a070; }
+.person-type.both { background: rgba(212,168,50,0.15); color: var(--accent); }
+
+.tier-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+.tier-dot.high { background: #4a4; }
+.tier-dot.medium { background: #aa4; }
+.tier-dot.low { background: #a44; }
+.tier-dot.unknown { background: #666; }
+
+/* ── Placeholder text ── */
+.detail-empty {
+  color: var(--fg2);
+  font-size: 0.8rem;
+  font-style: italic;
+  padding: 1rem 0;
+  text-align: center;
+}
+
+/* ── Tooltip ── */
+.globe-tooltip {
+  position: absolute;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: var(--fg);
+  pointer-events: none;
+  z-index: 200;
+  max-width: 280px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  transition: opacity 0.15s;
+}
+.globe-tooltip .tt-place {
+  color: var(--accent);
+  font-size: 0.82rem;
+  margin-bottom: 0.2rem;
+}
+.globe-tooltip .tt-counts {
+  color: var(--fg2);
+  font-size: 0.7rem;
+}
+
+/* ── Legend ── */
+.legend {
+  position: absolute;
+  bottom: 0.75rem;
+  right: 0.75rem;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.65rem;
+  color: var(--fg2);
+  z-index: 50;
+  backdrop-filter: blur(8px);
+}
+.legend-title { color: var(--fg); font-size: 0.72rem; margin-bottom: 0.3rem; }
+.legend-row { display: flex; align-items: center; gap: 0.4rem; margin: 0.15rem 0; }
+.legend-swatch {
+  width: 10px; height: 10px; border-radius: 2px;
+}
+
+/* ── Loading ── */
+.loading {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+  z-index: 300;
+  transition: opacity 0.5s;
+}
+.loading-text {
+  color: var(--accent);
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+/* ── Mobile ── */
+@media (max-width: 700px) {
+  .panel { width: 100%; left: 0; top: auto; bottom: 0; max-height: 45vh; border-radius: 10px 10px 0 0; }
+  .legend { bottom: auto; top: 0.5rem; right: 0.5rem; }
+  header { padding: 0.4rem 0.8rem; gap: 0.8rem; }
+  header h1 { font-size: 0.85rem; }
+  nav a { font-size: 0.65rem; padding: 0.2rem 0.4rem; }
+}
+
+/* footer */
+footer {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.15);
+  z-index: 10;
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+<header>
+  <h1><a href="/">Lack Lineage</a></h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/search.html">Search</a>
+    <a href="/research.html">Research</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/tree.html">Tree</a>
+    <a href="/globe.html" class="active">Globe</a>
+  </nav>
+</header>
+
+<div id="globe-container">
+  <div class="loading" id="loading">
+    <div class="loading-text">Loading globe data&hellip;</div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="panel" id="panel">
+    <div class="panel-header">
+      <h2>LACK LINEAGE</h2>
+      <div class="panel-stats">
+        <div><span class="stat-val" id="stat-locations">—</span> locations</div>
+        <div><span class="stat-val" id="stat-people">—</span> people</div>
+        <div><span class="stat-val" id="stat-arcs">—</span> migrations</div>
+      </div>
+    </div>
+    <div class="panel-controls">
+      <button id="btn-all" class="active" title="Show all locations">All</button>
+      <button id="btn-births" title="Birth locations only">Births</button>
+      <button id="btn-deaths" title="Death locations only">Deaths</button>
+      <button id="btn-arcs" title="Toggle migration arcs">Migrations</button>
+      <button id="btn-reset" title="Reset view to home">Reset</button>
+    </div>
+    <div class="panel-detail" id="panel-detail">
+      <div class="detail-empty">Click a location on the globe to see who lived there.</div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend" id="legend">
+    <div class="legend-title">Era</div>
+    <div class="legend-row"><div class="legend-swatch" style="background: #5588cc;"></div> Pre-1800</div>
+    <div class="legend-row"><div class="legend-swatch" style="background: #44aa99;"></div> 1800s</div>
+    <div class="legend-row"><div class="legend-swatch" style="background: #d4a832;"></div> 1900s</div>
+    <div class="legend-row"><div class="legend-swatch" style="background: #ee8844;"></div> 2000s</div>
+    <div class="legend-row" id="legend-arc-row" style="display:none;"><div class="legend-swatch" style="background: transparent; border: 1px solid #d4a832;"></div> Migration arc</div>
+  </div>
+
+  <!-- Tooltip -->
+  <div class="globe-tooltip" id="tooltip" style="opacity: 0;"></div>
+
+  <footer>lacklineage.com · 2026</footer>
+</div>
+
+<script src="//unpkg.com/globe.gl@2.35.2/dist/globe.gl.min.js"></script>
+<script src="/data/help-widget.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  // ─── Color palette ───
+  const ERA_COLORS = {
+    'pre1800': '#5588cc',
+    '1800s':   '#44aa99',
+    '1900s':   '#d4a832',
+    '2000s':   '#ee8844',
+    'unknown': '#888888'
+  };
+
+  const ARC_COLORS = {
+    'pre1800': 'rgba(85,136,204,0.35)',
+    '1800s':   'rgba(68,170,153,0.35)',
+    '1900s':   'rgba(212,168,50,0.35)',
+    '2000s':   'rgba(238,136,68,0.35)',
+    'unknown': 'rgba(136,136,136,0.25)'
+  };
+
+  // ─── State ───
+  let globeData = null;
+  let globe = null;
+  let viewMode = 'all'; // 'all', 'births', 'deaths'
+  let showArcs = false;
+  let selectedPoint = null;
+
+  // ─── DOM ───
+  const container = document.getElementById('globe-container');
+  const loadingEl = document.getElementById('loading');
+  const tooltip = document.getElementById('tooltip');
+  const panelDetail = document.getElementById('panel-detail');
+  const legendArcRow = document.getElementById('legend-arc-row');
+
+  // ─── Load data ───
+  fetch('/data/globe.json')
+    .then(r => r.json())
+    .then(data => {
+      globeData = data;
+      initGlobe(data);
+    })
+    .catch(err => {
+      loadingEl.querySelector('.loading-text').textContent = 'Failed to load globe data';
+      console.error(err);
+    });
+
+  function initGlobe(data) {
+    // Stats
+    document.getElementById('stat-locations').textContent = data.stats.totalPoints.toLocaleString();
+    document.getElementById('stat-people').textContent = data.stats.totalPeopleMapped.toLocaleString();
+    document.getElementById('stat-arcs').textContent = data.stats.totalArcs.toLocaleString();
+
+    // Compute max for sizing
+    const maxTotal = Math.max(...data.points.map(p => p.total));
+
+    globe = Globe()
+      .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
+      .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
+      .pointsData(data.points)
+      .pointLat('lat')
+      .pointLng('lng')
+      .pointAltitude(d => 0.005 + (d.total / maxTotal) * 0.08)
+      .pointRadius(d => 0.15 + Math.sqrt(d.total / maxTotal) * 1.2)
+      .pointColor(d => pointColor(d))
+      .pointLabel('')
+      .onPointClick(d => selectPoint(d))
+      .onPointHover(d => handlePointHover(d))
+      .arcsData([])
+      .arcStartLat('startLat')
+      .arcStartLng('startLng')
+      .arcEndLat('endLat')
+      .arcEndLng('endLng')
+      .arcColor(d => ARC_COLORS[d.era] || ARC_COLORS.unknown)
+      .arcAltitude(d => {
+        const dist = Math.sqrt(
+          Math.pow(d.startLat - d.endLat, 2) + Math.pow(d.startLng - d.endLng, 2)
+        );
+        return 0.05 + Math.min(dist / 200, 0.5);
+      })
+      .arcStroke(0.3)
+      .arcDashLength(0.4)
+      .arcDashGap(0.2)
+      .arcDashAnimateTime(2000)
+      .arcLabel('')
+      .onArcHover(d => handleArcHover(d))
+      .atmosphereColor('#334455')
+      .atmosphereAltitude(0.2)
+      (container);
+
+    // Start view: Pennsylvania
+    globe.pointOfView({ lat: 40.5, lng: -78.5, altitude: 0.8 }, 1500);
+
+    // Auto-rotate
+    globe.controls().autoRotate = true;
+    globe.controls().autoRotateSpeed = 0.3;
+    globe.controls().enableDamping = true;
+    globe.controls().dampingFactor = 0.1;
+
+    // Stop auto-rotate on interaction
+    container.addEventListener('mousedown', () => { globe.controls().autoRotate = false; });
+    container.addEventListener('touchstart', () => { globe.controls().autoRotate = false; });
+
+    // Size
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    // Hide loading
+    loadingEl.style.opacity = '0';
+    setTimeout(() => { loadingEl.style.display = 'none'; }, 500);
+  }
+
+  function handleResize() {
+    if (!globe) return;
+    globe.width(container.clientWidth);
+    globe.height(container.clientHeight);
+  }
+
+  // ─── Point color based on dominant era ───
+  function pointColor(d) {
+    if (viewMode === 'births' && d.births === 0) return 'rgba(0,0,0,0)';
+    if (viewMode === 'deaths' && d.deaths === 0) return 'rgba(0,0,0,0)';
+
+    // Find dominant era among people at this point
+    const eras = {};
+    d.people.forEach(p => {
+      eras[p.era] = (eras[p.era] || 0) + 1;
+    });
+    let best = 'unknown', bestCount = 0;
+    for (const [era, count] of Object.entries(eras)) {
+      if (count > bestCount) { best = era; bestCount = count; }
+    }
+    return ERA_COLORS[best] || ERA_COLORS.unknown;
+  }
+
+  // ─── Tooltip on hover ───
+  function handlePointHover(d) {
+    if (!d) {
+      tooltip.style.opacity = '0';
+      container.style.cursor = 'grab';
+      return;
+    }
+    container.style.cursor = 'pointer';
+
+    const births = viewMode === 'deaths' ? 0 : d.births;
+    const deaths = viewMode === 'births' ? 0 : d.deaths;
+    const total = viewMode === 'births' ? d.births : viewMode === 'deaths' ? d.deaths : d.total;
+
+    tooltip.innerHTML = `
+      <div class="tt-place">${escHtml(d.place)}</div>
+      <div class="tt-counts">${total} people · ${births} born · ${deaths} died</div>
+    `;
+    tooltip.style.opacity = '1';
+
+    // Position tooltip near cursor
+    container.addEventListener('mousemove', moveTooltip);
+  }
+
+  function handleArcHover(d) {
+    if (!d) {
+      tooltip.style.opacity = '0';
+      container.style.cursor = 'grab';
+      return;
+    }
+    container.style.cursor = 'pointer';
+    tooltip.innerHTML = `
+      <div class="tt-place">${escHtml(d.name)} ${d.dates ? '(' + d.dates + ')' : ''}</div>
+      <div class="tt-counts">${escHtml(d.from)} → ${escHtml(d.to)}</div>
+    `;
+    tooltip.style.opacity = '1';
+  }
+
+  function moveTooltip(e) {
+    const rect = container.getBoundingClientRect();
+    let x = e.clientX - rect.left + 15;
+    let y = e.clientY - rect.top - 10;
+    if (x + 280 > rect.width) x = e.clientX - rect.left - 290;
+    if (y + 80 > rect.height) y = e.clientY - rect.top - 80;
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+  }
+  container.addEventListener('mousemove', moveTooltip);
+
+  // ─── Click point: show detail ───
+  function selectPoint(d) {
+    if (!d) return;
+    selectedPoint = d;
+    globe.controls().autoRotate = false;
+
+    // Fly to
+    globe.pointOfView({ lat: d.lat, lng: d.lng, altitude: 0.4 }, 800);
+
+    // Filter people by view mode
+    let people = d.people;
+    if (viewMode === 'births') people = people.filter(p => p.type === 'birth' || p.type === 'both');
+    if (viewMode === 'deaths') people = people.filter(p => p.type === 'death' || p.type === 'both');
+
+    const births = d.births;
+    const deaths = d.deaths;
+
+    let html = `<h3 class="detail-title">${escHtml(d.place)}</h3>`;
+    html += `<div class="detail-counts">
+      <div><span>${births}</span> born here</div>
+      <div><span>${deaths}</span> died here</div>
+      <div><span>${d.total}</span> total</div>
+    </div>`;
+    html += '<ul class="person-list">';
+    people.forEach(p => {
+      html += `<li class="person-item">
+        <div class="tier-dot ${p.tier}"></div>
+        <a href="/profile.html?id=${p.id}">${escHtml(p.name)}</a>
+        <span class="person-dates">${escHtml(p.dates)}</span>
+        <span class="person-type ${p.type}">${p.type}</span>
+      </li>`;
+    });
+    html += '</ul>';
+    panelDetail.innerHTML = html;
+  }
+
+  // ─── Controls ───
+  document.getElementById('btn-all').addEventListener('click', () => setView('all'));
+  document.getElementById('btn-births').addEventListener('click', () => setView('births'));
+  document.getElementById('btn-deaths').addEventListener('click', () => setView('deaths'));
+  document.getElementById('btn-arcs').addEventListener('click', toggleArcs);
+  document.getElementById('btn-reset').addEventListener('click', resetView);
+
+  function setView(mode) {
+    viewMode = mode;
+    document.querySelectorAll('.panel-controls button').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + mode).classList.add('active');
+    if (showArcs) document.getElementById('btn-arcs').classList.add('active');
+
+    // Re-color points
+    if (globe && globeData) {
+      // Filter points based on mode
+      let pts = globeData.points;
+      if (mode === 'births') pts = pts.filter(p => p.births > 0);
+      if (mode === 'deaths') pts = pts.filter(p => p.deaths > 0);
+      globe.pointsData(pts);
+
+      // Update arcs filter too
+      if (showArcs) {
+        globe.arcsData(globeData.arcs);
+      }
+    }
+
+    // Refresh detail if point selected
+    if (selectedPoint) selectPoint(selectedPoint);
+  }
+
+  function toggleArcs() {
+    showArcs = !showArcs;
+    document.getElementById('btn-arcs').classList.toggle('active', showArcs);
+    legendArcRow.style.display = showArcs ? 'flex' : 'none';
+    if (globe && globeData) {
+      globe.arcsData(showArcs ? globeData.arcs : []);
+    }
+  }
+
+  function resetView() {
+    if (!globe) return;
+    viewMode = 'all';
+    showArcs = false;
+    selectedPoint = null;
+    document.querySelectorAll('.panel-controls button').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-all').classList.add('active');
+    legendArcRow.style.display = 'none';
+
+    globe.pointsData(globeData.points);
+    globe.arcsData([]);
+    globe.pointOfView({ lat: 40.5, lng: -78.5, altitude: 0.8 }, 1200);
+    globe.controls().autoRotate = true;
+    panelDetail.innerHTML = '<div class="detail-empty">Click a location on the globe to see who lived there.</div>';
+  }
+
+  function escHtml(s) {
+    if (!s) return '';
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ─── Help widget ───
+  if (typeof initHelp === 'function') {
+    initHelp({
+      title: 'Globe',
+      intro: 'A 3D globe showing where 1,251 family members were born, lived, and died across 5 centuries.',
+      keyboard: [
+        ['?', 'Toggle this help panel']
+      ],
+      mouse: [
+        ['Left-drag', 'Rotate the globe'],
+        ['Scroll', 'Zoom in/out'],
+        ['Right-drag', 'Pan the view'],
+        ['Click point', 'Show people at that location'],
+        ['Hover point', 'Show location tooltip']
+      ],
+      sections: [
+        {
+          title: '🌍 Views',
+          body: '<strong>All</strong> shows every mapped location. <strong>Births</strong> and <strong>Deaths</strong> filter to show only where people were born or died. <strong>Migrations</strong> draws arcs from birth place to death place for everyone who moved.'
+        },
+        {
+          title: '🎨 Colors',
+          body: 'Points are colored by the dominant era of people at that location: <span style="color:#5588cc">blue</span> for pre-1800, <span style="color:#44aa99">teal</span> for 1800s, <span style="color:#d4a832">gold</span> for 1900s, <span style="color:#ee8844">orange</span> for 2000s.'
+        },
+        {
+          title: '📊 Data',
+          body: 'Location data comes from birth and death places in the genealogy database. Places are geocoded to coordinates. Click any glowing point to see the full list of people with links to their profiles.'
+        }
+      ]
+    });
+  }
+})();
+</script>
+</body>
+</html>
