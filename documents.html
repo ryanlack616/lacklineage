@@ -393,6 +393,39 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
 .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
 .empty-state p { font-size: 0.9rem; }
 
+/* ── Pagination ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 1.2rem 1.5rem 2rem;
+  flex-wrap: wrap;
+}
+.pagination button {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem 0.7rem;
+  font-family: var(--font);
+  font-size: 0.82rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 36px;
+  text-align: center;
+}
+.pagination button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.pagination button:disabled { opacity: 0.35; cursor: default; }
+.pagination button.active {
+  background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700;
+}
+.pagination .page-info {
+  font-size: 0.78rem;
+  color: var(--text3);
+  margin: 0 0.5rem;
+}
+
 /* ── Loading ── */
 .loading {
   text-align: center;
@@ -440,6 +473,9 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
   <div class="loading">Loading documents…</div>
 </div>
 
+<!-- Pagination -->
+<div class="pagination" id="pagination"></div>
+
 <!-- Modal -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal" id="modal">
@@ -458,6 +494,8 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
 /* ────────── State ────────── */
 let allDocs = [];
 let filtered = [];
+let currentPage = 1;
+const PAGE_SIZE = 25;
 
 /* ────────── Load ────────── */
 fetch('/data/documents.json')
@@ -533,8 +571,10 @@ function applyFilters() {
     return true;
   });
 
+  currentPage = 1;
   document.getElementById('count').textContent = `${filtered.length} of ${allDocs.length}`;
   renderGrid();
+  renderPagination();
 }
 
 document.getElementById('search').addEventListener('input', applyFilters);
@@ -561,7 +601,11 @@ function renderGrid() {
     return;
   }
 
-  grid.innerHTML = filtered.map((doc, i) => {
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageItems = filtered.slice(start, start + PAGE_SIZE);
+
+  grid.innerHTML = pageItems.map((doc, pi) => {
+    const i = start + pi;
     const thumbHtml = doc.thumb
       ? `<img class="thumb" src="${doc.thumb}" alt="${esc(doc.title)}" loading="lazy">`
       : `<div class="thumb-placeholder">${typeIcon(doc.type)}</div>`;
@@ -592,6 +636,58 @@ function renderGrid() {
       openModal(filtered[idx]);
     });
   });
+}
+
+/* ────────── Pagination ────────── */
+function renderPagination() {
+  const el = document.getElementById('pagination');
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+
+  const start = (currentPage - 1) * PAGE_SIZE + 1;
+  const end = Math.min(currentPage * PAGE_SIZE, filtered.length);
+  let html = `<button id="pg-prev" ${currentPage === 1 ? 'disabled' : ''}>&#8592; Prev</button>`;
+
+  // Page buttons - show at most 7 pages with ellipsis
+  const pages = [];
+  if (totalPages <= 7) {
+    for (let p = 1; p <= totalPages; p++) pages.push(p);
+  } else {
+    pages.push(1);
+    if (currentPage > 3) pages.push('...');
+    for (let p = Math.max(2, currentPage - 1); p <= Math.min(totalPages - 1, currentPage + 1); p++) pages.push(p);
+    if (currentPage < totalPages - 2) pages.push('...');
+    pages.push(totalPages);
+  }
+
+  for (const p of pages) {
+    if (p === '...') {
+      html += '<span class="page-info">…</span>';
+    } else {
+      html += `<button class="pg-num ${p === currentPage ? 'active' : ''}" data-page="${p}">${p}</button>`;
+    }
+  }
+
+  html += `<button id="pg-next" ${currentPage === totalPages ? 'disabled' : ''}>Next &#8594;</button>`;
+  html += `<span class="page-info">${start}–${end} of ${filtered.length}</span>`;
+  el.innerHTML = html;
+
+  // Bind events
+  document.getElementById('pg-prev')?.addEventListener('click', () => goToPage(currentPage - 1));
+  document.getElementById('pg-next')?.addEventListener('click', () => goToPage(currentPage + 1));
+  el.querySelectorAll('.pg-num').forEach(btn => {
+    btn.addEventListener('click', () => goToPage(parseInt(btn.dataset.page)));
+  });
+}
+
+function goToPage(page) {
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  renderGrid();
+  renderPagination();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /* ────────── Modal ────────── */
