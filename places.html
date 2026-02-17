@@ -1048,7 +1048,7 @@ function populateUI() {
 // ══════════════════════════════════════════════════════════════
 initMap();
 
-fetch('data/map.json')
+fetch('/data/map.json')
   .then(r => r.json())
   .then(data => {
     DATA = data;
@@ -1072,6 +1072,38 @@ fetch('data/map.json')
         Failed to load map data. Run generate_map.py first.
       </div>`;
   });
+</script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'Places Map',
+  intro: 'An interactive map showing where everyone in the family was born and died, with migration arcs connecting the two. Precision-aware markers show how confident each location is.',
+  sections: [
+    { title: 'Precision Levels', icon: '🎯', html: `
+      <ul>
+        <li><strong>Pinpointed</strong> — Exact town or city coordinates confirmed</li>
+        <li><strong>Approximate</strong> — Nearby area, possibly a neighboring town</li>
+        <li><strong>Regional</strong> — County or state level only</li>
+        <li><strong>Homeland</strong> — Country known but no finer detail</li>
+      </ul>
+    ` },
+    { title: 'Color Modes', icon: '🎨', html: `
+      <p>Use the dropdown to switch between:</p>
+      <ul>
+        <li><strong>Map Precision</strong> — Green shades by how exact the location is</li>
+        <li><strong>German Heritage</strong> — Amber glow on German-origin births</li>
+        <li><strong>Birth Era</strong> — Color by century of birth</li>
+        <li><strong>Country of Origin</strong> — Color by birth country/region</li>
+      </ul>
+    ` },
+    { title: 'Layers & Filters', icon: '⚙️', html: `
+      <p>Toggle <strong>Births</strong>, <strong>Deaths</strong>, and <strong>Migration Arcs</strong> independently. Use the <strong>time sliders</strong> to filter by birth year range.</p>
+    ` },
+    { title: 'Lost Places', icon: '🔍', html: `
+      <p>The right panel shows places that couldn\u2019t be mapped — potential research opportunities where the place name is too vague or historical to geocode.</p>
+    ` }
+  ]
+});
 </script>
 </body>
 </html>

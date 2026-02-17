@@ -922,5 +922,23 @@ function encPath(p) {
   return p.replace(/\\/g, '/').split('/').map(s => encodeURIComponent(s)).join('/');
 }
 </script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'Dad\'s Desk — Admin',
+  intro: 'The admin panel for editing person records, uploading documents, and managing notes. Changes save directly to the database via the review server.',
+  sections: [
+    { title: 'Editing', icon: '✏️', html: `
+      <p>Click any person to open their edit form. You can update names, dates, places, and confidence. Changes save when you click <strong>Save</strong>.</p>
+    ` },
+    { title: 'Documents', icon: '📄', html: `
+      <p>Upload new document scans from the person\'s detail view. Drag & drop or use the file picker. The server processes OCR automatically.</p>
+    ` },
+    { title: 'Notes', icon: '📝', html: `
+      <p>Add research notes to any person. Notes are timestamped and attributed to the current reviewer name (top right).</p>
+    ` }
+  ]
+});
+</script>
 </body>
 </html>

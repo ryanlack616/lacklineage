@@ -810,6 +810,16 @@ footer {
     document.getElementById('btn-all').classList.add('active');
     legendArcRow.style.display = 'none';
 
+    // Reset timeline
+    if (tlPlaying) {
+      tlPlaying = false;
+      tlPlayBtn.innerHTML = '&#9654;';
+      tlPlayBtn.classList.remove('playing');
+      if (tlAnimId) cancelAnimationFrame(tlAnimId);
+    }
+    tlYear = TL_MAX;
+    updateTimeline();
+
     globe.pointsData(globeData.points);
     globe.arcsData([]);
     globe.pointOfView({ lat: 40.5, lng: -78.5, altitude: 0.8 }, 1200);
@@ -822,20 +832,217 @@ footer {
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  // ─── Timeline ───
+  const TL_MIN = 1700, TL_MAX = 2025;
+  let tlYear = TL_MIN;
+  let tlPlaying = false;
+  let tlSpeed = 3; // years per second
+  let tlAnimId = null;
+  let tlLastTick = 0;
+  let tlDragging = false;
+
+  const tlPlayBtn = document.getElementById('tl-play');
+  const tlYearEl = document.getElementById('tl-year');
+  const tlFill = document.getElementById('tl-fill');
+  const tlThumb = document.getElementById('tl-thumb');
+  const tlTrack = document.getElementById('tl-track');
+  const tlCounter = document.getElementById('tl-counter');
+  const tlPtsEl = document.getElementById('tl-pts');
+  const tlArcsEl = document.getElementById('tl-arcs-count');
+  const tlEraLabels = document.querySelectorAll('.tl-era-labels span');
+
+  // Parse year from a person or arc
+  function extractYear(dates) {
+    if (!dates) return null;
+    const m = dates.match(/\b(1[0-9]{3}|20[0-9]{2})\b/);
+    return m ? parseInt(m[1]) : null;
+  }
+
+  // Precompute years for points and arcs
+  let pointYears = []; // [{point, minYear}]
+  let arcYears = [];   // [{arc, year}]
+
+  function precomputeYears() {
+    if (!globeData) return;
+    pointYears = globeData.points.map(p => {
+      const years = p.people.map(pp => extractYear(pp.dates)).filter(y => y !== null);
+      return { point: p, minYear: years.length ? Math.min(...years) : null };
+    });
+    arcYears = globeData.arcs.map(a => {
+      return { arc: a, year: extractYear(a.dates) };
+    });
+  }
+
+  function tlPct() { return (tlYear - TL_MIN) / (TL_MAX - TL_MIN); }
+
+  function updateTimeline() {
+    const pct = tlPct() * 100;
+    tlYearEl.textContent = Math.round(tlYear);
+    tlFill.style.width = pct + '%';
+    tlThumb.style.left = pct + '%';
+
+    // Era label highlighting
+    tlEraLabels.forEach(el => {
+      const val = parseInt(el.textContent);
+      el.classList.toggle('active-era', Math.abs(val - tlYear) < 30);
+    });
+
+    // Filter points: show those with minYear <= tlYear
+    if (globe && globeData) {
+      const visPts = pointYears
+        .filter(py => py.minYear !== null && py.minYear <= tlYear)
+        .map(py => py.point);
+
+      // Apply viewMode filter on top
+      let pts = visPts;
+      if (viewMode === 'births') pts = pts.filter(p => p.births > 0);
+      if (viewMode === 'deaths') pts = pts.filter(p => p.deaths > 0);
+      globe.pointsData(pts);
+
+      // Arcs: show if enabled AND year <= tlYear
+      if (showArcs) {
+        const visArcs = arcYears
+          .filter(ay => ay.year !== null && ay.year <= tlYear)
+          .map(ay => ay.arc);
+        globe.arcsData(visArcs);
+        tlArcsEl.textContent = visArcs.length;
+      } else {
+        tlArcsEl.textContent = '0';
+      }
+
+      tlPtsEl.textContent = pts.length;
+    }
+  }
+
+  function tlAnimate(ts) {
+    if (!tlPlaying) return;
+    if (!tlLastTick) tlLastTick = ts;
+    const dt = (ts - tlLastTick) / 1000;
+    tlLastTick = ts;
+
+    tlYear += dt * tlSpeed;
+    if (tlYear >= TL_MAX) {
+      tlYear = TL_MAX;
+      tlPlaying = false;
+      tlPlayBtn.innerHTML = '&#9654;';
+      tlPlayBtn.classList.remove('playing');
+    }
+
+    updateTimeline();
+
+    if (tlPlaying) {
+      tlAnimId = requestAnimationFrame(tlAnimate);
+    }
+  }
+
+  // Play / Pause
+  tlPlayBtn.addEventListener('click', () => {
+    if (tlPlaying) {
+      tlPlaying = false;
+      tlPlayBtn.innerHTML = '&#9654;';
+      tlPlayBtn.classList.remove('playing');
+      if (tlAnimId) cancelAnimationFrame(tlAnimId);
+    } else {
+      // If at end, restart
+      if (tlYear >= TL_MAX) tlYear = TL_MIN;
+      tlPlaying = true;
+      tlPlayBtn.innerHTML = '&#9646;&#9646;';
+      tlPlayBtn.classList.add('playing');
+      globe.controls().autoRotate = false;
+      tlLastTick = 0;
+      tlAnimId = requestAnimationFrame(tlAnimate);
+    }
+  });
+
+  // Track click/drag
+  function tlSetFromEvent(e) {
+    const rect = tlTrack.getBoundingClientRect();
+    let pct = (e.clientX - rect.left) / rect.width;
+    pct = Math.max(0, Math.min(1, pct));
+    tlYear = TL_MIN + pct * (TL_MAX - TL_MIN);
+    updateTimeline();
+  }
+
+  tlTrack.addEventListener('mousedown', (e) => {
+    tlDragging = true;
+    if (tlPlaying) {
+      tlPlaying = false;
+      tlPlayBtn.innerHTML = '&#9654;';
+      tlPlayBtn.classList.remove('playing');
+      if (tlAnimId) cancelAnimationFrame(tlAnimId);
+    }
+    tlSetFromEvent(e);
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (tlDragging) tlSetFromEvent(e);
+  });
+  window.addEventListener('mouseup', () => { tlDragging = false; });
+
+  // Touch support
+  tlTrack.addEventListener('touchstart', (e) => {
+    tlDragging = true;
+    if (tlPlaying) {
+      tlPlaying = false;
+      tlPlayBtn.innerHTML = '&#9654;';
+      tlPlayBtn.classList.remove('playing');
+    }
+    tlSetFromEvent(e.touches[0]);
+  });
+  window.addEventListener('touchmove', (e) => {
+    if (tlDragging) tlSetFromEvent(e.touches[0]);
+  });
+  window.addEventListener('touchend', () => { tlDragging = false; });
+
+  // Speed buttons
+  document.querySelectorAll('.tl-speed-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      tlSpeed = parseInt(btn.dataset.speed);
+      document.querySelectorAll('.tl-speed-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Spacebar to play/pause
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && !e.target.matches('input, textarea, button')) {
+      e.preventDefault();
+      tlPlayBtn.click();
+    }
+  });
+
+  // Hook into data load: precompute years after globe inits
+  const origInitGlobe = initGlobe;
+  // We can't reassign initGlobe since it's already called via fetch...
+  // Instead, watch for globeData to be set and precompute
+  const tlWait = setInterval(() => {
+    if (globeData && globe) {
+      clearInterval(tlWait);
+      precomputeYears();
+      // Start at TL_MAX (show everything) so existing view works
+      tlYear = TL_MAX;
+      updateTimeline();
+    }
+  }, 200);
+
+  // Override resetView to also reset timeline
+  const origResetView = resetView;
+
   // ─── Help widget ───
   if (typeof initHelp === 'function') {
     initHelp({
       title: 'Globe',
-      intro: 'A 3D globe showing where 1,251 family members were born, lived, and died across 5 centuries.',
+      intro: 'A 3D globe showing where 1,251 family members were born, lived, and died across 5 centuries. Use the timeline to watch the family spread across the world.',
       keyboard: [
-        {key: '?', action: 'Toggle this help panel'}
+        {key: '?', action: 'Toggle this help panel'},
+        {key: 'Space', action: 'Play / Pause timeline'}
       ],
       mouse: [
         {key: 'Left-drag', action: 'Rotate the globe'},
         {key: 'Scroll', action: 'Zoom in/out'},
         {key: 'Right-drag', action: 'Pan the view'},
         {key: 'Click point', action: 'Show people at that location'},
-        {key: 'Hover point', action: 'Show location tooltip'}
+        {key: 'Hover point', action: 'Show location tooltip'},
+        {key: 'Drag timeline', action: 'Scrub to a specific year'}
       ],
       sections: [
         {
@@ -852,6 +1059,11 @@ footer {
           title: 'Data',
           icon: '📊',
           html: '<p>Location data comes from birth and death places in the genealogy database. Places are geocoded to coordinates. Click any glowing point to see the full list of people with links to their profiles.</p>'
+        },
+        {
+          title: 'Timeline',
+          icon: '⏱️',
+          html: '<p>Press <strong>Play</strong> or <strong>Space</strong> to animate the family spreading across the globe from 1700 to 2025. Drag the slider to jump to any year. Use <strong>1×/3×/10×</strong> to control speed. Points and arcs appear as their dates are reached.</p>'
         }
       ]
     });

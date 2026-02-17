@@ -795,5 +795,29 @@ document.querySelectorAll('.sort-btn').forEach(btn => {
   });
 });
 </script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'Advanced Search',
+  intro: 'Search every person in the database by name, place, date range, confidence tier, and more.',
+  keyboard: [
+    { key: 'Enter', action: 'Execute search with current filters' }
+  ],
+  sections: [
+    { title: 'Search Operators', icon: '🔍', html: `
+      <p>The name field supports multi-term queries:</p>
+      <ul>
+        <li><strong>Spaces</strong> between words act as AND</li>
+        <li><strong>&amp;</strong> also means AND</li>
+        <li><strong>|</strong> means OR — matches any group</li>
+      </ul>
+      <p>Example: <code>lack | smith</code> finds anyone named Lack or Smith.</p>
+    ` },
+    { title: 'Filters', icon: '⚙️', html: `
+      <p>Narrow results by <strong>confidence tier</strong>, <strong>birth/death year range</strong>, <strong>place</strong>, and more. All filters combine with AND logic.</p>
+    ` }
+  ]
+});
+</script>
 </body>
 </html>

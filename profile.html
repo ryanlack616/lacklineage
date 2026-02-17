@@ -948,7 +948,7 @@ function renderHero(p) {
 /* ─────── Nav pills ─────── */
 function renderNavPills(p) {
   document.getElementById('nav-pills').innerHTML = `
-    <a href="/ancestry.html#person-${p.id}">📜 Ancestry</a>
+    <a href="/tree.html?root=${p.id}">📜 Ancestry</a>
     <a href="/tree.html?root=${p.id}">🌳 Tree</a>
     <a href="/graph.html?focus=${p.id}">◉ Graph</a>
     <a href="/related.html?from=${p.id}">🔗 Relationships</a>
@@ -1401,6 +1401,24 @@ window.addEventListener('popstate', () => {
     document.getElementById('profile').classList.remove('active');
     document.getElementById('empty-state').style.display = 'block';
   }
+});
+</script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'Person Profile',
+  intro: 'A detailed view of one individual — their life events, family connections, confidence score, linked documents, and navigation to related views.',
+  sections: [
+    { title: 'Navigation', icon: '📍', html: `
+      <p>Use the pill buttons at the top to jump to this person\'s <strong>Tree</strong>, <strong>Graph</strong>, or <strong>Relationships</strong> view.</p>
+    ` },
+    { title: 'Confidence', icon: '📊', html: `
+      <p>The confidence meter shows how well-documented this person is. Tiers: <strong>High</strong> (≥80%), <strong>Medium</strong> (50-79%), <strong>Low</strong> (20-49%), <strong>Speculative</strong> (&lt;20%).</p>
+    ` },
+    { title: 'Documents', icon: '📄', html: `
+      <p>Linked documents appear at the bottom with thumbnails. Click any to view the full scan.</p>
+    ` }
+  ]
 });
 </script>
 </body>

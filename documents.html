@@ -616,7 +616,7 @@ function renderGrid() {
 
     const typeClass = 'type-' + (doc.type || 'other');
     const matches = (doc.matches || []).slice(0, 3).map(m =>
-      `<a class="match-tag" href="/ancestry.html#person-${m.person_id}">${esc(m.name)}</a>`
+      `<a class="match-tag" href="/profile.html?id=${m.person_id}">${esc(m.name)}</a>`
     ).join('');
     const moreCount = (doc.matches || []).length - 3;
     const moreTag = moreCount > 0 ? `<span class="match-tag">+${moreCount}</span>` : '';
@@ -726,7 +726,7 @@ function openModal(doc) {
     doc.matches.forEach(m => {
       const verBadge = m.verified ? '<span class="verified-badge">✓</span>' : '';
       html += `<li class="match-item">
-        <a class="match-name" href="/ancestry.html#person-${m.person_id}">${esc(m.name)}</a>
+        <a class="match-name" href="/profile.html?id=${m.person_id}">${esc(m.name)}</a>
         ${verBadge}
         <span class="match-conf">${(m.confidence * 100).toFixed(0)}% via ${m.match_type}</span>
       </li>`;
