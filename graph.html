@@ -48,6 +48,39 @@ header nav a {
 }
 header nav a:hover, header nav a.active { color: var(--bg); }
 
+/* ── Top search bar (upper right) ── */
+.top-search {
+  position: absolute;
+  top: 70px;
+  right: 16px;
+  z-index: 60;
+  width: 260px;
+}
+.top-search .search-wrap { position: relative; }
+.top-search input[type="text"] {
+  width: 100%;
+  padding: 9px 12px 9px 32px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-family: var(--font);
+  font-size: 0.85rem;
+  background: var(--bg2);
+  color: var(--fg);
+  box-shadow: var(--shadow);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.top-search input[type="text"]:focus { border-color: var(--accent); }
+.top-search .search-icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  color: var(--fg2);
+  pointer-events: none;
+}
+
 /* ── Controls panel ── */
 .controls {
   position: absolute;
@@ -56,21 +89,34 @@ header nav a:hover, header nav a.active { color: var(--bg); }
   background: var(--bg2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 0;
   z-index: 50;
   width: 260px;
   box-shadow: var(--shadow);
   font-size: 0.82rem;
+  overflow: hidden;
 }
-.controls h3 {
+.controls-header {
   font-size: 0.95rem;
-  margin-bottom: 12px;
   color: var(--fg);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid var(--border);
 }
-.controls h3 button {
+.controls-header:hover { background: rgba(0,0,0,0.02); }
+.controls-header .chevron {
+  font-size: 0.7rem;
+  transition: transform 0.2s;
+  color: var(--fg2);
+  margin-right: 4px;
+}
+.controls.collapsed .chevron { transform: rotate(-90deg); }
+.controls-header .ctrl-title { font-weight: 600; flex: 1; }
+.controls-header button {
   background: none;
   border: none;
   cursor: pointer;
@@ -79,7 +125,19 @@ header nav a:hover, header nav a.active { color: var(--bg); }
   padding: 2px 6px;
   border-radius: 3px;
 }
-.controls h3 button:hover { background: var(--border); }
+.controls-header button:hover { background: var(--border); }
+.controls-body {
+  padding: 12px 14px;
+  transition: max-height 0.25s ease, padding 0.25s ease, opacity 0.2s ease;
+  max-height: 600px;
+  opacity: 1;
+}
+.controls.collapsed .controls-body {
+  max-height: 0;
+  padding: 0 14px;
+  opacity: 0;
+  overflow: hidden;
+}
 .ctrl-row { margin-bottom: 10px; }
 .ctrl-row label {
   display: block;
@@ -121,26 +179,25 @@ header nav a:hover, header nav a.active { color: var(--bg); }
 }
 
 /* Search autocomplete */
-.search-wrap { position: relative; }
 .search-results {
   position: absolute;
   top: 100%;
   left: 0;
   right: 0;
-  max-height: 200px;
+  max-height: 260px;
   overflow-y: auto;
   background: var(--bg2);
   border: 1px solid var(--border);
   border-top: none;
-  border-radius: 0 0 var(--radius) var(--radius);
+  border-radius: 0 0 16px 16px;
   box-shadow: var(--shadow);
   display: none;
   z-index: 999;
 }
 .search-results .sr-item {
-  padding: 6px 10px;
+  padding: 8px 14px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   border-bottom: 1px solid var(--border);
 }
 .search-results .sr-item:last-child { border-bottom: none; }
@@ -337,7 +394,8 @@ canvas#canvas:active { cursor: grabbing; }
 @media (max-width: 700px) {
   header { padding: 0.5rem 1rem; gap: 1rem; }
   header nav { gap: 0.8rem; }
-  .controls { width: 220px; left: 8px; top: 60px; padding: 12px; }
+  .controls { width: 220px; left: 8px; top: 60px; }
+  .top-search { width: 200px; right: 8px; top: 60px; }
   .legend { bottom: 8px; left: 8px; gap: 8px; font-size: 0.65rem; }
 }
 </style>
@@ -355,19 +413,23 @@ canvas#canvas:active { cursor: grabbing; }
   </nav>
 </header>
 
+<div class="top-search">
+  <div class="search-wrap">
+    <span class="search-icon">&#128269;</span>
+    <input type="text" id="searchInput" placeholder="Find a person..." autocomplete="off">
+    <div class="search-results" id="searchResults"></div>
+  </div>
+</div>
+
 <div class="controls" id="controls">
-  <h3>
-    Family Graph
+  <div class="controls-header" id="controlsHeader">
+    <span class="chevron">&#9660;</span>
+    <span class="ctrl-title">Graph Options</span>
     <button id="resetBtn" title="Reset view">Reset</button>
     <button id="recenterBtn" title="Fit all nodes on screen">Recenter</button>
     <button id="autoCenterBtn" title="Keep graph fitted to screen" style="opacity:0.5">Auto</button>
-  </h3>
-
-  <div class="ctrl-row search-wrap">
-    <label>Find Person</label>
-    <input type="text" id="searchInput" placeholder="Type a name..." autocomplete="off">
-    <div class="search-results" id="searchResults"></div>
   </div>
+  <div class="controls-body" id="controlsBody">
 
   <div class="ctrl-row">
     <label>View</label>
@@ -431,6 +493,7 @@ canvas#canvas:active { cursor: grabbing; }
   </div>
 
   <div class="stats" id="stats"></div>
+  </div>
 </div>
 
 <div class="focus-bar" id="focusBar">
@@ -1552,6 +1615,12 @@ document.getElementById('minimap').addEventListener('click', (e) => {
   const ty = height / 2 - simY * transform.k;
   d3.select(canvas).transition().duration(1200).ease(d3.easeCubicInOut)
     .call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(transform.k));
+});
+
+// ── Controls collapse toggle ──
+document.getElementById('controlsHeader').addEventListener('click', (e) => {
+  if (e.target.tagName === 'BUTTON') return; // don't toggle when clicking Reset/Recenter/Auto
+  document.getElementById('controls').classList.toggle('collapsed');
 });
 
 // ── Init ──
