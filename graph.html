@@ -783,7 +783,7 @@ function zoomToNode(node) {
   const k = 2;
   const tx = width / 2 - node.x * k;
   const ty = height / 2 - node.y * k;
-  d3.select(canvas).transition().duration(600)
+  d3.select(canvas).transition().duration(1200).ease(d3.easeCubicInOut)
     .call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(k));
 }
 
@@ -1357,7 +1357,7 @@ function fitAllNodes(animate) {
   const tx = width / 2 - cx * k, ty = height / 2 - cy * k;
   const t = d3.zoomIdentity.translate(tx, ty).scale(k);
   if (animate) {
-    d3.select(canvas).transition().duration(600).call(zoomBehavior.transform, t);
+    d3.select(canvas).transition().duration(1200).ease(d3.easeCubicInOut).call(zoomBehavior.transform, t);
   } else {
     transform = t;
     d3.select(canvas).call(zoomBehavior.transform, t);
@@ -1498,7 +1498,7 @@ document.getElementById('minimap').addEventListener('click', (e) => {
 
   const tx = width / 2 - simX * transform.k;
   const ty = height / 2 - simY * transform.k;
-  d3.select(canvas).transition().duration(400)
+  d3.select(canvas).transition().duration(1200).ease(d3.easeCubicInOut)
     .call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(transform.k));
 });
 
