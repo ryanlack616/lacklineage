@@ -566,5 +566,37 @@ document.addEventListener('keydown', e => {
 
 loadData();
 </script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'How Am I Related?',
+  intro: 'Find the shortest relationship path between any two people in the family. Uses a breadth-first search through the family graph to compute cousin degrees, ancestor/descendant relationships, and marriage hops.',
+  keys: [
+    { key: 'Enter', action: 'Find relationship (when both people selected)' },
+    { key: 'Click path node', action: 'Open that person\'s tree in a new tab' },
+    { key: '?', action: 'Toggle this help panel' }
+  ],
+  sections: [
+    { title: 'Finding Relationships', icon: '🔗', html: `
+      <p>Type a name in the <strong>Person A</strong> field — an autocomplete dropdown shows matching people. Select one. Repeat for <strong>Person B</strong>.</p>
+      <p>Click <strong>Find Relationship</strong> (or press <strong>Enter</strong>) to compute the path. The button is disabled until both people are selected.</p>
+    ` },
+    { title: 'Reading Results', icon: '📋', html: `
+      <p>The result shows a vertical chain of people connecting Person A to Person B. Each link is labeled with the relationship type:</p>
+      <ul>
+        <li><strong>mother / father</strong> — parent link going up</li>
+        <li><strong>son / daughter</strong> — child link going down</li>
+        <li><strong>spouse</strong> — marriage connection</li>
+      </ul>
+      <p>A summary sentence describes the relationship in natural language (e.g., "2nd cousin once removed", "great-grandfather", "sibling").</p>
+      <p>Click any person in the path to open their tree view in a new tab.</p>
+    ` },
+    { title: 'How It Works', icon: '⚙️', html: `
+      <p>The tool builds an adjacency graph from all parent-child and spouse relationships, then runs a <strong>breadth-first search</strong> to find the shortest path.</p>
+      <p>Cousin degrees, removal counts, and ancestor/descendant depth are computed from the path structure. If no path exists, the people are unconnected in the database.</p>
+    ` }
+  ]
+});
+</script>
 </body>
 </html>

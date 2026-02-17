@@ -602,5 +602,32 @@
   </p>
 </div>
 
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'Thirteen Ways to See a Family',
+  intro: 'A planning document describing thirteen planned visualization pieces for the Lack Lineage project. This page is a manifesto and roadmap — no interactive controls.',
+  keys: [
+    { key: '?', action: 'Toggle this help panel' }
+  ],
+  sections: [
+    { title: 'About This Page', icon: '📝', html: `
+      <p>This page describes the vision for thirteen distinct visualization pieces organized across five build phases:</p>
+      <ul>
+        <li><strong>Phase 1</strong> — Heartbeat Chart, Orphan Constellation, Name River, Sibling Stack</li>
+        <li><strong>Phase 2</strong> — TimeNets, GeneaQuilts, Dual Tree, Widow\'s Window, Parallel Lives</li>
+        <li><strong>Phase 3</strong> — Marriage Distance, Fork Points</li>
+        <li><strong>Phase 4</strong> — Census Moment</li>
+        <li><strong>Phase 5</strong> — H-Tree poster</li>
+      </ul>
+      <p>Each piece is described with its purpose, data source, and aesthetic goals.</p>
+    ` },
+    { title: 'Navigation', icon: '🧭', html: `
+      <p>This page has no navigation bar. Use your browser\'s back button to return, or visit <a href="/">the dashboard</a> to navigate elsewhere.</p>
+      <p>This page has a print-friendly stylesheet for creating clean PDFs.</p>
+    ` }
+  ]
+});
+</script>
 </body>
 </html>

@@ -1318,6 +1318,70 @@ document.addEventListener('keydown', (e) => {
   }
 });
 </script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'Tree Explorer',
+  intro: 'An interactive collapsible tree view. Browse ancestors, descendants, or both directions from any person. Expand and collapse branches to explore the family structure.',
+  keys: [
+    { key: 'Click node', action: 'Expand or collapse that branch' },
+    { key: 'Shift + Click node', action: 'Re-root the tree on that person' },
+    { key: 'Right-click node', action: 'Open detail panel' },
+    { key: 'Hover node', action: 'Show tooltip with name, dates, spouse, interaction hints' },
+    { key: '/', action: 'Focus the search bar' },
+    { key: 'Escape', action: 'Close detail panel and search results' },
+    { key: 'Home', action: 'Reset to George l Lack as root' },
+    { key: 'Scroll wheel', action: 'Zoom in/out' },
+    { key: 'Drag background', action: 'Pan the canvas' },
+    { key: '?', action: 'Toggle this help panel' }
+  ],
+  sections: [
+    { title: 'Modes', icon: '🔀', html: `
+      <p>Three modes control what the tree shows:</p>
+      <ul>
+        <li><strong>Ancestors</strong> — Shows parents, grandparents, etc. fanning to the right</li>
+        <li><strong>Descendants</strong> — Shows children, grandchildren, etc. fanning to the right</li>
+        <li><strong>Both</strong> — Ancestors go left, descendants go right from the root</li>
+      </ul>
+      <p>Switch modes using the buttons in the toolbar. The tree re-renders immediately.</p>
+    ` },
+    { title: 'Expanding & Collapsing', icon: '🌳', html: `
+      <p><strong>Click</strong> any node to toggle its children visible/hidden. A <code>+N</code> badge shows how many hidden children exist.</p>
+      <p>Use <strong>Collapse All</strong> to close every branch, or <strong>Expand All</strong> to open them. Branches beyond depth 4 auto-collapse on first load for performance.</p>
+      <p>Each node shows a maximum of 10 children — if more exist, a summary node indicates the overflow.</p>
+    ` },
+    { title: 'Depth Slider', icon: '📏', html: `
+      <p>The depth slider (1–14) controls how many generations to load. Increasing depth fetches more data from the API and may take a moment for large trees.</p>
+      <p>The default depth is 6 generations.</p>
+    ` },
+    { title: 'Detail Panel', icon: '📋', html: `
+      <p><strong>Right-click</strong> any node to open the detail panel on the right side. It shows:</p>
+      <ul>
+        <li>Vital dates and birthplace</li>
+        <li>Parents, spouses, children, and siblings</li>
+        <li>Life events from the database</li>
+        <li>Cross-links to Ancestry, Graph, and Related pages</li>
+      </ul>
+      <p>Press <strong>Escape</strong> or click the × to close the panel.</p>
+    ` },
+    { title: 'Re-rooting', icon: '🎯', html: `
+      <p>Hold <strong>Shift</strong> and click any node to make that person the new root. The URL updates to <code>?root=ID</code> so you can bookmark or share any view.</p>
+      <p>Press <strong>Home</strong> to return to George l Lack.</p>
+    ` },
+    { title: 'Node Colors', icon: '🎨', html: `
+      <ul>
+        <li><strong>Blue border</strong> — Male</li>
+        <li><strong>Red border</strong> — Female</li>
+        <li><strong>Gray border</strong> — Unknown sex</li>
+        <li><strong>Confidence dot</strong> — Green (high), Yellow (medium), Orange (low), Red (speculative)</li>
+      </ul>
+    ` },
+    { title: 'Search', icon: '🔍', html: `
+      <p>Press <strong>/</strong> or click the search bar to find anyone by name. Select a result to navigate to them as the new tree root.</p>
+    ` }
+  ]
+});
+</script>
 </body>
 </html>
 

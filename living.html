@@ -659,5 +659,56 @@ window.addEventListener('resize', resize);
 // ── Init ──
 loadData();
 </script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'The Living Moment',
+  intro: 'An animated timeline showing who in the family was alive during any given year. Each dot represents a person — watch the family grow and fade across 500+ years of history.',
+  keys: [
+    { key: 'Space', action: 'Play / Pause the animation' },
+    { key: 'K', action: 'Play / Pause (alternate key)' },
+    { key: '→', action: 'Advance 1 year' },
+    { key: 'Shift + →', action: 'Advance 10 years' },
+    { key: '←', action: 'Go back 1 year' },
+    { key: 'Shift + ←', action: 'Go back 10 years' },
+    { key: 'Hover dot', action: 'Show person tooltip (name, dates, age, birthplace)' },
+    { key: 'Click person in list', action: 'Open their tree in a new tab' },
+    { key: '?', action: 'Toggle this help panel' }
+  ],
+  sections: [
+    { title: 'Timeline Controls', icon: '⏯', html: `
+      <p>Use the <strong>year slider</strong> to scrub to any year. The <strong>Play</strong> button starts auto-advancing through the years.</p>
+      <p>Click the <strong>Speed</strong> button to cycle through 1×, 2×, 5×, and 10× playback speed.</p>
+      <p>You can also use <strong>Space</strong> or <strong>K</strong> to play/pause, and arrow keys to step forward or back.</p>
+    ` },
+    { title: 'Reading the Display', icon: '👁', html: `
+      <p>Each dot is a person alive in the current year:</p>
+      <ul>
+        <li><strong>Blue dots</strong> — Male</li>
+        <li><strong>Pink dots</strong> — Female</li>
+        <li><strong>Gray dots</strong> — Unknown sex</li>
+        <li><strong>Green pulse</strong> — Born this year</li>
+        <li><strong>Red pulse</strong> — Died this year</li>
+      </ul>
+      <p>Dot size scales with the total population — fewer people means larger dots so they remain visible.</p>
+    ` },
+    { title: 'Info Panel', icon: '📋', html: `
+      <p>The right-side panel shows for the current year:</p>
+      <ul>
+        <li>Total alive count and average age</li>
+        <li>Male/female split</li>
+        <li>A list of people alive that year (oldest first, up to 25 shown)</li>
+      </ul>
+      <p>Click any person in the list to open their tree view in a new tab.</p>
+    ` },
+    { title: 'Highlight Toggles', icon: '✨', html: `
+      <p>The <strong>Births</strong> and <strong>Deaths</strong> toggle buttons highlight people born or deceased in the displayed year with bright green/red pulses.</p>
+    ` },
+    { title: 'Historical Events', icon: '📅', html: `
+      <p>For certain notable years (1776, 1914, 1945, etc.), a historical event banner appears briefly to provide context alongside the family data.</p>
+    ` }
+  ]
+});
+</script>
 </body>
 </html>

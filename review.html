@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lack Lineage — Document Review</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f0ede6;
+  --card: #ffffff;
+  --text: #2d2a25;
+  --text2: #706b63;
+  --text3: #9e9a93;
+  --accent: #457b3b;
+  --accent2: #3a6b32;
+  --accent-light: #e8f0e6;
+  --danger: #c0392b;
+  --danger-light: #fbe9e7;
+  --warn: #e67e22;
+  --warn-light: #fef3cd;
+  --info: #2980b9;
+  --info-light: #d6eaf8;
+  --border: #d4cfc7;
+  --shadow: 0 2px 8px rgba(0,0,0,0.1);
+  --radius: 8px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+html, body { height: 100%; }
+body { font-family: var(--font); color: var(--text); background: var(--bg); }
+
+/* ── Top bar ── */
+.topbar {
+  background: linear-gradient(180deg, #3a7232 0%, #2d5f27 100%);
+  color: #fff; height: 52px; display: flex; align-items: center;
+  padding: 0 1.2rem; gap: 1rem; position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.topbar .logo { font-size: 1.1rem; font-weight: 700; text-decoration: none; color: #fff; }
+.topbar .logo span { font-weight: 300; opacity: 0.7; }
+.topbar nav { display: flex; gap: 0.15rem; margin-left: 1rem; }
+.topbar nav a {
+  color: rgba(255,255,255,0.8); text-decoration: none; padding: 0.4rem 0.8rem;
+  border-radius: 4px 4px 0 0; font-size: 0.82rem; transition: all 0.15s;
+}
+.topbar nav a:hover { color: #fff; background: rgba(255,255,255,0.12); }
+.topbar nav a.active { color: #fff; background: rgba(255,255,255,0.2); font-weight: 600; }
+.topbar .spacer { flex: 1; }
+.topbar .reviewer-tag {
+  background: rgba(255,255,255,0.15); padding: 0.3rem 0.7rem;
+  border-radius: 4px; font-size: 0.78rem; display: flex; align-items: center; gap: 0.4rem;
+}
+
+/* ── Layout ── */
+.app-layout { display: flex; height: calc(100vh - 52px); }
+
+/* ── Sidebar list ── */
+.sidebar {
+  width: 360px; min-width: 300px; background: #fff; border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.sidebar-header {
+  padding: 0.8rem; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.5rem;
+}
+.sidebar-header .search-box {
+  width: 100%; padding: 0.5rem 0.7rem; border: 1px solid var(--border);
+  border-radius: var(--radius); font-size: 0.85rem; font-family: var(--font); outline: none;
+}
+.sidebar-header .search-box:focus { border-color: var(--accent); }
+.sidebar-filters { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.filter-btn {
+  padding: 0.25rem 0.6rem; border: 1px solid var(--border); border-radius: 20px;
+  font-size: 0.72rem; font-family: var(--font); cursor: pointer; background: #fff;
+  color: var(--text2); transition: all 0.15s;
+}
+.filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+.filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.filter-btn .count { font-weight: 700; }
+
+.sidebar-list { flex: 1; overflow-y: auto; }
+.doc-item {
+  padding: 0.6rem 0.8rem; border-bottom: 1px solid #f0ede6; cursor: pointer;
+  display: flex; gap: 0.6rem; align-items: flex-start; transition: background 0.1s;
+}
+.doc-item:hover { background: #faf8f5; }
+.doc-item.selected { background: var(--accent-light); border-left: 3px solid var(--accent); }
+.doc-item .mini-thumb {
+  width: 48px; height: 48px; border-radius: 4px; object-fit: cover;
+  background: #f0ede6; flex-shrink: 0;
+}
+.doc-item .mini-thumb-empty {
+  width: 48px; height: 48px; border-radius: 4px; background: #f0ede6;
+  display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;
+}
+.doc-item-info { flex: 1; min-width: 0; }
+.doc-item-title { font-size: 0.8rem; font-weight: 600; line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-item-meta { font-size: 0.7rem; color: var(--text3); display: flex; gap: 0.5rem; margin-top: 2px; }
+.doc-item .status-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px;
+}
+.status-pending { background: #e0d0a0; }
+.status-approved { background: #4caf50; }
+.status-rejected { background: #e74c3c; }
+.status-needs_review { background: #ff9800; }
+
+.sidebar-footer { padding: 0.5rem 0.8rem; border-top: 1px solid var(--border);
+  font-size: 0.72rem; color: var(--text3); display: flex; justify-content: space-between; }
+
+/* ── Main panel ── */
+.main-panel { flex: 1; overflow-y: auto; background: var(--bg); padding: 0; }
+
+/* ── Detail view ── */
+.detail-empty { display: flex; align-items: center; justify-content: center;
+  height: 100%; color: var(--text3); font-size: 1rem; text-align: center; padding: 2rem; }
+.detail-empty .icon { font-size: 3rem; margin-bottom: 0.5rem; }
+
+.detail-header {
+  background: #fff; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 1rem; position: sticky; top: 0; z-index: 10;
+}
+.detail-header h2 { font-size: 1rem; font-weight: 600; flex: 1; }
+.detail-header .status-badge {
+  padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;
+  text-transform: uppercase;
+}
+.badge-pending { background: var(--warn-light); color: #856404; }
+.badge-approved { background: var(--accent-light); color: var(--accent); }
+.badge-rejected { background: var(--danger-light); color: var(--danger); }
+.badge-needs_review { background: var(--info-light); color: var(--info); }
+
+.detail-actions { display: flex; gap: 0.4rem; }
+.btn {
+  padding: 0.4rem 0.9rem; border-radius: 6px; font-size: 0.8rem; font-family: var(--font);
+  font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; display: inline-flex;
+  align-items: center; gap: 0.3rem;
+}
+.btn-approve { background: var(--accent); color: #fff; }
+.btn-approve:hover { background: var(--accent2); }
+.btn-reject { background: var(--danger); color: #fff; }
+.btn-reject:hover { background: #a93226; }
+.btn-flag { background: var(--warn); color: #fff; }
+.btn-flag:hover { background: #d35400; }
+.btn-secondary { background: #e8e4dc; color: var(--text); }
+.btn-secondary:hover { background: #d4cfc7; }
+.btn-sm { padding: 0.25rem 0.6rem; font-size: 0.72rem; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Image + OCR split ── */
+.detail-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0; min-height: 500px; }
+@media (max-width: 900px) { .detail-body { grid-template-columns: 1fr; } }
+
+.image-panel {
+  background: #1a1815; display: flex; align-items: center; justify-content: center;
+  position: relative; min-height: 400px; overflow: hidden;
+}
+.image-panel img { max-width: 100%; max-height: 70vh; object-fit: contain; }
+.image-panel .no-img { color: #666; font-size: 3rem; text-align: center; }
+.image-panel .zoom-controls {
+  position: absolute; bottom: 1rem; right: 1rem; display: flex; gap: 0.3rem;
+}
+.zoom-btn {
+  width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.9);
+  border: none; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center;
+  justify-content: center;
+}
+.zoom-btn:hover { background: #fff; }
+
+.ocr-panel { display: flex; flex-direction: column; overflow: hidden; background: #fff; }
+
+/* ── OCR tabs ── */
+.ocr-tabs {
+  display: flex; border-bottom: 1px solid var(--border); background: #faf8f5;
+  overflow-x: auto; flex-shrink: 0;
+}
+.ocr-tab {
+  padding: 0.5rem 0.8rem; font-size: 0.75rem; font-family: var(--font);
+  border: none; background: none; cursor: pointer; color: var(--text2);
+  border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap;
+}
+.ocr-tab:hover { color: var(--text); background: #f0ede6; }
+.ocr-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.ocr-tab .engine-status { display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+  margin-left: 4px; vertical-align: middle; }
+.engine-ok { background: #4caf50; }
+.engine-err { background: #e74c3c; }
+.engine-none { background: #ccc; }
+
+.ocr-tab-actions { margin-left: auto; padding: 0.4rem 0.6rem; display: flex; gap: 0.3rem; }
+
+.ocr-content { flex: 1; overflow-y: auto; padding: 0; position: relative; }
+.ocr-text-box {
+  width: 100%; min-height: 300px; padding: 0.8rem; font-family: var(--mono);
+  font-size: 0.8rem; line-height: 1.6; border: none; outline: none; resize: none;
+  background: #fff; color: var(--text);
+}
+.ocr-text-box:read-only { background: #faf8f5; color: var(--text2); }
+.ocr-text-box:focus { background: #fffff0; }
+.ocr-text-box.edited { border-left: 3px solid var(--accent); }
+
+/* ── Matches section ── */
+.matches-section {
+  background: #fff; border-top: 1px solid var(--border); padding: 1rem 1.5rem;
+}
+.section-title {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--text3); font-weight: 600; margin-bottom: 0.6rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.match-list { display: flex; flex-direction: column; gap: 0.4rem; }
+.match-row {
+  display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.7rem;
+  border-radius: 6px; font-size: 0.82rem; transition: background 0.1s;
+}
+.match-row:hover { background: #f8f6f1; }
+.match-row .match-name { font-weight: 600; color: var(--accent); }
+.match-row .match-detail { color: var(--text3); font-size: 0.72rem; }
+.match-row .match-conf {
+  margin-left: auto; font-size: 0.72rem; color: var(--text3); white-space: nowrap;
+}
+.match-row .verified-check { color: var(--accent); font-weight: 700; }
+.match-row .match-actions { display: flex; gap: 0.2rem; }
+
+.add-match-bar { display: flex; gap: 0.4rem; margin-top: 0.6rem; }
+.add-match-bar input {
+  flex: 1; padding: 0.4rem 0.6rem; border: 1px solid var(--border);
+  border-radius: var(--radius); font-size: 0.8rem; font-family: var(--font);
+}
+.people-dropdown {
+  position: absolute; background: #fff; border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow); max-height: 200px;
+  overflow-y: auto; z-index: 50; width: 300px;
+}
+.people-dropdown .person-opt {
+  padding: 0.4rem 0.7rem; cursor: pointer; font-size: 0.8rem;
+  display: flex; justify-content: space-between;
+}
+.people-dropdown .person-opt:hover { background: var(--accent-light); }
+.people-dropdown .person-opt .dates { color: var(--text3); font-size: 0.72rem; }
+
+/* ── Edit history ── */
+.edit-history { background: #faf8f5; padding: 0.8rem 1.5rem; border-top: 1px solid var(--border); }
+.edit-entry { font-size: 0.72rem; color: var(--text3); padding: 0.2rem 0; }
+.edit-entry .edit-date { font-weight: 600; }
+
+/* ── Keyboard hints ── */
+.key-hints {
+  position: fixed; bottom: 1rem; right: 1rem; background: rgba(0,0,0,0.85);
+  color: #fff; padding: 0.5rem 0.8rem; border-radius: 6px; font-size: 0.7rem;
+  display: flex; gap: 1rem; z-index: 50;
+}
+.key-hints kbd {
+  background: rgba(255,255,255,0.2); padding: 0.1rem 0.4rem; border-radius: 3px;
+  font-family: var(--mono); margin-right: 0.2rem;
+}
+
+/* ── Loading spinner ── */
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.1);
+  border-left-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Toast ── */
+.toast-container { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%);
+  z-index: 500; display: flex; flex-direction: column; gap: 0.4rem; }
+.toast {
+  background: #333; color: #fff; padding: 0.6rem 1.2rem; border-radius: 8px;
+  font-size: 0.82rem; animation: slideUp 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.toast.success { background: #2e7d32; }
+.toast.error { background: #c62828; }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <a href="/" class="logo">Lack <span>Lineage</span></a>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/tree.html">Tree</a>
+    <a href="/ancestry.html">Ancestry</a>
+    <a href="/documents.html">Documents</a>
+    <a href="/review.html" class="active">Review</a>
+  </nav>
+  <div class="spacer"></div>
+  <div class="reviewer-tag">
+    👤 <input id="reviewer-name" value="Dad" style="background:none;border:none;color:#fff;width:60px;font-size:0.78rem;font-family:var(--font);">
+  </div>
+</div>
+
+<div class="app-layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <input type="text" class="search-box" id="search" placeholder="Search documents…" autocomplete="off">
+      <div class="sidebar-filters" id="filters"></div>
+    </div>
+    <div class="sidebar-list" id="doc-list"></div>
+    <div class="sidebar-footer">
+      <span id="list-count"></span>
+      <span id="list-nav"></span>
+    </div>
+  </div>
+
+  <!-- Main panel -->
+  <div class="main-panel" id="main-panel">
+    <div class="detail-empty" id="empty-state">
+      <div>
+        <div class="icon">📋</div>
+        <p>Select a document from the list to review</p>
+        <p style="margin-top:0.5rem;font-size:0.8rem;">Use ↑↓ arrows to navigate, A to approve, R to reject</p>
+      </div>
+    </div>
+    <div id="detail-view" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- Keyboard hints -->
+<div class="key-hints">
+  <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+  <span><kbd>A</kbd> Approve</span>
+  <span><kbd>R</kbd> Reject</span>
+  <span><kbd>F</kbd> Flag</span>
+  <span><kbd>E</kbd> Edit OCR</span>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════ */
+const API = '';  // same origin
+let allDocs = [];
+let currentDoc = null;
+let currentDocDetail = null;
+let selectedIdx = -1;
+let currentFilter = 'all';
+let searchQuery = '';
+let currentOcrTab = 'corrected';
+let editMode = false;
+let zoomLevel = 1;
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  loadDocuments();
+  setupKeyboard();
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   API CALLS
+   ═══════════════════════════════════════════════════════════════ */
+async function apiFetch(url, opts = {}) {
+  const resp = await fetch(API + url, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  return resp.json();
+}
+
+async function loadDocuments() {
+  const params = new URLSearchParams({ per_page: '2000' });
+  if (currentFilter !== 'all') params.set('status', currentFilter);
+  if (searchQuery) params.set('q', searchQuery);
+  const data = await apiFetch(`/api/documents?${params}`);
+  allDocs = data.documents;
+  renderFilters(data.stats);
+  renderList();
+}
+
+async function loadDocumentDetail(docId) {
+  const data = await apiFetch(`/api/documents/${docId}`);
+  currentDocDetail = data;
+  renderDetail(data);
+}
+
+async function runOcr(docId, engine) {
+  toast('Running OCR…');
+  const data = await apiFetch(`/api/documents/${docId}/ocr`, {
+    method: 'POST',
+    body: JSON.stringify({ engine }),
+  });
+  if (data.results) {
+    const ok = data.results.filter(r => !r.error).length;
+    const err = data.results.filter(r => r.error).length;
+    toast(`OCR done: ${ok} success${err ? ', ' + err + ' errors' : ''}`, err ? 'error' : 'success');
+  }
+  await loadDocumentDetail(docId);
+}
+
+async function verifyMatch(matchId, action) {
+  await apiFetch(`/api/matches/${matchId}/verify`, {
+    method: 'POST',
+    body: JSON.stringify({ action }),
+  });
+  toast(action === 'verify' ? '✓ Match verified' : '✗ Match removed', 'success');
+  if (currentDocDetail) await loadDocumentDetail(currentDocDetail.id);
+}
+
+async function addMatch(docId, personId) {
+  await apiFetch(`/api/documents/${docId}/match`, {
+    method: 'POST',
+    body: JSON.stringify({ person_id: personId }),
+  });
+  toast('✓ Person linked', 'success');
+  await loadDocumentDetail(docId);
+}
+
+async function saveCorrection(docId, text) {
+  const reviewer = document.getElementById('reviewer-name').value || 'reviewer';
+  await apiFetch(`/api/documents/${docId}/correct`, {
+    method: 'POST',
+    body: JSON.stringify({ corrected_text: text, reviewer }),
+  });
+  toast('✓ Correction saved', 'success');
+}
+
+async function setReviewStatus(docId, status) {
+  const reviewer = document.getElementById('reviewer-name').value || 'reviewer';
+  await apiFetch(`/api/documents/${docId}/status`, {
+    method: 'POST',
+    body: JSON.stringify({ status, reviewer }),
+  });
+
+  // Update sidebar
+  const doc = allDocs.find(d => d.id === docId);
+  if (doc) doc.review_status = status;
+  renderList();
+
+  if (currentDocDetail) {
+    currentDocDetail.review_status = status;
+    renderDetail(currentDocDetail);
+  }
+
+  const labels = { approved: '✓ Approved', rejected: '✗ Rejected', needs_review: '⚑ Flagged', pending: 'Set to pending' };
+  toast(labels[status] || status, 'success');
+}
+
+async function searchPeople(query) {
+  const data = await apiFetch(`/api/people?q=${encodeURIComponent(query)}`);
+  return data.people || [];
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER: Sidebar
+   ═══════════════════════════════════════════════════════════════ */
+function renderFilters(stats) {
+  if (!stats) return;
+  const el = document.getElementById('filters');
+  const filters = [
+    { key: 'all', label: 'All', count: stats.total },
+    { key: 'pending', label: 'Pending', count: stats.pending || 0 },
+    { key: 'approved', label: 'Approved', count: stats.approved || 0 },
+    { key: 'needs_review', label: 'Flagged', count: stats.needs_review || 0 },
+    { key: 'rejected', label: 'Rejected', count: stats.rejected || 0 },
+  ];
+  el.innerHTML = filters.map(f =>
+    `<button class="filter-btn ${currentFilter === f.key ? 'active' : ''}" data-filter="${f.key}">
+      ${f.label} <span class="count">${f.count}</span>
+    </button>`
+  ).join('');
+  el.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.onclick = () => {
+      currentFilter = btn.dataset.filter;
+      loadDocuments();
+    };
+  });
+}
+
+function renderList() {
+  const el = document.getElementById('doc-list');
+  const countEl = document.getElementById('list-count');
+
+  if (!allDocs.length) {
+    el.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text3);font-size:0.85rem;">No documents found</div>';
+    countEl.textContent = '0 documents';
+    return;
+  }
+
+  countEl.textContent = `${allDocs.length} documents`;
+
+  el.innerHTML = allDocs.map((doc, i) => {
+    const sel = currentDoc && currentDoc.id === doc.id ? 'selected' : '';
+    const thumb = doc.thumb
+      ? `<img class="mini-thumb" src="${doc.thumb}" loading="lazy">`
+      : `<div class="mini-thumb-empty">${typeIcon(doc.type)}</div>`;
+    const matchInfo = doc.match_count
+      ? `${doc.verified_count}/${doc.match_count} verified`
+      : 'no matches';
+    const engineInfo = doc.engine_count ? `${doc.engine_count} OCR` : '';
+
+    return `<div class="doc-item ${sel}" data-idx="${i}" data-id="${doc.id}">
+      <div class="status-dot status-${doc.review_status}"></div>
+      ${thumb}
+      <div class="doc-item-info">
+        <div class="doc-item-title">${esc(doc.title)}</div>
+        <div class="doc-item-meta">
+          <span>${doc.type || 'other'}</span>
+          <span>${matchInfo}</span>
+          ${engineInfo ? `<span>${engineInfo}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('.doc-item').forEach(item => {
+    item.onclick = () => selectDocument(parseInt(item.dataset.idx));
+  });
+}
+
+function selectDocument(idx) {
+  if (idx < 0 || idx >= allDocs.length) return;
+  selectedIdx = idx;
+  currentDoc = allDocs[idx];
+  renderList(); // highlight
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('detail-view').style.display = 'block';
+  document.getElementById('detail-view').innerHTML = '<div style="padding:3rem;text-align:center;"><div class="spinner"></div><br>Loading…</div>';
+  loadDocumentDetail(currentDoc.id);
+
+  // Scroll sidebar item into view
+  const items = document.querySelectorAll('.doc-item');
+  if (items[idx]) items[idx].scrollIntoView({ block: 'nearest' });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER: Detail
+   ═══════════════════════════════════════════════════════════════ */
+function renderDetail(doc) {
+  const el = document.getElementById('detail-view');
+  const badgeClass = `badge-${doc.review_status}`;
+
+  // Build OCR tabs
+  const tabs = [
+    { key: 'corrected', label: 'Corrected', text: doc.corrected_text || doc.ocr_text || '' },
+    { key: 'tesseract', label: 'Tesseract', text: doc.ocr_text || '' },
+  ];
+  if (doc.vision_text) {
+    tabs.push({ key: 'vision', label: 'Vision AI', text: doc.vision_text });
+  }
+  for (const r of (doc.ocr_results || [])) {
+    if (!tabs.find(t => t.key === r.engine)) {
+      tabs.push({
+        key: r.engine,
+        label: OCR_ENGINES[r.engine] || r.engine,
+        text: r.text || '',
+        time: r.time_ms,
+        error: r.error,
+      });
+    }
+  }
+  // Make sure corrected tab is selected if valid
+  if (!tabs.find(t => t.key === currentOcrTab)) currentOcrTab = 'corrected';
+
+  const activeTab = tabs.find(t => t.key === currentOcrTab) || tabs[0];
+
+  el.innerHTML = `
+    <!-- Header -->
+    <div class="detail-header">
+      <h2>${esc(doc.title)}</h2>
+      <span class="status-badge ${badgeClass}">${doc.review_status}</span>
+      <div class="detail-actions">
+        <button class="btn btn-approve btn-sm" onclick="setReviewStatus(${doc.id}, 'approved')" title="Approve (A)">✓ Approve</button>
+        <button class="btn btn-flag btn-sm" onclick="setReviewStatus(${doc.id}, 'needs_review')" title="Flag for review (F)">⚑ Flag</button>
+        <button class="btn btn-reject btn-sm" onclick="setReviewStatus(${doc.id}, 'rejected')" title="Reject (R)">✗ Reject</button>
+      </div>
+    </div>
+
+    <!-- Image + OCR split -->
+    <div class="detail-body">
+      <div class="image-panel" id="image-panel">
+        ${doc.thumb
+          ? `<img id="doc-img" src="/api/documents/${doc.id}/image" alt="${esc(doc.title)}" style="transform:scale(${zoomLevel})"
+              onerror="this.src='${doc.thumb}'">`
+          : `<div class="no-img">${typeIcon(doc.type)}</div>`}
+        <div class="zoom-controls">
+          <button class="zoom-btn" onclick="zoomImg(-0.25)" title="Zoom out">−</button>
+          <button class="zoom-btn" onclick="zoomImg(0.25)" title="Zoom in">+</button>
+          <button class="zoom-btn" onclick="zoomImg(0)" title="Reset">⟳</button>
+        </div>
+      </div>
+
+      <div class="ocr-panel">
+        <div class="ocr-tabs">
+          ${tabs.map(t => {
+            const statusDot = t.error ? 'engine-err' : (t.text ? 'engine-ok' : 'engine-none');
+            return `<button class="ocr-tab ${currentOcrTab === t.key ? 'active' : ''}"
+                      data-tab="${t.key}">
+              ${t.label}
+              <span class="engine-status ${statusDot}"></span>
+            </button>`;
+          }).join('')}
+          <div class="ocr-tab-actions">
+            <button class="btn btn-secondary btn-sm" onclick="runOcr(${doc.id}, 'all')" title="Run all OCR engines">
+              🔄 Run All
+            </button>
+          </div>
+        </div>
+        <div class="ocr-content">
+          <textarea class="ocr-text-box ${currentOcrTab === 'corrected' ? 'edited' : ''}"
+            id="ocr-text"
+            ${currentOcrTab !== 'corrected' ? 'readonly' : ''}
+            placeholder="No text extracted yet. Click 'Run All' to OCR this document."
+          >${esc(activeTab.text)}</textarea>
+          ${currentOcrTab === 'corrected'
+            ? `<div style="padding:0.4rem 0.8rem;border-top:1px solid var(--border);display:flex;gap:0.4rem;">
+                <button class="btn btn-approve btn-sm" onclick="saveCurrentCorrection()">💾 Save Correction</button>
+                <span style="font-size:0.7rem;color:var(--text3);margin:auto 0;">Edit the text above to correct OCR errors</span>
+              </div>`
+            : `<div style="padding:0.4rem 0.8rem;border-top:1px solid var(--border);display:flex;gap:0.4rem;">
+                <button class="btn btn-secondary btn-sm" onclick="copyToCorrected()">📋 Copy to Corrected</button>
+                ${activeTab.time ? `<span style="font-size:0.7rem;color:var(--text3);margin:auto 0;">${activeTab.time}ms</span>` : ''}
+                ${activeTab.error ? `<span style="font-size:0.7rem;color:var(--danger);margin:auto 0;">Error: ${esc(activeTab.error).substring(0, 80)}</span>` : ''}
+              </div>`
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Matches -->
+    <div class="matches-section">
+      <div class="section-title">
+        Matched People
+        <span style="font-size:0.7rem;color:var(--text3);font-weight:400;">
+          (${doc.matches.filter(m => m.verified).length} verified of ${doc.matches.length})
+        </span>
+      </div>
+      <div class="match-list" id="match-list">
+        ${doc.matches.length
+          ? doc.matches.map(m => `
+            <div class="match-row">
+              <span class="match-name">${esc(m.name)}</span>
+              <span class="match-detail">
+                ${m.birth ? `b.${m.birth}` : ''} ${m.death ? `d.${m.death}` : ''}
+                · ${(m.confidence * 100).toFixed(0)}% via ${m.match_type}
+                ${m.snippet ? `· "${esc(m.snippet)}"` : ''}
+              </span>
+              ${m.verified ? '<span class="verified-check">✓</span>' : ''}
+              <div class="match-actions">
+                ${!m.verified ? `
+                  <button class="btn btn-approve btn-sm" onclick="verifyMatch(${m.id}, 'verify')" title="Verify">✓</button>
+                  <button class="btn btn-reject btn-sm" onclick="verifyMatch(${m.id}, 'reject')" title="Remove">✗</button>
+                ` : `
+                  <button class="btn btn-secondary btn-sm" onclick="verifyMatch(${m.id}, 'reject')" title="Un-verify">↩</button>
+                `}
+              </div>
+            </div>
+          `).join('')
+          : '<div style="color:var(--text3);font-size:0.82rem;padding:0.5rem 0;">No matches yet</div>'
+        }
+      </div>
+
+      <!-- Add person manually -->
+      <div class="add-match-bar" style="position:relative;">
+        <input type="text" id="person-search" placeholder="Add person… type to search" autocomplete="off">
+        <div class="people-dropdown" id="people-dropdown" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- Edit history -->
+    ${doc.edits && doc.edits.length ? `
+      <div class="edit-history">
+        <div class="section-title">Edit History</div>
+        ${doc.edits.map(e => `
+          <div class="edit-entry">
+            <span class="edit-date">${e.date ? new Date(e.date).toLocaleString() : '?'}</span>
+            — ${e.reviewer || '?'} edited ${e.field}
+            ${e.notes ? ` (${esc(e.notes)})` : ''}
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
+  `;
+
+  // Tab click handlers
+  el.querySelectorAll('.ocr-tab').forEach(tab => {
+    tab.onclick = () => {
+      currentOcrTab = tab.dataset.tab;
+      renderDetail(doc);
+    };
+  });
+
+  // Person search
+  setupPersonSearch(doc.id);
+}
+
+const OCR_ENGINES = {
+  'tesseract': 'Tesseract',
+  'glm-ocr': 'GLM-OCR',
+  'minicpm-v': 'MiniCPM-V',
+  'numarkdown': 'NuMarkdown',
+};
+
+function typeIcon(type) {
+  const icons = {
+    certificate: '📜', obituary: '🕊️', newspaper: '📰', photo: '📷',
+    census: '📋', military: '⚔️', letter: '✉️', other: '📎'
+  };
+  return icons[type] || '📎';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ACTIONS
+   ═══════════════════════════════════════════════════════════════ */
+function zoomImg(delta) {
+  if (delta === 0) { zoomLevel = 1; }
+  else { zoomLevel = Math.max(0.5, Math.min(4, zoomLevel + delta)); }
+  const img = document.getElementById('doc-img');
+  if (img) img.style.transform = `scale(${zoomLevel})`;
+}
+
+function saveCurrentCorrection() {
+  const text = document.getElementById('ocr-text').value;
+  if (currentDocDetail) {
+    saveCorrection(currentDocDetail.id, text);
+    currentDocDetail.corrected_text = text;
+  }
+}
+
+function copyToCorrected() {
+  const text = document.getElementById('ocr-text').value;
+  if (currentDocDetail) {
+    currentDocDetail.corrected_text = text;
+    currentOcrTab = 'corrected';
+    renderDetail(currentDocDetail);
+    toast('Copied to corrected tab — edit and save', 'success');
+  }
+}
+
+let personSearchTimeout = null;
+function setupPersonSearch(docId) {
+  const input = document.getElementById('person-search');
+  const dropdown = document.getElementById('people-dropdown');
+  if (!input || !dropdown) return;
+
+  input.oninput = () => {
+    clearTimeout(personSearchTimeout);
+    const q = input.value.trim();
+    if (q.length < 2) { dropdown.style.display = 'none'; return; }
+    personSearchTimeout = setTimeout(async () => {
+      const people = await searchPeople(q);
+      if (!people.length) {
+        dropdown.style.display = 'none';
+        return;
+      }
+      dropdown.innerHTML = people.map(p =>
+        `<div class="person-opt" data-id="${p.id}">
+          <span>${esc(p.name)}</span>
+          <span class="dates">${p.birth || '?'} – ${p.death || '?'}</span>
+        </div>`
+      ).join('');
+      dropdown.style.display = 'block';
+      dropdown.querySelectorAll('.person-opt').forEach(opt => {
+        opt.onclick = () => {
+          addMatch(docId, parseInt(opt.dataset.id));
+          dropdown.style.display = 'none';
+          input.value = '';
+        };
+      });
+    }, 300);
+  };
+
+  input.onblur = () => setTimeout(() => { dropdown.style.display = 'none'; }, 200);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   KEYBOARD
+   ═══════════════════════════════════════════════════════════════ */
+function setupKeyboard() {
+  document.addEventListener('keydown', e => {
+    // Don't intercept when typing in inputs
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    if (e.key === 'ArrowDown' || e.key === 'j') {
+      e.preventDefault();
+      selectDocument(Math.min(selectedIdx + 1, allDocs.length - 1));
+    } else if (e.key === 'ArrowUp' || e.key === 'k') {
+      e.preventDefault();
+      selectDocument(Math.max(selectedIdx - 1, 0));
+    } else if (e.key === 'a' && currentDocDetail) {
+      setReviewStatus(currentDocDetail.id, 'approved');
+    } else if (e.key === 'r' && currentDocDetail) {
+      setReviewStatus(currentDocDetail.id, 'rejected');
+    } else if (e.key === 'f' && currentDocDetail) {
+      setReviewStatus(currentDocDetail.id, 'needs_review');
+    } else if (e.key === 'e' && currentDocDetail) {
+      currentOcrTab = 'corrected';
+      renderDetail(currentDocDetail);
+      setTimeout(() => {
+        const box = document.getElementById('ocr-text');
+        if (box) box.focus();
+      }, 100);
+    }
+  });
+}
+
+// Search debounce
+let searchTimeout = null;
+document.getElementById('search').addEventListener('input', e => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    searchQuery = e.target.value.trim();
+    loadDocuments();
+  }, 300);
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════════════════════════════ */
+function toast(msg, type = '') {
+  const container = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  container.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UTIL
+   ═══════════════════════════════════════════════════════════════ */
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+</script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'Document Review',
+  intro: 'A workstation for reviewing OCR results, verifying person matches, and managing the review status of scanned family documents. Designed for efficient keyboard-driven workflow.',
+  keys: [
+    { key: '↑', action: 'Previous document (also K)' },
+    { key: '↓', action: 'Next document (also J)' },
+    { key: 'A', action: 'Approve current document' },
+    { key: 'R', action: 'Reject current document' },
+    { key: 'F', action: 'Flag document for review' },
+    { key: 'E', action: 'Edit OCR — switch to Corrected tab and focus textarea' },
+    { key: 'Click sidebar item', action: 'Load that document for review' },
+    { key: '?', action: 'Toggle this help panel' }
+  ],
+  sections: [
+    { title: 'Review Workflow', icon: '✅', html: `
+      <p>The typical workflow is:</p>
+      <ol>
+        <li>Select a document from the sidebar (or press <strong>↓</strong> to advance)</li>
+        <li>Review the image on the left and OCR text on the right</li>
+        <li>Verify or remove person matches</li>
+        <li>Correct the OCR text if needed (press <strong>E</strong>)</li>
+        <li>Set the review status: <strong>A</strong>pprove, <strong>F</strong>lag, or <strong>R</strong>eject</li>
+      </ol>
+      <p>Status dots in the sidebar show progress: 🟡 Pending, 🟢 Approved, 🔴 Rejected, 🟠 Needs Review.</p>
+    ` },
+    { title: 'Document List & Filters', icon: '📄', html: `
+      <p>The sidebar lists all documents. Use the <strong>search box</strong> to filter by filename or title.</p>
+      <p>Filter buttons show documents by status:</p>
+      <ul>
+        <li><strong>All</strong> — Every document</li>
+        <li><strong>Pending</strong> — Not yet reviewed</li>
+        <li><strong>Approved</strong> — Verified correct</li>
+        <li><strong>Flagged</strong> — Needs further attention</li>
+        <li><strong>Rejected</strong> — Marked as incorrect or unusable</li>
+      </ul>
+      <p>Each filter button shows a count badge.</p>
+    ` },
+    { title: 'OCR Review', icon: '📝', html: `
+      <p>Multiple OCR engines may have processed each document. Switch between tabs to compare results:</p>
+      <ul>
+        <li><strong>Corrected</strong> — Human-edited text (editable)</li>
+        <li><strong>Tesseract</strong> — Traditional OCR engine</li>
+        <li><strong>GLM-OCR</strong> — AI vision model (recommended for genealogy)</li>
+        <li><strong>MiniCPM-V</strong> — Alternative AI model</li>
+        <li><strong>NuMarkdown</strong> — Markdown-output AI model</li>
+      </ul>
+      <p>Press <strong>E</strong> to jump to the Corrected tab and start editing. Click <strong>Save Correction</strong> to store your edits.</p>
+      <p><strong>Copy to Corrected</strong> copies the current tab\'s text into the Corrected field for editing.</p>
+      <p><strong>Run All OCR</strong> triggers all engines to re-process the current document.</p>
+    ` },
+    { title: 'Person Matching', icon: '👤', html: `
+      <p>The person match section shows which people from the database have been linked to this document, with confidence percentages.</p>
+      <ul>
+        <li>Click <strong>✓</strong> to verify a match is correct</li>
+        <li>Click <strong>✗</strong> to remove an incorrect match</li>
+        <li>Use the <strong>Add person</strong> search to link additional people</li>
+      </ul>
+    ` },
+    { title: 'Image Controls', icon: '🖼', html: `
+      <p>Use the <strong>+</strong>, <strong>−</strong>, and <strong>Reset</strong> buttons above the image to zoom in, zoom out, or reset to fit.</p>
+    ` },
+    { title: 'Reviewer Name', icon: '🏷', html: `
+      <p>Enter your name in the <strong>Reviewer</strong> field in the top bar. This name is attached to all status changes and corrections you make for audit purposes.</p>
+    ` }
+  ]
+});
+</script>
+</body>
+</html>

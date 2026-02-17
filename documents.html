@@ -771,5 +771,38 @@ function encThumb(path) {
   return path.split('/').map(s => encodeURIComponent(s)).join('/');
 }
 </script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'Documents Gallery',
+  intro: 'Browse scanned family records — certificates, obituaries, census pages, photos, and more. Each document shows OCR-extracted text and matched people from the database.',
+  keys: [
+    { key: 'Escape', action: 'Close the document detail modal' },
+    { key: 'Click card', action: 'Open document detail modal' },
+    { key: '?', action: 'Toggle this help panel' }
+  ],
+  sections: [
+    { title: 'Browsing', icon: '📄', html: `
+      <p>Documents are displayed as thumbnail cards showing the image, title, type badge, and how many people are matched.</p>
+      <p>Use the <strong>pagination</strong> buttons at the bottom to move between pages (25 documents per page).</p>
+      <p>The stats bar at the top shows totals: documents, matched count, total matches, linked people, and OCR count.</p>
+    ` },
+    { title: 'Filtering & Search', icon: '🔍', html: `
+      <p><strong>Search</strong> by title, person name, or filename using the search box.</p>
+      <p><strong>Type filter</strong> — Use the dropdown to show only specific document types (certificate, obituary, newspaper, photo, census, military, etc.).</p>
+      <p><strong>Match filter</strong> — Toggle between All, Matched Only (documents linked to at least one person), or Unmatched Only.</p>
+      <p>Filters combine — you can search for "Lack" with type "certificate" and match status "matched" simultaneously.</p>
+    ` },
+    { title: 'Document Detail Modal', icon: '📋', html: `
+      <p>Click any document card to open a full detail view. The modal shows:</p>
+      <ul>
+        <li><strong>Left side</strong> — Full-size image of the scanned document</li>
+        <li><strong>Right side</strong> — Document type, sequence number, filename, matched people with confidence percentages, and the OCR-extracted text</li>
+      </ul>
+      <p>Click a <strong>matched person tag</strong> to navigate to their ancestry chart. Press <strong>Escape</strong>, click ×, or click outside the modal to close.</p>
+    ` }
+  ]
+});
+</script>
 </body>
 </html>

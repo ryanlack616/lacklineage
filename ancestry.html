@@ -1297,6 +1297,63 @@ readURL();
 initCanvas();
 loadAndRender();
 </script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'Ancestry Chart',
+  intro: 'A pedigree chart showing ancestors fanning out from a root person. Navigate through generations, select and rearrange cards, and switch between horizontal and vertical layouts.',
+  keys: [
+    { key: 'Click', action: 'Select a person card' },
+    { key: 'Ctrl + Click', action: 'Toggle card in/out of selection' },
+    { key: 'Shift + Click', action: 'Add card to selection' },
+    { key: 'Double-click', action: 'Navigate to that person as new root' },
+    { key: 'Right-click', action: 'Open detail modal for that person' },
+    { key: 'Drag card', action: 'Move selected card(s) — lines follow' },
+    { key: 'Shift + Drag background', action: 'Draw rectangle to select multiple cards' },
+    { key: 'Ctrl + Release marquee', action: 'Add marquee cards to existing selection' },
+    { key: 'Scroll wheel', action: 'Zoom in/out (when hovering canvas)' },
+    { key: 'Drag background', action: 'Pan the canvas' },
+    { key: 'Escape', action: 'Deselect all cards' },
+    { key: '?', action: 'Toggle this help panel' }
+  ],
+  sections: [
+    { title: 'Navigation', icon: '🧭', html: `
+      <p>The chart starts at <strong>George l Lack</strong> (the root). Click any person card to select it, then <strong>double-click</strong> to make that person the new root. The chart rebuilds to show their ancestors.</p>
+      <p>Use the <strong>← Back</strong> button or breadcrumb trail to return to previous roots. <strong>⌂ Home</strong> returns to George.</p>
+      <p>The URL updates with <code>?root=</code> and <code>?depth=</code> parameters — you can bookmark or share any view.</p>
+    ` },
+    { title: 'Selection & Dragging', icon: '✋', html: `
+      <p><strong>Click</strong> a card to select it (orange highlight). Hold <strong>Ctrl</strong> and click to toggle additional cards. Hold <strong>Shift</strong> and click to add to the selection.</p>
+      <p><strong>Drag</strong> any selected card to move all selected cards together. Connection lines update in real time.</p>
+      <p>To select many cards at once, hold <strong>Shift</strong> and drag on empty space to draw a selection rectangle. Any card whose center falls inside the rectangle gets selected.</p>
+      <p>Hold <strong>Ctrl</strong> when releasing the rectangle to add to an existing selection instead of replacing it.</p>
+      <p>Press <strong>Escape</strong> or click empty space to deselect all. The orange badge at the bottom shows how many cards are selected.</p>
+    ` },
+    { title: 'Views & Layout', icon: '🔀', html: `
+      <p>Use the <strong>⬍</strong> button (bottom-right) to switch between <strong>horizontal</strong> (ancestors fan right) and <strong>vertical</strong> (ancestors go up) layouts.</p>
+      <p>Use the <strong>↺</strong> button to reset all cards to their computed positions.</p>
+      <p>The <strong>⊡ Fit</strong> button zooms and pans to show all cards. <strong>+</strong> and <strong>−</strong> control zoom level.</p>
+    ` },
+    { title: 'Detail Modal', icon: '📋', html: `
+      <p><strong>Right-click</strong> any card to open a detail modal showing vital information, parents, spouses, children, and siblings.</p>
+      <p>Click any person link in the modal to navigate to them. The confidence badge shows data quality (High/Medium/Low/Speculative).</p>
+    ` },
+    { title: 'Search', icon: '🔍', html: `
+      <p>Type in the search bar at the top to find any person by name. Results appear as you type (debounced). Click a result to navigate directly to that person as the new root.</p>
+    ` },
+    { title: 'Card Colors', icon: '🎨', html: `
+      <ul>
+        <li><strong>Blue left border</strong> — Male</li>
+        <li><strong>Red left border</strong> — Female</li>
+        <li><strong>Gray left border</strong> — Unknown sex</li>
+        <li><strong>Gold border</strong> — Root person (current focus)</li>
+        <li><strong>Orange outline</strong> — Selected card</li>
+        <li><strong>Confidence dot</strong> — Green (high), Yellow (medium), Orange (low), Red (speculative)</li>
+      </ul>
+    ` }
+  ]
+});
+</script>
 </body>
 </html>
 

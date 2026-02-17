@@ -291,5 +291,34 @@ fetch('/data/stats.json')
   })
   .catch(() => {});
 </script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'Dashboard',
+  intro: 'The home page of Lack Lineage — a family history project built from George Lack\'s genealogical research database.',
+  keys: [
+    { key: '?', action: 'Toggle this help panel' }
+  ],
+  sections: [
+    { title: 'Overview', icon: '📊', html: `
+      <p>The dashboard shows live statistics pulled from the database: total people, unique surnames, relationships, and confidence scores.</p>
+      <p>Stats update automatically when <code>stats.json</code> is regenerated from the database.</p>
+    ` },
+    { title: 'Navigation', icon: '🧭', html: `
+      <p>Use the top navigation bar to visit any page:</p>
+      <ul>
+        <li><strong>Tree</strong> — Collapsible tree explorer with ancestors/descendants/both modes</li>
+        <li><strong>Ancestry</strong> — Pedigree chart with draggable cards</li>
+        <li><strong>Documents</strong> — Browse scanned family records with OCR text</li>
+        <li><strong>Surnames</strong> — Browse all family surnames with counts</li>
+        <li><strong>Living</strong> — Animated timeline of who was alive each year</li>
+        <li><strong>Related</strong> — Find relationship paths between any two people</li>
+        <li><strong>Letter</strong> — A letter to George summarizing the project</li>
+        <li><strong>Visualizations</strong> — Plans for thirteen visualization pieces</li>
+      </ul>
+    ` }
+  ]
+});
+</script>
 </body>
 </html>

@@ -634,5 +634,36 @@ document.addEventListener('keydown', e => {
 
 loadData();
 </script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'Surname Directory',
+  intro: 'Browse all family surnames with counts, filter by letter, and drill down to see every person carrying a given surname.',
+  keys: [
+    { key: '/', action: 'Focus the search bar' },
+    { key: 'Escape', action: 'Close the person drawer' },
+    { key: 'Click surname card', action: 'Open person drawer for that surname' },
+    { key: '?', action: 'Toggle this help panel' }
+  ],
+  sections: [
+    { title: 'Browsing', icon: '📖', html: `
+      <p>Surnames are shown as cards (grid view) or rows (list view). Each shows the surname and how many people carry it, with a proportional bar visualization.</p>
+      <p>Use the <strong>letter index</strong> (A–Z + #) at the top to jump to surnames starting with a specific letter. The <strong>#</strong> button shows surnames starting with numbers or special characters.</p>
+    ` },
+    { title: 'Search & Sort', icon: '🔍', html: `
+      <p>Type in the search box (or press <strong>/</strong>) to filter surnames instantly. The letter filter clears when you search.</p>
+      <p><strong>A–Z</strong> sorts alphabetically. <strong>By Count</strong> sorts by the number of people (most common first).</p>
+    ` },
+    { title: 'Views', icon: '👁', html: `
+      <p>Toggle between <strong>Grid</strong> (cards) and <strong>List</strong> (table rows) using the view buttons. Grid view shows larger cards with bar charts; list view is more compact.</p>
+    ` },
+    { title: 'Person Drawer', icon: '📋', html: `
+      <p>Click any surname to open a slide-in drawer on the right showing every person with that surname.</p>
+      <p>Each person shows their full name, birth/death dates, and birthplace. Click a person to open their tree view in a new tab.</p>
+      <p>The drawer also provides links to view the surname in the Tree or Graph views. Press <strong>Escape</strong> or click × to close.</p>
+    ` }
+  ]
+});
+</script>
 </body>
 </html>

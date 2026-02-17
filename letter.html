@@ -411,5 +411,25 @@ outward. A poster for the wall.</p>
   <div class="date">February 2026</div>
 </div>
 
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'Letter to George',
+  intro: 'A literary letter addressed to George Lack, summarizing the family database as narrative prose. This page is purely for reading — there are no interactive controls.',
+  keys: [
+    { key: '?', action: 'Toggle this help panel' }
+  ],
+  sections: [
+    { title: 'About This Letter', icon: '✉️', html: `
+      <p>This page is a personal letter from Ryan to his grandfather George, reflecting on the genealogy database and what it means to preserve family history.</p>
+      <p>The letter references real statistics from the database — people counts, surname counts, place counts, and date spans.</p>
+    ` },
+    { title: 'Navigation', icon: '🧭', html: `
+      <p>Use the navigation bar at the top to visit other pages in the Lack Lineage project.</p>
+      <p>This page has a print-friendly stylesheet — use your browser\'s print function to create a clean PDF.</p>
+    ` }
+  ]
+});
+</script>
 </body>
 </html>
