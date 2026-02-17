@@ -10,7 +10,7 @@
   style.textContent = `
 /* Help toggle button */
 .help-btn {
-  position: fixed; bottom: 1.5rem; left: 1.5rem; z-index: 900;
+  position: fixed; bottom: 4.5rem; left: 1.5rem; z-index: 900;
   width: 38px; height: 38px; border-radius: 50%;
   background: #5b4636; color: #fff; border: none; cursor: pointer;
   font-size: 1.2rem; font-weight: 700; font-family: Georgia, serif;
