@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dad's Desk — Lack Lineage Admin</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8f6f1; --card: #ffffff; --fg: #2a2520; --fg2: #6b6360;
+  --fg3: #9e9a93; --accent: #8b6914; --border: #d8d2c8;
+  --font: 'Georgia','Times New Roman',serif;
+  --sans: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono: 'Consolas','Monaco',monospace;
+  --green: #2d9a2d; --yellow: #c9a100; --orange: #d4740a; --red: #c0392b;
+  --radius: 8px;
+}
+html { font-size: 16px; }
+body { font-family: var(--font); color: var(--fg); background: var(--bg); line-height: 1.6; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+input, textarea, select, button { font-family: var(--sans); }
+button { cursor: pointer; }
+
+/* ── Header ── */
+header {
+  background: var(--fg); color: var(--bg); padding: 0.75rem 2rem;
+  display: flex; align-items: center; gap: 2rem;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
+header h1 span { font-weight: 300; opacity: 0.6; }
+header h1 a { color: inherit; text-decoration: none; }
+nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+nav a {
+  background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--bg);
+  padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.8rem;
+  text-decoration: none; transition: all 0.15s;
+}
+nav a:hover, nav a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+nav a.active { font-weight: bold; }
+.header-right {
+  margin-left: auto; display: flex; align-items: center; gap: 0.75rem;
+}
+.dad-badge {
+  background: linear-gradient(135deg, #f7eed5, #e8d8a0);
+  color: #5a4410; padding: 0.3rem 0.8rem; border-radius: 999px;
+  font-size: 0.75rem; font-weight: 700; font-family: var(--sans);
+  letter-spacing: 0.04em; display: flex; align-items: center; gap: 0.3rem;
+}
+
+/* ── Layout ── */
+.app { max-width: 1200px; margin: 0 auto; padding: 1.5rem 2rem 4rem; }
+
+/* ── Stats bar ── */
+.stats-bar {
+  display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+}
+.stat-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0.8rem 1.2rem; flex: 1; min-width: 120px; text-align: center;
+}
+.stat-num { font-size: 1.8rem; font-weight: 700; font-family: var(--mono); color: var(--accent); line-height: 1; }
+.stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg3); font-family: var(--sans); margin-top: 0.2rem; }
+
+/* ── Two-column layout ── */
+.main-grid {
+  display: grid; grid-template-columns: 380px 1fr; gap: 1.5rem; align-items: start;
+}
+@media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+/* ── People list ── */
+.people-panel {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; position: sticky; top: 68px;
+}
+.panel-head {
+  padding: 0.8rem 1rem; border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.panel-title {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
+  font-family: var(--sans); font-weight: 700; color: var(--fg2);
+}
+.panel-count { font-size: 0.7rem; font-family: var(--mono); color: var(--fg3); }
+
+.search-row { padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); display: flex; gap: 0.4rem; }
+.search-row input {
+  flex: 1; padding: 0.5rem 0.7rem; border: 1px solid var(--border); border-radius: var(--radius);
+  font-size: 0.85rem; outline: none;
+}
+.search-row input:focus { border-color: var(--accent); }
+.search-row select {
+  padding: 0.4rem 0.5rem; border: 1px solid var(--border); border-radius: var(--radius);
+  font-size: 0.75rem; background: var(--card); outline: none;
+}
+
+.people-list { max-height: calc(100vh - 250px); overflow-y: auto; }
+.person-item {
+  padding: 0.55rem 0.9rem; border-bottom: 1px solid #f0ede6; cursor: pointer;
+  display: flex; align-items: center; gap: 0.6rem; transition: all 0.1s;
+}
+.person-item:hover { background: #fefcf6; }
+.person-item.selected { background: #fdf6e3; border-left: 3px solid var(--accent); }
+.person-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.dot-m { background: #93c5fd; }
+.dot-f { background: #f9a8d4; }
+.dot-u { background: #d1d5db; }
+.person-info { flex: 1; min-width: 0; }
+.person-name { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.person-meta { font-size: 0.7rem; color: var(--fg3); font-family: var(--sans); }
+.person-tier {
+  font-size: 0.55rem; padding: 0.1rem 0.35rem; border-radius: 3px; font-weight: 700;
+  text-transform: uppercase; font-family: var(--sans); flex-shrink: 0;
+}
+.tier-high { background: #e8f5e9; color: #2d9a2d; }
+.tier-medium { background: #fff8e1; color: #c9a100; }
+.tier-low { background: #fff3e0; color: #d4740a; }
+.tier-speculative { background: #fde8e8; color: #c0392b; }
+
+.list-paging {
+  padding: 0.5rem 0.8rem; border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.72rem; color: var(--fg3); font-family: var(--sans);
+}
+.list-paging button {
+  padding: 0.3rem 0.6rem; border: 1px solid var(--border); border-radius: 4px;
+  font-size: 0.72rem; background: var(--card); color: var(--fg);
+}
+.list-paging button:hover { border-color: var(--accent); }
+.list-paging button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Detail panel (right side) ── */
+.detail-panel {
+  display: flex; flex-direction: column; gap: 1.2rem;
+}
+.detail-empty {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 4rem 2rem; text-align: center; color: var(--fg3);
+}
+.detail-empty .icon { font-size: 3rem; margin-bottom: 0.5rem; }
+
+/* ── Card ── */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.card-head {
+  padding: 0.7rem 1rem; border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.card-title {
+  font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--fg2); font-family: var(--sans); font-weight: 700;
+}
+.card-body { padding: 1rem; }
+
+/* ── Person Header Card ── */
+.person-header {
+  display: flex; gap: 1.5rem; align-items: flex-start;
+}
+.person-header-left { flex: 1; }
+.person-header h2 { font-size: 1.5rem; font-weight: 400; margin-bottom: 0.3rem; }
+.person-header .ph-dates { font-size: 0.9rem; color: var(--fg2); }
+.person-header .ph-tier {
+  display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px;
+  font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+  font-family: var(--sans); margin-top: 0.4rem;
+}
+.person-header .ph-score {
+  font-size: 2rem; font-weight: 700; font-family: var(--mono);
+  color: var(--accent); text-align: center;
+}
+.person-header .ph-score-label {
+  font-size: 0.6rem; text-transform: uppercase; color: var(--fg3);
+  font-family: var(--sans); text-align: center;
+}
+
+/* ── Edit form ── */
+.edit-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;
+}
+.edit-grid .full { grid-column: 1 / -1; }
+.field-group { display: flex; flex-direction: column; gap: 0.25rem; }
+.field-label {
+  font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--fg3); font-family: var(--sans); font-weight: 600;
+}
+.field-input {
+  padding: 0.5rem 0.7rem; border: 1px solid var(--border); border-radius: var(--radius);
+  font-size: 0.88rem; outline: none; background: var(--card);
+}
+.field-input:focus { border-color: var(--accent); background: #fffff8; }
+.field-input.changed { border-color: var(--accent); background: #fdf6e3; }
+.field-select {
+  padding: 0.5rem 0.7rem; border: 1px solid var(--border); border-radius: var(--radius);
+  font-size: 0.85rem; background: var(--card); outline: none;
+}
+
+.save-bar {
+  display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.5rem;
+}
+.btn {
+  padding: 0.5rem 1.2rem; border-radius: var(--radius); font-size: 0.82rem;
+  font-weight: 600; border: none; transition: all 0.15s; display: inline-flex;
+  align-items: center; gap: 0.3rem;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #7a5c12; }
+.btn-secondary { background: #e8e4dc; color: var(--fg); }
+.btn-secondary:hover { background: #d4cfc7; }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-danger:hover { background: #a93226; }
+.btn-sm { padding: 0.3rem 0.7rem; font-size: 0.72rem; }
+
+.save-toast {
+  position: fixed; bottom: 2rem; right: 2rem; background: #2d9a2d; color: #fff;
+  padding: 0.6rem 1.2rem; border-radius: var(--radius); font-family: var(--sans);
+  font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  opacity: 0; transform: translateY(8px); transition: all 0.25s;
+  z-index: 300; pointer-events: none;
+}
+.save-toast.show { opacity: 1; transform: translateY(0); }
+
+/* ── Family cards ── */
+.fam-group { margin-bottom: 0.8rem; }
+.fam-group:last-child { margin-bottom: 0; }
+.fam-group-label {
+  font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--fg3); font-family: var(--sans); font-weight: 600; margin-bottom: 0.3rem;
+}
+.fam-list { display: flex; flex-direction: column; gap: 0.3rem; }
+.fam-link {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.35rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius);
+  cursor: pointer; transition: all 0.1s; color: var(--fg);
+  font-size: 0.82rem; text-decoration: none;
+}
+.fam-link:hover { border-color: var(--accent); background: #fefcf6; text-decoration: none; }
+.fam-link .fam-dates { font-size: 0.68rem; color: var(--fg3); margin-left: auto; }
+
+/* ── Notes ── */
+.note-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.8rem; }
+.note-item {
+  padding: 0.6rem 0.8rem; background: #faf8f4; border: 1px solid var(--border);
+  border-radius: var(--radius); position: relative;
+}
+.note-text { font-size: 0.85rem; white-space: pre-wrap; word-break: break-word; }
+.note-meta { font-size: 0.65rem; color: var(--fg3); font-family: var(--sans); margin-top: 0.3rem; }
+.note-delete {
+  position: absolute; top: 0.4rem; right: 0.4rem; background: none; border: none;
+  color: var(--fg3); font-size: 0.85rem; cursor: pointer; line-height: 1;
+  width: 22px; height: 22px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center;
+}
+.note-delete:hover { background: #fde8e8; color: var(--red); }
+
+.note-form { display: flex; gap: 0.4rem; }
+.note-form textarea {
+  flex: 1; padding: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius);
+  font-size: 0.85rem; resize: vertical; min-height: 60px; outline: none;
+  font-family: var(--font);
+}
+.note-form textarea:focus { border-color: var(--accent); }
+
+/* ── Upload ── */
+.upload-zone {
+  border: 2px dashed var(--border); border-radius: var(--radius);
+  padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s;
+  background: #faf8f4;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--accent); background: #fdf6e3;
+}
+.upload-zone .icon { font-size: 2rem; margin-bottom: 0.4rem; }
+.upload-zone p { font-size: 0.85rem; color: var(--fg2); }
+.upload-zone .sub { font-size: 0.7rem; color: var(--fg3); margin-top: 0.2rem; }
+
+.upload-form { display: none; margin-top: 0.8rem; }
+.upload-form.active { display: block; }
+.upload-preview {
+  display: flex; gap: 0.8rem; align-items: flex-start; margin-bottom: 0.8rem;
+}
+.upload-preview img {
+  width: 120px; height: 90px; object-fit: cover; border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.upload-fields { flex: 1; display: flex; flex-direction: column; gap: 0.5rem; }
+.upload-progress {
+  height: 4px; background: #e0ddd6; border-radius: 2px; overflow: hidden;
+  margin-top: 0.5rem; display: none;
+}
+.upload-progress.active { display: block; }
+.upload-progress-bar { height: 100%; background: var(--accent); width: 0; transition: width 0.3s; }
+
+/* ── Documents grid ── */
+.doc-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.6rem;
+}
+.doc-thumb {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; cursor: pointer; transition: all 0.2s;
+}
+.doc-thumb:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.12); transform: translateY(-2px); }
+.doc-thumb img {
+  width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: #f0ede6;
+}
+.doc-thumb-placeholder {
+  width: 100%; aspect-ratio: 4/3; background: linear-gradient(135deg, #f0ede6, #e2ddd4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; color: var(--fg3);
+}
+.doc-thumb-label {
+  padding: 0.3rem 0.45rem; font-size: 0.65rem; color: var(--fg2);
+  font-family: var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Edit history ── */
+.edit-item {
+  padding: 0.4rem 0; border-bottom: 1px solid #f0ede6; font-size: 0.78rem;
+}
+.edit-item:last-child { border-bottom: none; }
+.edit-field { font-weight: 600; color: var(--accent); }
+.edit-old { color: var(--red); text-decoration: line-through; }
+.edit-new { color: var(--green); }
+.edit-date { font-size: 0.65rem; color: var(--fg3); font-family: var(--sans); }
+
+/* ── Responsive ── */
+@media (max-width: 800px) {
+  header { padding: 0.75rem 1rem; gap: 0.75rem; flex-wrap: wrap; }
+  .app { padding: 1rem; }
+  .main-grid { grid-template-columns: 1fr; }
+  .people-panel { position: static; }
+  .people-list { max-height: 300px; }
+  .edit-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Lack <span>Lineage</span></a></h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/search.html">Search</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/tree.html">Tree</a>
+    <a href="/admin.html" class="active">Admin</a>
+  </nav>
+  <div class="header-right">
+    <span class="dad-badge">★ Dad's Desk</span>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- Stats bar -->
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat-card"><div class="stat-num" id="stat-people">—</div><div class="stat-label">People</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-docs">—</div><div class="stat-label">Documents</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-verified">—</div><div class="stat-label">Verified</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-notes">—</div><div class="stat-label">Notes</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-edits">—</div><div class="stat-label">Edits</div></div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="main-grid">
+
+    <!-- Left: People list -->
+    <div class="people-panel">
+      <div class="panel-head">
+        <span class="panel-title">People</span>
+        <span class="panel-count" id="people-count"></span>
+      </div>
+      <div class="search-row">
+        <input type="text" id="search-input" placeholder="Search by name…" autocomplete="off">
+        <select id="tier-filter">
+          <option value="">All tiers</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+          <option value="speculative">Speculative</option>
+        </select>
+      </div>
+      <div class="people-list" id="people-list"></div>
+      <div class="list-paging">
+        <button id="prev-btn" disabled>← Prev</button>
+        <span id="page-info">Page 1</span>
+        <button id="next-btn">Next →</button>
+      </div>
+    </div>
+
+    <!-- Right: Detail -->
+    <div class="detail-panel" id="detail-panel">
+      <div class="detail-empty" id="detail-empty">
+        <div class="icon">👨‍👩‍👧‍👦</div>
+        <h3>Select a person</h3>
+        <p>Choose someone from the list to view, edit, add photos, or leave notes.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="save-toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   State
+   ═══════════════════════════════════════════════ */
+const API = '';  // same origin
+let currentPerson = null;
+let currentPage = 1;
+let totalPages = 1;
+let searchTimeout = null;
+
+const TIER_COLORS = { high:'#2d9a2d', medium:'#c9a100', low:'#d4740a', speculative:'#c0392b' };
+const TIER_BG    = { high:'#e8f5e9', medium:'#fff8e1', low:'#fff3e0', speculative:'#fde8e8' };
+const DOC_ICONS  = { photo:'📷', certificate:'📋', obituary:'🕯️', newspaper:'📰',
+                     census:'📊', military:'🎖️', other:'📄' };
+
+/* ═══════════════════════════════════════════════
+   Init
+   ═══════════════════════════════════════════════ */
+loadStats();
+loadPeople();
+
+document.getElementById('search-input').addEventListener('input', () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => { currentPage = 1; loadPeople(); }, 300);
+});
+document.getElementById('tier-filter').addEventListener('change', () => { currentPage = 1; loadPeople(); });
+document.getElementById('prev-btn').addEventListener('click', () => { if (currentPage > 1) { currentPage--; loadPeople(); } });
+document.getElementById('next-btn').addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; loadPeople(); } });
+
+/* ═══════════════════════════════════════════════
+   Load functions
+   ═══════════════════════════════════════════════ */
+function loadStats() {
+  fetch(API + '/api/admin/stats').then(r => r.json()).then(d => {
+    document.getElementById('stat-people').textContent = d.total_people || 0;
+    document.getElementById('stat-docs').textContent = d.total_documents || 0;
+    document.getElementById('stat-verified').textContent = d.verified_matches || 0;
+    document.getElementById('stat-notes').textContent = d.total_notes || 0;
+    document.getElementById('stat-edits').textContent = d.total_edits || 0;
+  }).catch(() => {});
+}
+
+function loadPeople() {
+  const q = document.getElementById('search-input').value.trim();
+  const tier = document.getElementById('tier-filter').value;
+  const params = new URLSearchParams({ q, tier, page: currentPage, sort: 'name' });
+
+  fetch(API + '/api/admin/people?' + params).then(r => r.json()).then(d => {
+    totalPages = d.pages || 1;
+    document.getElementById('people-count').textContent = `${d.total} total`;
+    document.getElementById('page-info').textContent = `Page ${d.page} of ${totalPages}`;
+    document.getElementById('prev-btn').disabled = d.page <= 1;
+    document.getElementById('next-btn').disabled = d.page >= totalPages;
+
+    const list = document.getElementById('people-list');
+    list.innerHTML = d.people.map(p => {
+      const dotCls = p.sex === 'M' ? 'dot-m' : p.sex === 'F' ? 'dot-f' : 'dot-u';
+      const tierCls = 'tier-' + (p.confidence_tier || 'speculative');
+      const dates = fmtRange(p.birth_date, p.death_date);
+      const sel = currentPerson && currentPerson.id === p.id ? ' selected' : '';
+      return `<div class="person-item${sel}" data-id="${p.id}">
+        <span class="person-dot ${dotCls}"></span>
+        <div class="person-info">
+          <div class="person-name">${esc(p.name)}</div>
+          <div class="person-meta">${dates}${p.doc_count ? ' · ' + p.doc_count + ' docs' : ''}</div>
+        </div>
+        <span class="person-tier ${tierCls}">${p.confidence_tier || '?'}</span>
+      </div>`;
+    }).join('');
+
+    list.querySelectorAll('.person-item').forEach(el => {
+      el.addEventListener('click', () => loadPerson(parseInt(el.dataset.id)));
+    });
+  }).catch(err => console.error('Failed to load people:', err));
+}
+
+function loadPerson(id) {
+  fetch(API + '/api/admin/person/' + id).then(r => r.json()).then(p => {
+    if (p.error) { showToast(p.error, true); return; }
+    currentPerson = p;
+    renderDetail(p);
+
+    // Highlight in list
+    document.querySelectorAll('.person-item').forEach(el => {
+      el.classList.toggle('selected', parseInt(el.dataset.id) === id);
+    });
+  }).catch(err => console.error('Failed to load person:', err));
+}
+
+/* ═══════════════════════════════════════════════
+   Render detail
+   ═══════════════════════════════════════════════ */
+function renderDetail(p) {
+  const panel = document.getElementById('detail-panel');
+  const tier = p.confidence_tier || 'speculative';
+  const tierCls = 'tier-' + tier;
+
+  panel.innerHTML = `
+    <!-- Person header -->
+    <div class="card">
+      <div class="card-body">
+        <div class="person-header">
+          <div class="person-header-left">
+            <h2>${esc(p.given_name || '')} ${esc(p.surname || '')}${p.suffix ? ' <span style="font-size:0.8rem;color:var(--fg2)">' + esc(p.suffix) + '</span>' : ''}</h2>
+            <div class="ph-dates">${fmtRange(p.birth_date, p.death_date)}</div>
+            <span class="ph-tier ${tierCls}" style="background:${TIER_BG[tier]||'#f0f0f0'};color:${TIER_COLORS[tier]||'#999'}">${tier}</span>
+          </div>
+          <div>
+            <div class="ph-score">${p.confidence || 0}</div>
+            <div class="ph-score-label">Confidence</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit form -->
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">✏️ Edit Person</span>
+      </div>
+      <div class="card-body">
+        <div class="edit-grid">
+          <div class="field-group">
+            <label class="field-label">Given Name</label>
+            <input class="field-input" id="f-given" value="${esc(p.given_name || '')}" data-orig="${esc(p.given_name || '')}">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Surname</label>
+            <input class="field-input" id="f-surname" value="${esc(p.surname || '')}" data-orig="${esc(p.surname || '')}">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Suffix</label>
+            <input class="field-input" id="f-suffix" value="${esc(p.suffix || '')}" data-orig="${esc(p.suffix || '')}">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Sex</label>
+            <select class="field-select" id="f-sex">
+              <option value="" ${!p.sex ? 'selected' : ''}>Unknown</option>
+              <option value="M" ${p.sex === 'M' ? 'selected' : ''}>Male</option>
+              <option value="F" ${p.sex === 'F' ? 'selected' : ''}>Female</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Birth Date</label>
+            <input class="field-input" id="f-birth-date" value="${esc(p.birth_date || '')}" data-orig="${esc(p.birth_date || '')}" placeholder="e.g. 1850-03-15">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Birth Place</label>
+            <input class="field-input" id="f-birth-place" value="${esc(p.birth_place || '')}" data-orig="${esc(p.birth_place || '')}">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Death Date</label>
+            <input class="field-input" id="f-death-date" value="${esc(p.death_date || '')}" data-orig="${esc(p.death_date || '')}" placeholder="e.g. 1920-11-02">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Death Place</label>
+            <input class="field-input" id="f-death-place" value="${esc(p.death_place || '')}" data-orig="${esc(p.death_place || '')}">
+          </div>
+        </div>
+        <div class="save-bar">
+          <button class="btn btn-secondary" id="reset-btn">Reset</button>
+          <button class="btn btn-primary" id="save-btn">💾 Save Changes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Family -->
+    <div class="card">
+      <div class="card-head"><span class="card-title">👨‍👩‍👧 Family</span></div>
+      <div class="card-body" id="family-body"></div>
+    </div>
+
+    <!-- Upload Photos -->
+    <div class="card">
+      <div class="card-head"><span class="card-title">📷 Upload Photos & Documents</span></div>
+      <div class="card-body">
+        <div class="upload-zone" id="upload-zone">
+          <div class="icon">📁</div>
+          <p>Drop files here or click to browse</p>
+          <div class="sub">JPG, PNG, TIFF, PDF — max 50 MB</div>
+        </div>
+        <input type="file" id="file-input" accept="image/*,.pdf,.tif,.tiff" multiple style="display:none">
+        <div class="upload-form" id="upload-form">
+          <div class="upload-preview" id="upload-preview"></div>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <select class="field-select" id="upload-type">
+              <option value="photo">Photo</option>
+              <option value="certificate">Certificate</option>
+              <option value="obituary">Obituary</option>
+              <option value="census">Census</option>
+              <option value="newspaper">Newspaper</option>
+              <option value="military">Military</option>
+              <option value="other">Other</option>
+            </select>
+            <input class="field-input" id="upload-desc" placeholder="Description (optional)" style="flex:1">
+            <button class="btn btn-primary" id="upload-btn">⬆️ Upload</button>
+          </div>
+          <div class="upload-progress" id="upload-progress"><div class="upload-progress-bar" id="upload-bar"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Existing Documents -->
+    <div class="card" id="docs-card" style="display:none">
+      <div class="card-head">
+        <span class="card-title">📄 Documents</span>
+        <span class="panel-count" id="doc-count"></span>
+      </div>
+      <div class="card-body">
+        <div class="doc-grid" id="doc-grid"></div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="card">
+      <div class="card-head"><span class="card-title">📝 Notes</span></div>
+      <div class="card-body">
+        <div class="note-list" id="note-list"></div>
+        <div class="note-form">
+          <textarea id="note-text" placeholder="Add a note about this person…"></textarea>
+          <button class="btn btn-primary btn-sm" id="add-note-btn" style="align-self:flex-end">Add Note</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit History -->
+    <div class="card" id="history-card" style="display:none">
+      <div class="card-head"><span class="card-title">📋 Edit History</span></div>
+      <div class="card-body" id="history-body"></div>
+    </div>
+  `;
+
+  // Render sub-sections
+  renderFamily(p);
+  renderDocuments(p);
+  renderNotes(p);
+  renderHistory(p);
+
+  // Wire up event listeners
+  wireEditForm(p);
+  wireUpload(p);
+  wireNotes(p);
+}
+
+/* ── Family ── */
+function renderFamily(p) {
+  const body = document.getElementById('family-body');
+  const groups = [];
+  if (p.parents?.length)  groups.push({ label: 'Parents', list: p.parents });
+  if (p.spouses?.length)  groups.push({ label: 'Spouses', list: p.spouses });
+  if (p.children?.length) groups.push({ label: 'Children', list: p.children });
+  if (p.siblings?.length) groups.push({ label: 'Siblings', list: p.siblings });
+
+  if (!groups.length) { body.innerHTML = '<div style="color:var(--fg3);font-size:0.85rem;">No family links found.</div>'; return; }
+
+  body.innerHTML = groups.map(g => {
+    const items = g.list.map(r => {
+      const dotCls = r.sex === 'M' ? 'dot-m' : r.sex === 'F' ? 'dot-f' : 'dot-u';
+      const name = `${r.given_name || ''} ${r.surname || ''}`.trim();
+      return `<a class="fam-link" data-id="${r.id}">
+        <span class="person-dot ${dotCls}"></span>
+        ${esc(name)}
+        <span class="fam-dates">${fmtRange(r.birth_date, r.death_date)}</span>
+      </a>`;
+    }).join('');
+    return `<div class="fam-group">
+      <div class="fam-group-label">${g.label}</div>
+      <div class="fam-list">${items}</div>
+    </div>`;
+  }).join('');
+
+  body.querySelectorAll('.fam-link[data-id]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.preventDefault();
+      loadPerson(parseInt(el.dataset.id));
+    });
+  });
+}
+
+/* ── Documents ── */
+function renderDocuments(p) {
+  const card = document.getElementById('docs-card');
+  const grid = document.getElementById('doc-grid');
+  if (!p.documents?.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  document.getElementById('doc-count').textContent = p.documents.length;
+
+  grid.innerHTML = p.documents.map(d => {
+    const icon = DOC_ICONS[d.doc_type] || DOC_ICONS.other;
+    const label = d.description || d.filename || `Doc #${d.id}`;
+    const imgSrc = d.filepath ? encPath(d.filepath) : null;
+    return `<div class="doc-thumb" title="${esc(label)}">
+      ${imgSrc
+        ? `<img src="${imgSrc}" loading="lazy" onerror="this.outerHTML='<div class=\\'doc-thumb-placeholder\\'>${icon}</div>'">`
+        : `<div class="doc-thumb-placeholder">${icon}</div>`}
+      <div class="doc-thumb-label">${esc(label)}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Notes ── */
+function renderNotes(p) {
+  const list = document.getElementById('note-list');
+  if (!p.notes?.length) { list.innerHTML = '<div style="color:var(--fg3);font-size:0.8rem;margin-bottom:0.5rem;">No notes yet.</div>'; return; }
+  list.innerHTML = p.notes.map(n => `
+    <div class="note-item">
+      <div class="note-text">${esc(n.note)}</div>
+      <div class="note-meta">${n.reviewer || 'Dad'} · ${fmtDate(n.created_date)}</div>
+      <button class="note-delete" data-nid="${n.id}" title="Delete note">×</button>
+    </div>
+  `).join('');
+}
+
+/* ── Edit History ── */
+function renderHistory(p) {
+  const card = document.getElementById('history-card');
+  const body = document.getElementById('history-body');
+  const edits = p.edit_history || [];
+  if (!edits.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  body.innerHTML = edits.slice(0, 20).map(e => `
+    <div class="edit-item">
+      <span class="edit-field">${e.field}</span>:
+      <span class="edit-old">${esc(e.old_value || '(empty)')}</span> →
+      <span class="edit-new">${esc(e.new_value || '(empty)')}</span>
+      <div class="edit-date">${fmtDate(e.edit_date)} · ${e.reviewer || 'Dad'}</div>
+    </div>
+  `).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   Wire up interactions
+   ═══════════════════════════════════════════════ */
+function wireEditForm(p) {
+  const fields = ['f-given', 'f-surname', 'f-suffix', 'f-birth-date', 'f-birth-place', 'f-death-date', 'f-death-place'];
+
+  // Highlight changed fields
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      el.classList.toggle('changed', el.value !== el.dataset.orig);
+    });
+  });
+
+  // Reset
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.value = el.dataset.orig; el.classList.remove('changed'); }
+    });
+    document.getElementById('f-sex').value = p.sex || '';
+  });
+
+  // Save
+  document.getElementById('save-btn').addEventListener('click', () => {
+    const body = {
+      given_name: document.getElementById('f-given').value.trim(),
+      surname: document.getElementById('f-surname').value.trim(),
+      suffix: document.getElementById('f-suffix').value.trim(),
+      sex: document.getElementById('f-sex').value || null,
+      birth_date: document.getElementById('f-birth-date').value.trim() || null,
+      birth_place: document.getElementById('f-birth-place').value.trim() || null,
+      death_date: document.getElementById('f-death-date').value.trim() || null,
+      death_place: document.getElementById('f-death-place').value.trim() || null,
+      reviewer: 'Dad',
+    };
+
+    fetch(API + '/api/admin/person/' + p.id, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).then(r => r.json()).then(d => {
+      if (d.error) { showToast(d.error, true); return; }
+      showToast(`Saved ${d.changes} change${d.changes !== 1 ? 's' : ''}`);
+      loadPerson(p.id);
+      loadStats();
+    }).catch(() => showToast('Save failed', true));
+  });
+}
+
+function wireUpload(p) {
+  const zone = document.getElementById('upload-zone');
+  const fileInput = document.getElementById('file-input');
+  const form = document.getElementById('upload-form');
+  let selectedFiles = [];
+
+  zone.addEventListener('click', () => fileInput.click());
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+
+  function handleFiles(files) {
+    selectedFiles = Array.from(files);
+    if (!selectedFiles.length) return;
+    form.classList.add('active');
+
+    const preview = document.getElementById('upload-preview');
+    preview.innerHTML = selectedFiles.map(f => {
+      const url = URL.createObjectURL(f);
+      return `<img src="${url}" alt="${esc(f.name)}">`;
+    }).join('') + `<div class="upload-fields">
+      <div style="font-size:0.85rem;font-weight:600;">${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} selected</div>
+      <div style="font-size:0.72rem;color:var(--fg3)">${selectedFiles.map(f => f.name).join(', ')}</div>
+    </div>`;
+  }
+
+  document.getElementById('upload-btn').addEventListener('click', async () => {
+    if (!selectedFiles.length) return;
+    const prog = document.getElementById('upload-progress');
+    const bar = document.getElementById('upload-bar');
+    prog.classList.add('active');
+
+    const docType = document.getElementById('upload-type').value;
+    const desc = document.getElementById('upload-desc').value.trim();
+    let done = 0;
+
+    for (const file of selectedFiles) {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('doc_type', docType);
+      fd.append('description', desc || file.name);
+
+      try {
+        const r = await fetch(API + '/api/admin/person/' + p.id + '/upload', { method: 'POST', body: fd });
+        const d = await r.json();
+        if (d.error) { showToast(`${file.name}: ${d.error}`, true); }
+        else { done++; }
+      } catch (err) { showToast(`Upload failed: ${file.name}`, true); }
+
+      bar.style.width = ((done / selectedFiles.length) * 100) + '%';
+    }
+
+    showToast(`Uploaded ${done} file${done !== 1 ? 's' : ''}`);
+    selectedFiles = [];
+    form.classList.remove('active');
+    prog.classList.remove('active');
+    bar.style.width = '0';
+    fileInput.value = '';
+    loadPerson(p.id);
+    loadStats();
+  });
+}
+
+function wireNotes(p) {
+  // Add note
+  document.getElementById('add-note-btn').addEventListener('click', () => {
+    const textarea = document.getElementById('note-text');
+    const note = textarea.value.trim();
+    if (!note) return;
+
+    fetch(API + '/api/admin/person/' + p.id + '/note', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note, reviewer: 'Dad' }),
+    }).then(r => r.json()).then(d => {
+      if (d.error) { showToast(d.error, true); return; }
+      textarea.value = '';
+      showToast('Note added');
+      loadPerson(p.id);
+    }).catch(() => showToast('Failed to add note', true));
+  });
+
+  // Delete notes
+  document.querySelectorAll('.note-delete[data-nid]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const nid = btn.dataset.nid;
+      if (!confirm('Delete this note?')) return;
+      fetch(API + '/api/admin/note/' + nid + '/delete', { method: 'POST' })
+        .then(r => r.json())
+        .then(() => { showToast('Note deleted'); loadPerson(p.id); })
+        .catch(() => showToast('Failed to delete', true));
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   Helpers
+   ═══════════════════════════════════════════════ */
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = isError ? 'var(--red)' : '#2d9a2d';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function fmtRange(b, d) {
+  if (!b && !d) return '';
+  const by = b ? (yr(b) || b) : '?';
+  const dy = d ? (yr(d) || d) : '';
+  return dy ? `${by} – ${dy}` : `b. ${by}`;
+}
+function yr(s) { if (!s) return null; const m = s.match(/(\d{4})/); return m ? m[1] : null; }
+function fmtDate(s) {
+  if (!s) return '';
+  try { return new Date(s).toLocaleDateString(); } catch { return s; }
+}
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function encPath(p) {
+  if (!p) return '';
+  return p.replace(/\\/g, '/').split('/').map(s => encodeURIComponent(s)).join('/');
+}
+</script>
+</body>
+</html>

@@ -67,7 +67,7 @@ nav a.active { font-weight: bold; }
 /* ── Main ── */
 main {
   flex: 1;
-  max-width: 680px;
+  max-width: 860px;
   margin: 0 auto;
   padding: 4rem 2rem 3rem;
 }
@@ -113,42 +113,50 @@ h2 {
   display: block;
 }
 
-.pieces {
-  margin-top: 2rem;
+/* ── Dashboard Grid ── */
+.dash-sections { margin-top: 2rem; }
+.dash-sections h3 {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--fg2); margin-bottom: 0.8rem;
+  font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  font-weight: 700;
 }
-.pieces h3 {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--fg2);
-  margin-bottom: 1rem;
+.dash-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;
 }
-.piece-list { list-style: none; }
-.piece-list li { margin-bottom: 0.5rem; }
-.piece-list a {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  text-decoration: none;
-  color: var(--fg);
-  background: #fff;
-  transition: all 0.15s;
-  width: 100%;
+.dash-card {
+  display: flex; flex-direction: column; gap: 0.3rem;
+  padding: 1.1rem 1rem; border: 1px solid var(--border);
+  border-radius: 8px; background: #fff;
+  text-decoration: none; color: var(--fg);
+  transition: all 0.15s; position: relative;
 }
-.piece-list a:hover {
-  border-color: var(--accent);
-  background: #fefcf6;
+.dash-card:hover {
+  border-color: var(--accent); background: #fefcf6;
+  box-shadow: 0 2px 8px rgba(139,105,20,0.1);
+  transform: translateY(-1px); text-decoration: none;
 }
-.piece-list .icon { font-size: 1.2rem; width: 2rem; text-align: center; }
-.piece-list .title { font-weight: 600; }
-.piece-list .desc {
-  font-size: 0.8rem;
-  color: var(--fg2);
-  margin-left: auto;
+.dash-card.accent { border-left: 4px solid var(--accent); }
+.dash-lock {
+  position: absolute; top: 0.6rem; right: 0.6rem; font-size: 0.8rem; opacity: 0.5;
 }
+.dash-icon { font-size: 1.3rem; }
+.dash-title { font-weight: 700; font-size: 0.88rem; }
+.dash-desc { font-size: 0.72rem; color: var(--fg2); line-height: 1.4; }
+
+.dash-grid.small { grid-template-columns: repeat(5, 1fr); }
+.dash-card-sm {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0.25rem; padding: 0.8rem 0.5rem;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: #fff; text-decoration: none; color: var(--fg);
+  transition: all 0.15s; text-align: center;
+}
+.dash-card-sm:hover {
+  border-color: var(--accent); background: #fefcf6; text-decoration: none;
+}
+.dash-card-sm .dash-icon { font-size: 1.1rem; }
+.dash-card-sm .dash-title { font-size: 0.72rem; font-weight: 600; }
 
 footer {
   text-align: center;
@@ -167,7 +175,8 @@ footer {
   .subtitle { font-size: 0.95rem; }
   .stats { grid-template-columns: 1fr; gap: 0.6rem; }
   .stat .n { font-size: 1.4rem; }
-  .piece-list .desc { display: none; }
+  .dash-grid { grid-template-columns: 1fr; }
+  .dash-grid.small { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* ── Search bar ── */
@@ -247,11 +256,9 @@ footer {
   <h1><a href=\"/\">Lack <span>Lineage</span></a></h1>
   <nav>
     <a href="/" class="active">Dashboard</a>
+    <a href="/search.html">Search</a>
     <a href="/graph.html">Graph</a>
     <a href="/tree.html">Tree</a>
-    <a href="/ancestry.html">Ancestry</a>
-    <a href="/documents.html">Documents</a>
-    <a href="/profile.html">Profile</a>
   </nav>
 </header>
 
@@ -286,80 +293,69 @@ footer {
     <div class="stat"><span class="n" id="s-medium" style="color:#c9a100">—</span><span class="label">Medium 50-79</span></div>
   </div>
 
-  <div class="pieces">
-    <h3>Pieces</h3>
-    <ul class="piece-list">
-      <li>
-        <a href="/graph.html">
-          <span class="icon">◉</span>
-          <span class="title">Family Graph</span>
-          <span class="desc">Force-directed network</span>
-        </a>
-      </li>
-      <li>
-        <a href="/tree.html">
-          <span class="icon">🌳</span>
-          <span class="title">Tree Explorer</span>
-          <span class="desc">Ancestors &amp; descendants</span>
-        </a>
-      </li>
-      <li>
-        <a href="/ancestry.html">
-          <span class="icon">📜</span>
-          <span class="title">Ancestry View</span>
-          <span class="desc">Pedigree chart</span>
-        </a>
-      </li>
-      <li>
-        <a href="/letter.html">
-          <span class="icon">✉</span>
-          <span class="title">Letter to George</span>
-          <span class="desc">What the database holds</span>
-        </a>
-      </li>
-      <li>
-        <a href="/documents.html">
-          <span class="icon">📄</span>
-          <span class="title">Documents</span>
-          <span class="desc">OCR'd photos &amp; records</span>
-        </a>
-      </li>
-      <li>
-        <a href="/profile.html">
-          <span class="icon">👤</span>
-          <span class="title">Person Profile</span>
-          <span class="desc">Full record &amp; confidence</span>
-        </a>
-      </li>
-      <li>
-        <a href="/living.html">
-          <span class="icon">⏳</span>
-          <span class="title">The Living Moment</span>
-          <span class="desc">Who was alive when</span>
-        </a>
-      </li>
-      <li>
-        <a href="/surnames.html">
-          <span class="icon">🔤</span>
-          <span class="title">Surname Directory</span>
-          <span class="desc">Browse by family name</span>
-        </a>
-      </li>
-      <li>
-        <a href="/related.html">
-          <span class="icon">🔗</span>
-          <span class="title">How Am I Related?</span>
-          <span class="desc">Find connection paths</span>
-        </a>
-      </li>
-      <li>
-        <a href="/visualizations.html">
-          <span class="icon">◈</span>
-          <span class="title">Thirteen Ways to See a Family</span>
-          <span class="desc">Planned visualizations</span>
-        </a>
-      </li>
-    </ul>
+  <!-- Dashboard Sub-sections -->
+  <div class="dash-sections">
+    <h3>Explore</h3>
+    <div class="dash-grid">
+      <a href="/search.html" class="dash-card accent">
+        <span class="dash-icon">🔍</span>
+        <span class="dash-title">Advanced Search</span>
+        <span class="dash-desc">Query by name, date, place, confidence, document type, OCR text</span>
+      </a>
+      <a href="/profile.html" class="dash-card">
+        <span class="dash-icon">👤</span>
+        <span class="dash-title">People</span>
+        <span class="dash-desc">Browse all 1,251 individuals — full profiles &amp; confidence</span>
+      </a>
+      <a href="/surnames.html" class="dash-card">
+        <span class="dash-icon">🔤</span>
+        <span class="dash-title">Surnames</span>
+        <span class="dash-desc">600 family names — browse by lineage</span>
+      </a>
+      <a href="/living.html" class="dash-card">
+        <span class="dash-icon">⏳</span>
+        <span class="dash-title">Timeline</span>
+        <span class="dash-desc">Who was alive when — animated year-by-year</span>
+      </a>
+      <a href="/search.html?place=1" class="dash-card">
+        <span class="dash-icon">🗺️</span>
+        <span class="dash-title">Places</span>
+        <span class="dash-desc">680 birth places, 640 death places — Pennsylvania to Michigan</span>
+      </a>
+      <a href="/admin.html" class="dash-card locked">
+        <span class="dash-icon">✏️</span>
+        <span class="dash-title">Edit / Update</span>
+        <span class="dash-desc">Dad's desk — review, correct, and annotate records</span>
+        <span class="dash-lock">🔒</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- More Tools -->
+  <div class="dash-sections" style="margin-top: 2rem;">
+    <h3>More</h3>
+    <div class="dash-grid small">
+      <a href="/documents.html" class="dash-card-sm">
+        <span class="dash-icon">📄</span>
+        <span class="dash-title">Documents</span>
+      </a>
+      <a href="/related.html" class="dash-card-sm">
+        <span class="dash-icon">🔗</span>
+        <span class="dash-title">How Am I Related?</span>
+      </a>
+      <a href="/ancestry.html" class="dash-card-sm">
+        <span class="dash-icon">📜</span>
+        <span class="dash-title">Ancestry View</span>
+      </a>
+      <a href="/letter.html" class="dash-card-sm">
+        <span class="dash-icon">✉️</span>
+        <span class="dash-title">Letter to George</span>
+      </a>
+      <a href="/visualizations.html" class="dash-card-sm">
+        <span class="dash-icon">◈</span>
+        <span class="dash-title">Thirteen Ways</span>
+      </a>
+    </div>
   </div>
 
   <p style="margin-top: 3rem; font-size: 0.85rem; color: var(--fg2); line-height: 1.8;">
@@ -548,16 +544,15 @@ initHelp({
       <p>Stats update automatically when <code>stats.json</code> is regenerated from the database.</p>
     ` },
     { title: 'Navigation', icon: '🧭', html: `
-      <p>Use the top navigation bar to visit any page:</p>
+      <p>Top navigation: <strong>Dashboard</strong>, <strong>Search</strong>, <strong>Graph</strong>, <strong>Tree</strong>.</p>
+      <p>Dashboard sections:</p>
       <ul>
-        <li><strong>Tree</strong> — Collapsible tree explorer with ancestors/descendants/both modes</li>
-        <li><strong>Ancestry</strong> — Pedigree chart with draggable cards</li>
-        <li><strong>Documents</strong> — Browse scanned family records with OCR text</li>
-        <li><strong>Surnames</strong> — Browse all family surnames with counts</li>
-        <li><strong>Living</strong> — Animated timeline of who was alive each year</li>
-        <li><strong>Related</strong> — Find relationship paths between any two people</li>
-        <li><strong>Letter</strong> — A letter to George summarizing the project</li>
-        <li><strong>Visualizations</strong> — Plans for thirteen visualization pieces</li>
+        <li><strong>Advanced Search</strong> — Full database query with filters</li>
+        <li><strong>People</strong> — Browse all individuals with profiles</li>
+        <li><strong>Surnames</strong> — 600 family names by lineage</li>
+        <li><strong>Timeline</strong> — Animated year-by-year visualization</li>
+        <li><strong>Places</strong> — Search by birth/death locations</li>
+        <li><strong>Edit/Update</strong> — Dad's desk for review &amp; corrections (password-protected)</li>
       </ul>
     ` }
   ]

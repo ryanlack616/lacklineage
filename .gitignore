@@ -1,6 +1,12 @@
 lineage.db
+lineage.db-shm
+lineage.db-wal
 raw-data/
 __pycache__/
 _*.py
 _*.json
+.howell.json
+test_*.py
+check_db.py
+list_models.py
 *.bak

@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lack Lineage — Advanced Search</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8f6f1; --card: #ffffff; --fg: #2a2520; --fg2: #6b6360;
+  --fg3: #9e9a93; --accent: #8b6914; --border: #d8d2c8;
+  --font: 'Georgia','Times New Roman',serif;
+  --sans: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono: 'Consolas','Monaco',monospace;
+  --green: #2d9a2d; --yellow: #c9a100; --orange: #d4740a; --red: #c0392b;
+  --radius: 8px;
+}
+html { font-size: 16px; }
+body { font-family: var(--font); color: var(--fg); background: var(--bg); line-height: 1.7; min-height: 100vh; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Header ── */
+header {
+  background: var(--fg); color: var(--bg); padding: 0.75rem 2rem;
+  display: flex; align-items: center; gap: 2rem;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
+header h1 span { font-weight: 300; opacity: 0.6; }
+header h1 a { color: inherit; text-decoration: none; }
+nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+nav a {
+  background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--bg);
+  padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.8rem;
+  text-decoration: none; transition: all 0.15s;
+}
+nav a:hover, nav a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+nav a.active { font-weight: bold; }
+
+/* ── Layout ── */
+.page { max-width: 1200px; margin: 0 auto; padding: 1.5rem 2rem 4rem; }
+.page-title { font-size: 1.8rem; font-weight: 400; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+.page-sub { color: var(--fg2); font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+/* ── Search Panel ── */
+.search-panel {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.5rem; margin-bottom: 1.5rem;
+  border-top: 4px solid var(--accent);
+}
+.search-row { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.search-row:last-child { margin-bottom: 0; }
+.field { flex: 1; min-width: 200px; }
+.field label {
+  display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--fg2); font-family: var(--sans); font-weight: 600; margin-bottom: 0.3rem;
+}
+.field input, .field select {
+  width: 100%; padding: 0.55rem 0.75rem; border: 1px solid var(--border);
+  border-radius: 5px; font-size: 0.88rem; font-family: var(--font);
+  background: var(--bg); outline: none; transition: border-color 0.15s;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.field-sm { flex: 0 0 140px; min-width: 120px; }
+.field-xs { flex: 0 0 100px; min-width: 80px; }
+
+/* Toggle chips */
+.chip-group { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.chip {
+  display: inline-flex; align-items: center; gap: 0.25rem;
+  padding: 0.3rem 0.65rem; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--card);
+  font-size: 0.72rem; font-family: var(--sans); color: var(--fg2);
+  cursor: pointer; transition: all 0.15s; user-select: none;
+}
+.chip:hover { border-color: var(--accent); }
+.chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.chip .chip-icon { font-size: 0.85rem; }
+
+/* Buttons */
+.btn-row { display: flex; gap: 0.5rem; align-items: center; margin-top: 1rem; }
+.btn {
+  padding: 0.6rem 1.4rem; border-radius: 6px; font-size: 0.85rem;
+  font-family: var(--sans); font-weight: 600; cursor: pointer;
+  border: 1px solid var(--border); transition: all 0.15s;
+}
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { background: #7a5c10; }
+.btn-secondary { background: var(--card); color: var(--fg); }
+.btn-secondary:hover { border-color: var(--accent); }
+.btn-ocr { background: #e8f0fe; color: #1a56db; border-color: #c5d5f5; }
+.btn-ocr:hover { background: #d0e0fc; }
+.result-count {
+  font-size: 0.82rem; color: var(--fg2); font-family: var(--sans);
+  margin-left: auto;
+}
+
+/* ── Results ── */
+.results-panel {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden;
+}
+.results-header {
+  padding: 0.7rem 1.2rem; border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  background: #faf8f4;
+}
+.results-title {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--fg2); font-family: var(--sans); font-weight: 700;
+}
+.sort-controls { display: flex; gap: 0.3rem; }
+.sort-btn {
+  padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.68rem;
+  font-family: var(--sans); cursor: pointer; border: 1px solid transparent;
+  background: none; color: var(--fg2); transition: all 0.15s;
+}
+.sort-btn:hover { background: var(--bg); }
+.sort-btn.active { background: var(--accent); color: #fff; }
+
+.result-list { list-style: none; }
+.result-item {
+  display: grid; grid-template-columns: 1fr auto auto auto;
+  gap: 1rem; align-items: center;
+  padding: 0.7rem 1.2rem; border-bottom: 1px solid #f0ede6;
+  cursor: pointer; transition: background 0.1s;
+}
+.result-item:hover { background: #fefcf6; }
+.result-item:last-child { border-bottom: none; }
+.ri-name { font-weight: 600; font-size: 0.9rem; }
+.ri-name .ri-suffix { font-weight: 300; color: var(--fg2); font-size: 0.78rem; }
+.ri-sub { font-size: 0.75rem; color: var(--fg2); margin-top: 0.1rem; }
+.ri-match-tag {
+  font-size: 0.55rem; padding: 0.1rem 0.35rem; border-radius: 3px;
+  font-weight: 600; font-family: var(--sans); text-transform: uppercase;
+  letter-spacing: 0.04em; margin-left: 0.3rem;
+}
+.ri-match-tag.name-match { background: #e8f5e9; color: #2d9a2d; }
+.ri-match-tag.ocr-match { background: #e8f0fe; color: #1a56db; }
+.ri-match-tag.place-match { background: #fce7f3; color: #9d174d; }
+.ri-match-tag.doc-match { background: #fff8e1; color: #856404; }
+.ri-ocr-snippet {
+  font-size: 0.72rem; color: var(--fg3); font-family: var(--mono);
+  margin-top: 0.15rem; max-width: 500px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ri-ocr-snippet mark { background: #fff3cd; color: var(--fg); padding: 0 0.1rem; border-radius: 2px; }
+.ri-dates { font-size: 0.78rem; color: var(--fg2); font-family: var(--mono); white-space: nowrap; }
+.ri-place { font-size: 0.72rem; color: var(--fg3); max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ri-tier {
+  font-size: 0.6rem; padding: 0.12rem 0.4rem; border-radius: 3px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  font-family: var(--sans); white-space: nowrap;
+}
+.ri-docs { font-size: 0.7rem; color: var(--fg3); font-family: var(--mono); }
+
+/* No results */
+.no-results {
+  padding: 3rem 2rem; text-align: center; color: var(--fg3);
+}
+.no-results h3 { font-size: 1.1rem; color: var(--fg2); margin-bottom: 0.5rem; }
+
+/* Pagination */
+.pagination {
+  display: flex; justify-content: center; gap: 0.3rem; padding: 0.8rem;
+  border-top: 1px solid var(--border);
+}
+.page-btn {
+  padding: 0.3rem 0.7rem; border-radius: 4px; font-size: 0.78rem;
+  font-family: var(--sans); cursor: pointer; border: 1px solid var(--border);
+  background: var(--card); color: var(--fg); transition: all 0.15s;
+}
+.page-btn:hover { border-color: var(--accent); }
+.page-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.page-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* ── OCR Full-text panel ── */
+.ocr-panel {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  margin-bottom: 1.5rem; display: none;
+}
+.ocr-panel.open { display: block; }
+.ocr-panel-header {
+  padding: 0.7rem 1.2rem; border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  background: #edf2fe;
+}
+.ocr-panel-title {
+  font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: #1a56db; font-family: var(--sans); font-weight: 700;
+}
+.ocr-panel-body { padding: 1.2rem; }
+.ocr-result-item {
+  padding: 0.8rem 0; border-bottom: 1px solid #f0ede6;
+}
+.ocr-result-item:last-child { border-bottom: none; }
+.ocr-doc-title { font-weight: 600; font-size: 0.85rem; margin-bottom: 0.2rem; }
+.ocr-doc-meta { font-size: 0.7rem; color: var(--fg3); font-family: var(--sans); margin-bottom: 0.3rem; }
+.ocr-doc-text {
+  font-size: 0.78rem; font-family: var(--mono); color: var(--fg2);
+  background: #faf8f4; padding: 0.6rem; border-radius: 4px;
+  max-height: 120px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+  line-height: 1.5;
+}
+.ocr-doc-text mark { background: #fff3cd; color: var(--fg); padding: 0 0.15rem; border-radius: 2px; }
+.ocr-matched-people {
+  margin-top: 0.3rem; font-size: 0.72rem; color: var(--fg2); font-family: var(--sans);
+}
+.ocr-person-link { color: var(--accent); cursor: pointer; }
+.ocr-person-link:hover { text-decoration: underline; }
+
+/* ── Responsive ── */
+@media (max-width: 800px) {
+  header { padding: 0.75rem 1rem; gap: 0.75rem; flex-wrap: wrap; }
+  nav { gap: 0.3rem; }
+  nav a { padding: 0.25rem 0.5rem; font-size: 0.7rem; }
+  .page { padding: 1rem; }
+  .page-title { font-size: 1.4rem; }
+  .search-row { flex-direction: column; }
+  .field, .field-sm, .field-xs { flex: 1 1 100%; min-width: 0; }
+  .result-item { grid-template-columns: 1fr auto; gap: 0.5rem; }
+  .ri-place, .ri-docs { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Lack <span>Lineage</span></a></h1>
+  <nav>
+    <a href="/">Dashboard</a>
+    <a href="/search.html" class="active">Search</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/tree.html">Tree</a>
+  </nav>
+</header>
+
+<div class="page">
+  <h2 class="page-title">Advanced Search</h2>
+  <p class="page-sub">Query 1,251 people across five centuries — by name, place, date, document text, or any combination.</p>
+
+  <!-- Search Filters -->
+  <div class="search-panel" id="search-panel">
+    <div class="search-row">
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="f-name" placeholder="Given name, surname, or both…">
+      </div>
+      <div class="field">
+        <label>Surname</label>
+        <input type="text" id="f-surname" placeholder="Exact surname…">
+      </div>
+      <div class="field-sm">
+        <label>Sex</label>
+        <select id="f-sex">
+          <option value="">Any</option>
+          <option value="M">Male</option>
+          <option value="F">Female</option>
+          <option value="U">Unknown</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="search-row">
+      <div class="field-sm">
+        <label>Born After</label>
+        <input type="text" id="f-born-after" placeholder="1800">
+      </div>
+      <div class="field-sm">
+        <label>Born Before</label>
+        <input type="text" id="f-born-before" placeholder="1950">
+      </div>
+      <div class="field">
+        <label>Birth Place</label>
+        <input type="text" id="f-birth-place" placeholder="Pennsylvania, Cambria…">
+      </div>
+    </div>
+
+    <div class="search-row">
+      <div class="field-sm">
+        <label>Died After</label>
+        <input type="text" id="f-died-after" placeholder="1900">
+      </div>
+      <div class="field-sm">
+        <label>Died Before</label>
+        <input type="text" id="f-died-before" placeholder="2020">
+      </div>
+      <div class="field">
+        <label>Death Place</label>
+        <input type="text" id="f-death-place" placeholder="Michigan, Ebensburg…">
+      </div>
+    </div>
+
+    <div class="search-row">
+      <div class="field">
+        <label>Any Place (birth or death)</label>
+        <input type="text" id="f-any-place" placeholder="Search all places…">
+      </div>
+      <div class="field-sm">
+        <label>Confidence</label>
+        <select id="f-confidence">
+          <option value="">Any</option>
+          <option value="high">High (≥80)</option>
+          <option value="medium">Medium (50-79)</option>
+          <option value="low">Low (20-49)</option>
+          <option value="speculative">Speculative (<20)</option>
+        </select>
+      </div>
+      <div class="field-sm">
+        <label>Has Documents</label>
+        <select id="f-has-docs">
+          <option value="">Any</option>
+          <option value="yes">Yes</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="search-row">
+      <div class="field">
+        <label>Document Types</label>
+        <div class="chip-group" id="doc-type-chips">
+          <span class="chip" data-val="photo"><span class="chip-icon">📷</span> Photo</span>
+          <span class="chip" data-val="certificate"><span class="chip-icon">📋</span> Certificate</span>
+          <span class="chip" data-val="obituary"><span class="chip-icon">🕯️</span> Obituary</span>
+          <span class="chip" data-val="newspaper"><span class="chip-icon">📰</span> Newspaper</span>
+          <span class="chip" data-val="census"><span class="chip-icon">📊</span> Census</span>
+          <span class="chip" data-val="military"><span class="chip-icon">🎖️</span> Military</span>
+          <span class="chip" data-val="letter"><span class="chip-icon">✉</span> Letter</span>
+          <span class="chip" data-val="record"><span class="chip-icon">📄</span> Record</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-search">🔍 Search</button>
+      <button class="btn btn-ocr" id="btn-ocr-search">📄 Search All OCR Text</button>
+      <button class="btn btn-secondary" id="btn-clear">Clear Filters</button>
+      <span class="result-count" id="result-count"></span>
+    </div>
+  </div>
+
+  <!-- OCR Full-text Results -->
+  <div class="ocr-panel" id="ocr-panel">
+    <div class="ocr-panel-header">
+      <span class="ocr-panel-title">📄 OCR Text Matches</span>
+      <button class="btn btn-secondary" id="btn-close-ocr" style="padding:0.2rem 0.6rem; font-size:0.72rem;">✕ Close</button>
+    </div>
+    <div class="ocr-panel-body" id="ocr-results"></div>
+    <div class="pagination" id="ocr-pagination"></div>
+  </div>
+
+  <!-- Person Results -->
+  <div class="results-panel" id="results-panel">
+    <div class="results-header">
+      <span class="results-title" id="results-title">Results</span>
+      <div class="sort-controls">
+        <button class="sort-btn active" data-sort="name">Name</button>
+        <button class="sort-btn" data-sort="birth">Birth</button>
+        <button class="sort-btn" data-sort="death">Death</button>
+        <button class="sort-btn" data-sort="confidence">Confidence</button>
+        <button class="sort-btn" data-sort="docs">Docs</button>
+      </div>
+    </div>
+    <ul class="result-list" id="result-list"></ul>
+    <div class="pagination" id="pagination"></div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   State & Data
+   ══════════════════════════════════════════════════════ */
+let allProfiles = null;
+let allDocs = [];          // flat list of { doc, personId, personName }
+let searchResults = [];
+let ocrResults = [];
+let currentSort = 'name';
+let currentSortDir = 1;    // 1 = asc, -1 = desc
+const PAGE_SIZE = 50;
+let currentPage = 0;
+let ocrPage = 0;
+const OCR_PAGE_SIZE = 20;
+
+const TIER_COLORS = { high:'#2d9a2d', medium:'#c9a100', low:'#d4740a', speculative:'#c0392b' };
+const TIER_BG    = { high:'#e8f5e9', medium:'#fff8e1', low:'#fff3e0', speculative:'#fde8e8' };
+
+fetch('/data/profiles.json')
+  .then(r => r.json())
+  .then(data => {
+    allProfiles = data;
+    // Build flat doc index for OCR search
+    for (const [pid, p] of Object.entries(data)) {
+      (p.documents || []).forEach(d => {
+        if (d.ocr_excerpt) {
+          allDocs.push({
+            doc: d,
+            ocrLower: d.ocr_excerpt.toLowerCase(),
+            personId: pid,
+            personName: p.name,
+          });
+        }
+      });
+    }
+    // Run search from URL params if present
+    loadFiltersFromURL();
+    runSearch();
+  });
+
+/* ══════════════════════════════════════════════════════
+   Utility
+   ══════════════════════════════════════════════════════ */
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function yr(s) { if (!s) return null; const m = s.match(/(\d{4})/); return m ? parseInt(m[1]) : null; }
+function fmtRange(b, d) {
+  if (!b && !d) return '';
+  const by = b ? (yr(b)||b) : '?';
+  const dy = d ? (yr(d)||d) : '';
+  return dy ? `${by} – ${dy}` : `b. ${by}`;
+}
+
+/* ══════════════════════════════════════════════════════
+   Filter Logic
+   ══════════════════════════════════════════════════════ */
+function getFilters() {
+  const activeDocTypes = [...document.querySelectorAll('#doc-type-chips .chip.active')].map(c => c.dataset.val);
+  return {
+    name: document.getElementById('f-name').value.trim().toLowerCase(),
+    surname: document.getElementById('f-surname').value.trim().toLowerCase(),
+    sex: document.getElementById('f-sex').value,
+    bornAfter: parseInt(document.getElementById('f-born-after').value) || null,
+    bornBefore: parseInt(document.getElementById('f-born-before').value) || null,
+    birthPlace: document.getElementById('f-birth-place').value.trim().toLowerCase(),
+    diedAfter: parseInt(document.getElementById('f-died-after').value) || null,
+    diedBefore: parseInt(document.getElementById('f-died-before').value) || null,
+    deathPlace: document.getElementById('f-death-place').value.trim().toLowerCase(),
+    anyPlace: document.getElementById('f-any-place').value.trim().toLowerCase(),
+    confidence: document.getElementById('f-confidence').value,
+    hasDocs: document.getElementById('f-has-docs').value,
+    docTypes: activeDocTypes,
+  };
+}
+
+function matchesPerson(p, f) {
+  // Name (supports & and | operators)
+  if (f.name) {
+    const full = (p.name + ' ' + (p.given_name||'') + ' ' + (p.surname||'')).toLowerCase();
+    const orGroups = f.name.split('|').map(g => g.trim()).filter(Boolean)
+      .map(g => g.split('&').flatMap(t => t.trim().split(/\s+/)).filter(Boolean));
+    const nameMatch = orGroups.some(andTerms => andTerms.every(t => full.includes(t)));
+    if (!nameMatch) return false;
+  }
+
+  // Surname exact
+  if (f.surname && !(p.surname||'').toLowerCase().includes(f.surname)) return false;
+
+  // Sex
+  if (f.sex && (p.sex||'U') !== f.sex) return false;
+
+  // Birth year
+  const birthYr = yr(p.birth_date);
+  if (f.bornAfter && (!birthYr || birthYr < f.bornAfter)) return false;
+  if (f.bornBefore && (!birthYr || birthYr > f.bornBefore)) return false;
+
+  // Death year
+  const deathYr = yr(p.death_date);
+  if (f.diedAfter && (!deathYr || deathYr < f.diedAfter)) return false;
+  if (f.diedBefore && (!deathYr || deathYr > f.diedBefore)) return false;
+
+  // Birth place
+  if (f.birthPlace) {
+    const placeTerms = f.birthPlace.split(/\s+/);
+    const bp = (p.birth_place||'').toLowerCase();
+    if (!placeTerms.every(t => bp.includes(t))) return false;
+  }
+
+  // Death place
+  if (f.deathPlace) {
+    const placeTerms = f.deathPlace.split(/\s+/);
+    const dp = (p.death_place||'').toLowerCase();
+    if (!placeTerms.every(t => dp.includes(t))) return false;
+  }
+
+  // Any place
+  if (f.anyPlace) {
+    const placeTerms = f.anyPlace.split(/\s+/);
+    const bp = (p.birth_place||'').toLowerCase();
+    const dp = (p.death_place||'').toLowerCase();
+    const combined = bp + ' ' + dp;
+    if (!placeTerms.every(t => combined.includes(t))) return false;
+  }
+
+  // Confidence
+  if (f.confidence && (p.confidence_tier||'speculative') !== f.confidence) return false;
+
+  // Has documents
+  const docs = p.documents || [];
+  if (f.hasDocs === 'yes' && docs.length === 0) return false;
+  if (f.hasDocs === 'no' && docs.length > 0) return false;
+
+  // Doc types
+  if (f.docTypes.length > 0) {
+    const personDocTypes = new Set(docs.map(d => d.doc_type));
+    if (!f.docTypes.some(t => personDocTypes.has(t))) return false;
+  }
+
+  return true;
+}
+
+/* ══════════════════════════════════════════════════════
+   Search Execution
+   ══════════════════════════════════════════════════════ */
+function runSearch() {
+  if (!allProfiles) return;
+  const f = getFilters();
+  const isEmpty = !f.name && !f.surname && !f.sex && !f.bornAfter && !f.bornBefore &&
+    !f.birthPlace && !f.diedAfter && !f.diedBefore && !f.deathPlace && !f.anyPlace &&
+    !f.confidence && !f.hasDocs && f.docTypes.length === 0;
+
+  if (isEmpty) {
+    // Show all people
+    searchResults = Object.values(allProfiles);
+  } else {
+    searchResults = Object.values(allProfiles).filter(p => matchesPerson(p, f));
+  }
+
+  currentPage = 0;
+  sortResults();
+  renderResults();
+  updateURL(f);
+}
+
+function sortResults() {
+  const cmp = (a, b) => {
+    let av, bv;
+    switch (currentSort) {
+      case 'name':
+        return currentSortDir * (a.name||'').localeCompare(b.name||'');
+      case 'birth':
+        av = yr(a.birth_date) || 9999;
+        bv = yr(b.birth_date) || 9999;
+        return currentSortDir * (av - bv);
+      case 'death':
+        av = yr(a.death_date) || 9999;
+        bv = yr(b.death_date) || 9999;
+        return currentSortDir * (av - bv);
+      case 'confidence':
+        av = a.confidence || 0;
+        bv = b.confidence || 0;
+        return currentSortDir * (bv - av); // high first by default
+      case 'docs':
+        av = (a.documents||[]).length;
+        bv = (b.documents||[]).length;
+        return currentSortDir * (bv - av);
+      default:
+        return 0;
+    }
+  };
+  searchResults.sort(cmp);
+}
+
+/* ══════════════════════════════════════════════════════
+   OCR Search
+   ══════════════════════════════════════════════════════ */
+function runOcrSearch() {
+  const nameQ = document.getElementById('f-name').value.trim().toLowerCase();
+  if (!nameQ) {
+    alert('Enter a search term in the Name field to search OCR text.');
+    return;
+  }
+  const terms = nameQ.split(/[&|]/).flatMap(t => t.trim().split(/\s+/)).filter(Boolean);
+  ocrResults = [];
+  for (const entry of allDocs) {
+    if (terms.every(t => entry.ocrLower.includes(t))) {
+      ocrResults.push({ ...entry, matchTerms: terms });
+    }
+  }
+  ocrPage = 0;
+  renderOcrResults();
+  document.getElementById('ocr-panel').classList.add('open');
+  document.getElementById('result-count').textContent =
+    `${ocrResults.length} document${ocrResults.length !== 1 ? 's' : ''} with matching OCR text`;
+}
+
+function renderOcrResults() {
+  const start = ocrPage * OCR_PAGE_SIZE;
+  const page = ocrResults.slice(start, start + OCR_PAGE_SIZE);
+  const container = document.getElementById('ocr-results');
+
+  if (!page.length) {
+    container.innerHTML = '<div class="no-results"><h3>No OCR matches</h3><p>Try different search terms.</p></div>';
+    document.getElementById('ocr-pagination').innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = page.map(r => {
+    const re = new RegExp('(' + r.matchTerms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
+    const highlighted = esc(r.doc.ocr_excerpt).replace(re, '<mark>$1</mark>');
+    return `<div class="ocr-result-item">
+      <div class="ocr-doc-title">${esc(r.doc.description || r.doc.filepath?.split(/[/\\]/).pop() || 'Document')}</div>
+      <div class="ocr-doc-meta">
+        Type: ${r.doc.doc_type || 'unknown'}
+        ${r.doc.match_confidence != null ? ` · Match: ${(r.doc.match_confidence*100).toFixed(0)}%` : ''}
+        · <span class="ocr-person-link" data-id="${r.personId}">${esc(r.personName)}</span>
+      </div>
+      <div class="ocr-doc-text">${highlighted}</div>
+    </div>`;
+  }).join('');
+
+  // Person links
+  container.querySelectorAll('.ocr-person-link').forEach(el => {
+    el.addEventListener('click', () => {
+      window.location.href = `/profile.html?id=${el.dataset.id}`;
+    });
+  });
+
+  // Pagination
+  renderPagination('ocr-pagination', ocrResults.length, OCR_PAGE_SIZE, ocrPage, p => {
+    ocrPage = p;
+    renderOcrResults();
+    document.getElementById('ocr-panel').scrollIntoView({ behavior: 'smooth' });
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   Render Results
+   ══════════════════════════════════════════════════════ */
+function renderResults() {
+  const total = searchResults.length;
+  document.getElementById('results-title').textContent = `Results — ${total.toLocaleString()} ${total === 1 ? 'person' : 'people'}`;
+  document.getElementById('result-count').textContent =
+    `${total.toLocaleString()} ${total === 1 ? 'result' : 'results'}`;
+
+  const start = currentPage * PAGE_SIZE;
+  const page = searchResults.slice(start, start + PAGE_SIZE);
+  const list = document.getElementById('result-list');
+
+  if (!page.length) {
+    list.innerHTML = '<li class="no-results"><h3>No people match your filters</h3><p>Try broadening your search or clearing filters.</p></li>';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  list.innerHTML = page.map(p => {
+    const tier = p.confidence_tier || 'speculative';
+    const tc = TIER_COLORS[tier] || '#999';
+    const tb = TIER_BG[tier] || '#f0f0f0';
+    const docs = (p.documents || []).length;
+    const place = p.birth_place || p.death_place || '';
+    return `<li class="result-item" data-id="${p.id}">
+      <div>
+        <span class="ri-name">${esc(p.name)}${p.suffix ? ` <span class="ri-suffix">${esc(p.suffix)}</span>` : ''}</span>
+        <div class="ri-sub">${p.sex === 'M' ? '♂' : p.sex === 'F' ? '♀' : '?'} · ${docs} doc${docs !== 1 ? 's' : ''}</div>
+      </div>
+      <span class="ri-dates">${fmtRange(p.birth_date, p.death_date)}</span>
+      <span class="ri-place" title="${esc(place)}">${esc(place)}</span>
+      <span class="ri-tier" style="background:${tb};color:${tc};">${tier}</span>
+    </li>`;
+  }).join('');
+
+  // Click to profile
+  list.querySelectorAll('.result-item').forEach(el => {
+    el.addEventListener('click', () => {
+      window.location.href = `/profile.html?id=${el.dataset.id}`;
+    });
+  });
+
+  renderPagination('pagination', total, PAGE_SIZE, currentPage, p => {
+    currentPage = p;
+    renderResults();
+    document.getElementById('results-panel').scrollIntoView({ behavior: 'smooth' });
+  });
+}
+
+function renderPagination(containerId, total, pageSize, current, onPage) {
+  const totalPages = Math.ceil(total / pageSize);
+  const container = document.getElementById(containerId);
+  if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+  let html = '';
+  html += `<button class="page-btn" ${current === 0 ? 'disabled' : ''} data-p="${current-1}">‹</button>`;
+
+  const maxBtns = 7;
+  let startP = Math.max(0, current - Math.floor(maxBtns / 2));
+  let endP = Math.min(totalPages, startP + maxBtns);
+  if (endP - startP < maxBtns) startP = Math.max(0, endP - maxBtns);
+
+  if (startP > 0) html += `<button class="page-btn" data-p="0">1</button><span style="color:var(--fg3)">…</span>`;
+  for (let i = startP; i < endP; i++) {
+    html += `<button class="page-btn ${i === current ? 'active' : ''}" data-p="${i}">${i+1}</button>`;
+  }
+  if (endP < totalPages) html += `<span style="color:var(--fg3)">…</span><button class="page-btn" data-p="${totalPages-1}">${totalPages}</button>`;
+  html += `<button class="page-btn" ${current >= totalPages-1 ? 'disabled' : ''} data-p="${current+1}">›</button>`;
+
+  container.innerHTML = html;
+  container.querySelectorAll('.page-btn:not(:disabled)').forEach(btn => {
+    btn.addEventListener('click', () => onPage(parseInt(btn.dataset.p)));
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   URL State
+   ══════════════════════════════════════════════════════ */
+function updateURL(f) {
+  const params = new URLSearchParams();
+  if (f.name) params.set('q', f.name);
+  if (f.surname) params.set('surname', f.surname);
+  if (f.sex) params.set('sex', f.sex);
+  if (f.bornAfter) params.set('ba', f.bornAfter);
+  if (f.bornBefore) params.set('bb', f.bornBefore);
+  if (f.birthPlace) params.set('bp', f.birthPlace);
+  if (f.diedAfter) params.set('da', f.diedAfter);
+  if (f.diedBefore) params.set('db', f.diedBefore);
+  if (f.deathPlace) params.set('dp', f.deathPlace);
+  if (f.anyPlace) params.set('place', f.anyPlace);
+  if (f.confidence) params.set('tier', f.confidence);
+  if (f.hasDocs) params.set('docs', f.hasDocs);
+  if (f.docTypes.length) params.set('dtype', f.docTypes.join(','));
+  const qs = params.toString();
+  history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+}
+
+function loadFiltersFromURL() {
+  const p = new URLSearchParams(location.search);
+  if (p.get('q')) document.getElementById('f-name').value = p.get('q');
+  if (p.get('surname')) document.getElementById('f-surname').value = p.get('surname');
+  if (p.get('sex')) document.getElementById('f-sex').value = p.get('sex');
+  if (p.get('ba')) document.getElementById('f-born-after').value = p.get('ba');
+  if (p.get('bb')) document.getElementById('f-born-before').value = p.get('bb');
+  if (p.get('bp')) document.getElementById('f-birth-place').value = p.get('bp');
+  if (p.get('da')) document.getElementById('f-died-after').value = p.get('da');
+  if (p.get('db')) document.getElementById('f-died-before').value = p.get('db');
+  if (p.get('dp')) document.getElementById('f-death-place').value = p.get('dp');
+  if (p.get('place')) document.getElementById('f-any-place').value = p.get('place');
+  if (p.get('tier')) document.getElementById('f-confidence').value = p.get('tier');
+  if (p.get('docs')) document.getElementById('f-has-docs').value = p.get('docs');
+  if (p.get('dtype')) {
+    const types = p.get('dtype').split(',');
+    document.querySelectorAll('#doc-type-chips .chip').forEach(c => {
+      if (types.includes(c.dataset.val)) c.classList.add('active');
+    });
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   Event Handlers
+   ══════════════════════════════════════════════════════ */
+document.getElementById('btn-search').addEventListener('click', runSearch);
+document.getElementById('btn-ocr-search').addEventListener('click', runOcrSearch);
+document.getElementById('btn-close-ocr').addEventListener('click', () => {
+  document.getElementById('ocr-panel').classList.remove('open');
+});
+document.getElementById('btn-clear').addEventListener('click', () => {
+  document.querySelectorAll('#search-panel input').forEach(i => i.value = '');
+  document.querySelectorAll('#search-panel select').forEach(s => s.selectedIndex = 0);
+  document.querySelectorAll('#doc-type-chips .chip').forEach(c => c.classList.remove('active'));
+  document.getElementById('ocr-panel').classList.remove('open');
+  runSearch();
+});
+
+// Enter key triggers search
+document.getElementById('search-panel').addEventListener('keydown', e => {
+  if (e.key === 'Enter') runSearch();
+});
+
+// Chip toggles
+document.querySelectorAll('#doc-type-chips .chip').forEach(chip => {
+  chip.addEventListener('click', () => chip.classList.toggle('active'));
+});
+
+// Sort controls
+document.querySelectorAll('.sort-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const sort = btn.dataset.sort;
+    if (currentSort === sort) {
+      currentSortDir *= -1;
+    } else {
+      currentSort = sort;
+      currentSortDir = 1;
+    }
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    btn.textContent = btn.dataset.sort.charAt(0).toUpperCase() + btn.dataset.sort.slice(1) +
+      (currentSortDir === 1 ? ' ↑' : ' ↓');
+    sortResults();
+    currentPage = 0;
+    renderResults();
+  });
+});
+</script>
+</body>
+</html>
