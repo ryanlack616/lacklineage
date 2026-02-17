@@ -54,13 +54,17 @@ nav a:hover, nav a.active { background: rgba(255,255,255,0.15); border-color: rg
 nav a.active { font-weight: bold; }
 
 /* ── Globe container ── */
-#globe-container {
+#globe-wrapper {
   flex: 1;
   position: relative;
   overflow: hidden;
   cursor: grab;
 }
-#globe-container:active { cursor: grabbing; }
+#globe-wrapper:active { cursor: grabbing; }
+#globe-container {
+  position: absolute;
+  inset: 0;
+}
 
 /* ── Sidebar panel ── */
 .panel {
@@ -237,7 +241,7 @@ nav a.active { font-weight: bold; }
 /* ── Legend ── */
 .legend {
   position: absolute;
-  bottom: 0.75rem;
+  bottom: 82px;
   right: 0.75rem;
   background: var(--panel-bg);
   border: 1px solid var(--border);
@@ -253,6 +257,149 @@ nav a.active { font-weight: bold; }
 .legend-swatch {
   width: 10px; height: 10px; border-radius: 2px;
 }
+
+/* ── Timeline bar ── */
+.timeline-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 72px;
+  background: linear-gradient(to top, rgba(10,10,15,0.96), rgba(10,10,15,0.85));
+  border-top: 1px solid var(--border);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  padding: 0 1.2rem;
+  gap: 0.8rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.tl-play {
+  width: 38px; height: 38px;
+  background: rgba(212,168,50,0.15);
+  border: 1px solid var(--accent2);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.tl-play:hover { background: rgba(212,168,50,0.3); border-color: var(--accent); }
+.tl-play.playing { background: rgba(212,168,50,0.25); border-color: var(--accent); }
+.tl-year {
+  font-family: var(--mono);
+  font-size: 1.4rem;
+  color: var(--accent);
+  width: 52px;
+  text-align: center;
+  flex-shrink: 0;
+  font-weight: bold;
+  letter-spacing: -0.02em;
+}
+.tl-track-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.tl-track {
+  position: relative;
+  height: 24px;
+  cursor: pointer;
+}
+.tl-rail {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.tl-rail-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.08);
+}
+.tl-rail-fill {
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 0%;
+  border-radius: 2px;
+  transition: width 0.1s linear;
+}
+/* era gradient on fill */
+.tl-rail-fill {
+  background: linear-gradient(to right,
+    #5588cc 0%, #5588cc 25%,
+    #44aa99 25%, #44aa99 50%,
+    #d4a832 50%, #d4a832 75%,
+    #ee8844 75%, #ee8844 100%
+  );
+}
+.tl-thumb {
+  position: absolute;
+  top: 4px;
+  width: 16px; height: 16px;
+  margin-left: -8px;
+  background: var(--accent);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(212,168,50,0.6);
+  pointer-events: none;
+  transition: left 0.1s linear;
+}
+.tl-era-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6rem;
+  color: var(--fg2);
+  padding: 0 2px;
+  user-select: none;
+}
+.tl-era-labels span {
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.tl-era-labels span.active-era {
+  opacity: 1;
+  color: var(--accent);
+  font-weight: bold;
+}
+.tl-speed {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+.tl-speed-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--fg2);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tl-speed-btn:hover { border-color: var(--accent); color: var(--fg); }
+.tl-speed-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(212,168,50,0.15); }
+.tl-counter {
+  font-size: 0.7rem;
+  color: var(--fg2);
+  text-align: right;
+  min-width: 90px;
+  flex-shrink: 0;
+  line-height: 1.3;
+}
+.tl-counter span { color: var(--fg); font-weight: bold; }
 
 /* ── Loading ── */
 .loading {
@@ -272,17 +419,22 @@ nav a.active { font-weight: bold; }
 
 /* ── Mobile ── */
 @media (max-width: 700px) {
-  .panel { width: 100%; left: 0; top: auto; bottom: 0; max-height: 45vh; border-radius: 10px 10px 0 0; }
+  .panel { width: 100%; left: 0; top: auto; bottom: 72px; max-height: 40vh; border-radius: 10px 10px 0 0; }
   .legend { bottom: auto; top: 0.5rem; right: 0.5rem; }
   header { padding: 0.4rem 0.8rem; gap: 0.8rem; }
   header h1 { font-size: 0.85rem; }
   nav a { font-size: 0.65rem; padding: 0.2rem 0.4rem; }
+  .timeline-bar { height: 60px; padding: 0 0.6rem; gap: 0.4rem; }
+  .tl-year { font-size: 1.1rem; width: 44px; }
+  .tl-play { width: 32px; height: 32px; font-size: 0.85rem; }
+  .tl-speed { display: none; }
+  .tl-counter { min-width: 60px; font-size: 0.6rem; }
 }
 
 /* footer */
 footer {
   position: absolute;
-  bottom: 0.75rem;
+  bottom: 78px;
   left: 50%;
   transform: translateX(-50%);
   font-size: 0.6rem;
@@ -305,7 +457,9 @@ footer {
   </nav>
 </header>
 
-<div id="globe-container">
+<div id="globe-wrapper">
+  <div id="globe-container"></div>
+
   <div class="loading" id="loading">
     <div class="loading-text">Loading globe data&hellip;</div>
   </div>
@@ -345,10 +499,44 @@ footer {
   <!-- Tooltip -->
   <div class="globe-tooltip" id="tooltip" style="opacity: 0;"></div>
 
+  <!-- Timeline bar -->
+  <div class="timeline-bar" id="timeline-bar">
+    <button class="tl-play" id="tl-play" title="Play / Pause timeline">&#9654;</button>
+    <div class="tl-year" id="tl-year">1700</div>
+    <div class="tl-track-wrap">
+      <div class="tl-track" id="tl-track">
+        <div class="tl-rail">
+          <div class="tl-rail-bg"></div>
+          <div class="tl-rail-fill" id="tl-fill"></div>
+        </div>
+        <div class="tl-thumb" id="tl-thumb"></div>
+      </div>
+      <div class="tl-era-labels">
+        <span>1700</span>
+        <span>1750</span>
+        <span>1800</span>
+        <span>1850</span>
+        <span>1900</span>
+        <span>1950</span>
+        <span>2000</span>
+        <span>2025</span>
+      </div>
+    </div>
+    <div class="tl-speed">
+      <button class="tl-speed-btn" data-speed="1" title="1 year per second">1×</button>
+      <button class="tl-speed-btn active" data-speed="3" title="3 years per second">3×</button>
+      <button class="tl-speed-btn" data-speed="10" title="10 years per second">10×</button>
+    </div>
+    <div class="tl-counter" id="tl-counter">
+      <span id="tl-pts">0</span> locations<br>
+      <span id="tl-arcs-count">0</span> migrations
+    </div>
+  </div>
+
   <footer>lacklineage.com · 2026</footer>
 </div>
 
-<script src="//unpkg.com/globe.gl@2.35.2/dist/globe.gl.min.js"></script>
+<script src="https://unpkg.com/globe.gl"></script>
 <script src="/data/help-widget.js"></script>
 <script>
 (function() {
@@ -379,6 +567,7 @@ footer {
   let selectedPoint = null;
 
   // ─── DOM ───
+  const wrapper = document.getElementById('globe-wrapper');
   const container = document.getElementById('globe-container');
   const loadingEl = document.getElementById('loading');
   const tooltip = document.getElementById('tooltip');
@@ -450,8 +639,8 @@ footer {
     globe.controls().dampingFactor = 0.1;
 
     // Stop auto-rotate on interaction
-    container.addEventListener('mousedown', () => { globe.controls().autoRotate = false; });
-    container.addEventListener('touchstart', () => { globe.controls().autoRotate = false; });
+    wrapper.addEventListener('mousedown', () => { globe.controls().autoRotate = false; });
+    wrapper.addEventListener('touchstart', () => { globe.controls().autoRotate = false; });
 
     // Size
     handleResize();
@@ -464,8 +653,8 @@ footer {
 
   function handleResize() {
     if (!globe) return;
-    globe.width(container.clientWidth);
-    globe.height(container.clientHeight);
+    globe.width(wrapper.clientWidth);
+    globe.height(wrapper.clientHeight);
   }
 
   // ─── Point color based on dominant era ───
@@ -489,10 +678,10 @@ footer {
   function handlePointHover(d) {
     if (!d) {
       tooltip.style.opacity = '0';
-      container.style.cursor = 'grab';
+      wrapper.style.cursor = 'grab';
       return;
     }
-    container.style.cursor = 'pointer';
+    wrapper.style.cursor = 'pointer';
 
     const births = viewMode === 'deaths' ? 0 : d.births;
     const deaths = viewMode === 'births' ? 0 : d.deaths;
@@ -505,16 +694,16 @@ footer {
     tooltip.style.opacity = '1';
 
     // Position tooltip near cursor
-    container.addEventListener('mousemove', moveTooltip);
+    wrapper.addEventListener('mousemove', moveTooltip);
   }
 
   function handleArcHover(d) {
     if (!d) {
       tooltip.style.opacity = '0';
-      container.style.cursor = 'grab';
+      wrapper.style.cursor = 'grab';
       return;
     }
-    container.style.cursor = 'pointer';
+    wrapper.style.cursor = 'pointer';
     tooltip.innerHTML = `
       <div class="tt-place">${escHtml(d.name)} ${d.dates ? '(' + d.dates + ')' : ''}</div>
       <div class="tt-counts">${escHtml(d.from)} → ${escHtml(d.to)}</div>
@@ -523,7 +712,7 @@ footer {
   }
 
   function moveTooltip(e) {
-    const rect = container.getBoundingClientRect();
+    const rect = wrapper.getBoundingClientRect();
     let x = e.clientX - rect.left + 15;
     let y = e.clientY - rect.top - 10;
     if (x + 280 > rect.width) x = e.clientX - rect.left - 290;
@@ -531,7 +720,7 @@ footer {
     tooltip.style.left = x + 'px';
     tooltip.style.top = y + 'px';
   }
-  container.addEventListener('mousemove', moveTooltip);
+  wrapper.addEventListener('mousemove', moveTooltip);
 
   // ─── Click point: show detail ───
   function selectPoint(d) {
@@ -636,27 +825,30 @@ footer {
       title: 'Globe',
       intro: 'A 3D globe showing where 1,251 family members were born, lived, and died across 5 centuries.',
       keyboard: [
-        ['?', 'Toggle this help panel']
+        {key: '?', action: 'Toggle this help panel'}
       ],
       mouse: [
-        ['Left-drag', 'Rotate the globe'],
-        ['Scroll', 'Zoom in/out'],
-        ['Right-drag', 'Pan the view'],
-        ['Click point', 'Show people at that location'],
-        ['Hover point', 'Show location tooltip']
+        {key: 'Left-drag', action: 'Rotate the globe'},
+        {key: 'Scroll', action: 'Zoom in/out'},
+        {key: 'Right-drag', action: 'Pan the view'},
+        {key: 'Click point', action: 'Show people at that location'},
+        {key: 'Hover point', action: 'Show location tooltip'}
       ],
       sections: [
         {
-          title: '🌍 Views',
-          body: '<strong>All</strong> shows every mapped location. <strong>Births</strong> and <strong>Deaths</strong> filter to show only where people were born or died. <strong>Migrations</strong> draws arcs from birth place to death place for everyone who moved.'
+          title: 'Views',
+          icon: '🌍',
+          html: '<p><strong>All</strong> shows every mapped location. <strong>Births</strong> and <strong>Deaths</strong> filter to show only where people were born or died. <strong>Migrations</strong> draws arcs from birth place to death place for everyone who moved.</p>'
         },
         {
-          title: '🎨 Colors',
-          body: 'Points are colored by the dominant era of people at that location: <span style="color:#5588cc">blue</span> for pre-1800, <span style="color:#44aa99">teal</span> for 1800s, <span style="color:#d4a832">gold</span> for 1900s, <span style="color:#ee8844">orange</span> for 2000s.'
+          title: 'Colors',
+          icon: '🎨',
+          html: '<p>Points are colored by the dominant era of people at that location: <span style="color:#5588cc">blue</span> for pre-1800, <span style="color:#44aa99">teal</span> for 1800s, <span style="color:#d4a832">gold</span> for 1900s, <span style="color:#ee8844">orange</span> for 2000s.</p>'
         },
         {
-          title: '📊 Data',
-          body: 'Location data comes from birth and death places in the genealogy database. Places are geocoded to coordinates. Click any glowing point to see the full list of people with links to their profiles.'
+          title: 'Data',
+          icon: '📊',
+          html: '<p>Location data comes from birth and death places in the genealogy database. Places are geocoded to coordinates. Click any glowing point to see the full list of people with links to their profiles.</p>'
         }
       ]
     });
