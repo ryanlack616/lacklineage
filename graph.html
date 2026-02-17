@@ -492,6 +492,14 @@ canvas#canvas:active { cursor: grabbing; }
     </div>
   </div>
 
+  <div class="ctrl-row">
+    <label>Node Opacity</label>
+    <div class="range-row">
+      <input type="range" id="opacitySlider" min="0.1" max="1" step="0.05" value="1">
+      <span class="range-val" id="opacityVal">1.0</span>
+    </div>
+  </div>
+
   <div class="stats" id="stats"></div>
   </div>
 </div>
@@ -533,6 +541,7 @@ let userLinkDist = null;   // null = auto from node count
 let userCharge = null;
 let userGravity = null;
 let userCollPad = 1;
+let userOpacity = 1;
 let generationMap = new Map(); // generation distance from Ryan
 let highlightedPath = null;     // array of node IDs for path display
 let pathStartNode = null;       // first node for right-click path finding
@@ -763,9 +772,10 @@ function nodeRadius(d) {
 }
 
 function nodeOpacity(d) {
-  if (d.confidence_tier === 'low') return 0.55;
-  if (d.confidence_tier === 'medium') return 0.8;
-  return 1;
+  let base = 1;
+  if (d.confidence_tier === 'low') base = 0.55;
+  else if (d.confidence_tier === 'medium') base = 0.8;
+  return base * userOpacity;
 }
 
 // ── Get N-hop neighborhood ──
@@ -1430,10 +1440,18 @@ document.getElementById('collSlider').addEventListener('input', (e) => {
   }
 });
 
+document.getElementById('opacitySlider').addEventListener('input', (e) => {
+  userOpacity = parseFloat(e.target.value);
+  document.getElementById('opacityVal').textContent = userOpacity.toFixed(1);
+  draw();
+});
+
 document.getElementById('resetBtn').addEventListener('click', () => {
   transform = d3.zoomIdentity;
   d3.select(canvas).call(zoomBehavior.transform, d3.zoomIdentity);
-  userLinkDist = null; userCharge = null; userGravity = null; userCollPad = 1;
+  userLinkDist = null; userCharge = null; userGravity = null; userCollPad = 1; userOpacity = 1;
+  document.getElementById('opacitySlider').value = 1;
+  document.getElementById('opacityVal').textContent = '1.0';
   clearFocus();
 });
 
