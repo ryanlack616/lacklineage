@@ -1145,7 +1145,8 @@ d3.select(canvas).call(zoomBehavior);
 
 // ── Mouse interaction ──
 function screenToSim(x, y) {
-  return [(x - transform.x) / transform.k, (y - transform.y) / transform.k];
+  const rect = canvas.getBoundingClientRect();
+  return [(x - rect.left - transform.x) / transform.k, (y - rect.top - transform.y) / transform.k];
 }
 
 function findNode(mx, my) {
