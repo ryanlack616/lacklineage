@@ -607,7 +607,7 @@ function renderGrid() {
   grid.innerHTML = pageItems.map((doc, pi) => {
     const i = start + pi;
     const thumbHtml = doc.thumb
-      ? `<img class="thumb" src="${doc.thumb}" alt="${esc(doc.title)}" loading="lazy">`
+      ? `<img class="thumb" src="${encThumb(doc.thumb)}" alt="${esc(doc.title)}" loading="lazy">`
       : `<div class="thumb-placeholder">${typeIcon(doc.type)}</div>`;
 
     const typeClass = 'type-' + (doc.type || 'other');
@@ -698,7 +698,7 @@ function openModal(doc) {
   // Image
   const imgDiv = document.getElementById('modal-image');
   if (doc.thumb) {
-    imgDiv.innerHTML = `<img src="${doc.thumb}" alt="${esc(doc.title)}">`;
+    imgDiv.innerHTML = `<img src="${encThumb(doc.thumb)}" alt="${esc(doc.title)}">`;
   } else {
     imgDiv.innerHTML = `<div class="no-image">${typeIcon(doc.type)}</div>`;
   }
@@ -763,6 +763,12 @@ function esc(s) {
   const d = document.createElement('div');
   d.textContent = s;
   return d.innerHTML;
+}
+
+/** Encode a thumbnail path so #, &, spaces etc. don't break the URL */
+function encThumb(path) {
+  if (!path) return '';
+  return path.split('/').map(s => encodeURIComponent(s)).join('/');
 }
 </script>
 </body>
