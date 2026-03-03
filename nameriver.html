@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lack Lineage — Name River</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #1a1714;
+  --bg2: #242018;
+  --fg: #e8e2d8;
+  --fg2: #9e9688;
+  --accent: #c9a84c;
+  --border: #3a352e;
+  --font: 'Georgia', 'Times New Roman', serif;
+  --mono: 'Consolas', 'Monaco', monospace;
+}
+html, body { height: 100%; overflow: hidden; }
+body { font-family: var(--font); color: var(--fg); background: var(--bg); display: flex; flex-direction: column; }
+
+header {
+  background: #2a2520; color: #f8f6f1; padding: 0.75rem 2rem;
+  display: flex; align-items: center; gap: 2rem; z-index: 20; flex-shrink: 0;
+}
+header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
+header h1 span { font-weight: 300; opacity: 0.6; }
+header h1 a { color: inherit; text-decoration: none; }
+nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+nav a {
+  background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #f8f6f1;
+  padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.8rem;
+  text-decoration: none; transition: all 0.15s;
+}
+nav a:hover, nav a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+nav a.active { font-weight: bold; }
+
+/* Controls */
+.controls {
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  padding: 0.6rem 2rem; display: flex; align-items: center; gap: 1.5rem;
+  flex-wrap: wrap; flex-shrink: 0; z-index: 15;
+}
+.controls label { font-size: 0.78rem; color: var(--fg2); display: flex; align-items: center; gap: 0.4rem; }
+.controls select {
+  background: var(--bg); border: 1px solid var(--border); color: var(--fg);
+  padding: 0.25rem 0.5rem; border-radius: 4px; font-family: var(--font); font-size: 0.78rem;
+}
+.controls select:focus { outline: none; border-color: var(--accent); }
+.mode-pills { display: flex; gap: 0.3rem; }
+.mode-pills button {
+  background: var(--bg); border: 1px solid var(--border); color: var(--fg2);
+  padding: 0.2rem 0.6rem; border-radius: 4px; font-family: var(--font);
+  font-size: 0.75rem; cursor: pointer; transition: all 0.15s;
+}
+.mode-pills button:hover { border-color: var(--accent); color: var(--fg); }
+.mode-pills button.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.name-count { font-size: 0.75rem; color: var(--fg2); margin-left: auto; font-family: var(--mono); }
+
+/* Chart */
+.chart-wrap { flex: 1; position: relative; overflow: hidden; }
+
+.stream-area {
+  transition: opacity 0.3s;
+  cursor: pointer;
+}
+.stream-area:hover { opacity: 1 !important; }
+.stream-area.dimmed { opacity: 0.2; }
+.stream-area.highlighted { opacity: 1; }
+
+/* Name labels on streams */
+.stream-label {
+  font-family: var(--font);
+  font-size: 11px;
+  fill: var(--fg);
+  pointer-events: none;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  opacity: 0.85;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+/* Tooltip */
+.tooltip {
+  position: fixed; pointer-events: none; background: #2a2520; color: var(--fg);
+  padding: 0.6rem 0.9rem; border-radius: 6px; font-size: 0.8rem; line-height: 1.5;
+  max-width: 300px; z-index: 30; opacity: 0; transition: opacity 0.12s;
+  border: 1px solid var(--border); box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.tooltip .t-name { font-weight: bold; color: var(--accent); font-size: 1rem; }
+.tooltip .t-count { font-family: var(--mono); font-size: 0.85rem; margin-top: 0.2rem; }
+.tooltip .t-span { font-size: 0.75rem; color: var(--fg2); margin-top: 0.15rem; }
+.tooltip .t-people { font-size: 0.72rem; color: var(--fg2); margin-top: 0.3rem; font-style: italic; }
+
+/* Subtitle */
+.subtitle {
+  position: absolute; top: 0.8rem; left: 2rem; z-index: 5; pointer-events: none;
+}
+.subtitle h2 { font-size: 1.3rem; font-weight: 300; color: var(--fg2); }
+.subtitle p { font-size: 0.78rem; color: var(--fg2); opacity: 0.6; margin-top: 0.2rem; }
+
+/* Extinct indicator */
+.extinct-marker {
+  font-family: var(--mono);
+  font-size: 8px;
+  fill: var(--death, #e05555);
+  opacity: 0.5;
+}
+
+@media (max-width: 700px) {
+  header { padding: 0.5rem 1rem; gap: 1rem; }
+  .controls { padding: 0.4rem 1rem; gap: 0.6rem; }
+  .subtitle h2 { font-size: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Lack <span>Lineage</span></a></h1>
+  <nav>
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/search.html">Search</a>
+    <a href="/research.html">Research</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/places.html">Places</a>
+    <a href="/tree.html">Tree</a>
+    <a href="/globe.html">Globe</a>
+    <a href="/atlas.html">Atlas</a>
+    <a href="/rivers.html">Rivers</a>
+    <a href="/sunburst.html">Sunburst</a>
+    <a href="/living.html">Living</a>
+    <a href="/lifespan.html">Lifespan</a>
+    <a href="/heartbeat.html">Heartbeat</a>
+    <a href="/nameriver.html" class="active">Names</a>
+  </nav>
+</header>
+
+<div class="controls">
+  <label>
+    Sex
+    <select id="sex-filter">
+      <option value="all">All</option>
+      <option value="F">Female names</option>
+      <option value="M">Male names</option>
+    </select>
+  </label>
+  <label>
+    Top names
+    <select id="top-n">
+      <option value="10">Top 10</option>
+      <option value="15" selected>Top 15</option>
+      <option value="20">Top 20</option>
+      <option value="30">Top 30</option>
+    </select>
+  </label>
+  <div class="mode-pills">
+    <button class="active" data-mode="stream">Stream</button>
+    <button data-mode="ridge">Ridge</button>
+  </div>
+  <span class="name-count" id="name-count"></span>
+</div>
+
+<div class="chart-wrap" id="chart-wrap">
+  <div class="subtitle">
+    <h2>The Name River</h2>
+    <p>First names flowing through centuries — when they appear, swell, and vanish</p>
+  </div>
+  <svg id="chart"></svg>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// Name River — streamgraph of first names
+// ══════════════════════════════════════════════
+
+let allPeople = [];
+let chartMode = 'stream'; // 'stream' or 'ridge'
+
+// Color palette — muted earth tones that work on dark bg
+const palette = [
+  '#c9a84c', '#5b8abd', '#bd5b7a', '#6ab187', '#b07ab0',
+  '#d4855a', '#7ab8c9', '#c7c25b', '#8b7355', '#6b8f71',
+  '#ad7fa8', '#cc8866', '#7799aa', '#99aa55', '#aa6688',
+  '#88aacc', '#cc9977', '#77bb88', '#bb88aa', '#99ccaa',
+  '#ddaa55', '#6688bb', '#cc6677', '#55aa88', '#aa77cc',
+  '#bb9955', '#5599bb', '#cc7788', '#77ccaa', '#aa88bb',
+];
+
+function parseYear(s) {
+  if (!s) return null;
+  const m = String(s).match(/(\d{4})/);
+  return m ? parseInt(m[1]) : null;
+}
+
+async function loadData() {
+  const resp = await fetch('/data/people.json');
+  const raw = await resp.json();
+
+  allPeople = raw.map(p => ({
+    id: p.id,
+    firstName: p.given_name ? p.given_name.split(/\s+/)[0] : null,
+    fullName: `${p.given_name || ''} ${p.surname || ''}`.trim(),
+    surname: p.surname,
+    sex: p.sex,
+    birthYear: parseYear(p.birth_date),
+    deathYear: parseYear(p.death_date),
+    birthPlace: p.birth_place,
+  }));
+
+  renderChart();
+}
+
+function buildStreamData(sexFilter, topN) {
+  let people = allPeople.filter(p => p.firstName && p.birthYear);
+  if (sexFilter !== 'all') people = people.filter(p => p.sex === sexFilter);
+
+  // Count names overall
+  const nameCounts = {};
+  people.forEach(p => {
+    const n = p.firstName;
+    nameCounts[n] = (nameCounts[n] || 0) + 1;
+  });
+
+  // Top N names
+  const topNames = Object.entries(nameCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, topN)
+    .map(e => e[0]);
+
+  // Build decade buckets
+  const decades = {};
+  people.forEach(p => {
+    const dec = Math.floor(p.birthYear / 25) * 25; // quarter-century buckets
+    if (!decades[dec]) decades[dec] = {};
+    const n = p.firstName;
+    if (topNames.includes(n)) {
+      decades[dec][n] = (decades[dec][n] || 0) + 1;
+    }
+  });
+
+  // Fill gaps
+  const allDecs = Object.keys(decades).map(Number).sort((a, b) => a - b);
+  const minDec = Math.min(...allDecs);
+  const maxDec = Math.max(...allDecs);
+
+  const matrix = [];
+  for (let d = minDec; d <= maxDec; d += 25) {
+    const row = { decade: d };
+    topNames.forEach(n => { row[n] = (decades[d] && decades[d][n]) || 0; });
+    matrix.push(row);
+  }
+
+  // People lookup for tooltip
+  const peopleLookup = {};
+  topNames.forEach(n => {
+    peopleLookup[n] = people.filter(p => p.firstName === n)
+      .sort((a, b) => a.birthYear - b.birthYear);
+  });
+
+  document.getElementById('name-count').textContent =
+    `${topNames.length} names · ${people.length} people`;
+
+  return { matrix, topNames, peopleLookup, nameCounts };
+}
+
+function renderChart() {
+  const sexFilter = document.getElementById('sex-filter').value;
+  const topN = parseInt(document.getElementById('top-n').value);
+  const { matrix, topNames, peopleLookup, nameCounts } = buildStreamData(sexFilter, topN);
+
+  const wrap = document.getElementById('chart-wrap');
+  const W = wrap.offsetWidth;
+  const H = wrap.offsetHeight;
+  const margin = { top: 60, right: 30, bottom: 40, left: 50 };
+  const plotW = W - margin.left - margin.right;
+  const plotH = H - margin.top - margin.bottom;
+
+  const svg = d3.select('#chart')
+    .attr('width', W)
+    .attr('height', H);
+  svg.selectAll('*').remove();
+
+  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+  // Scales
+  const x = d3.scaleLinear()
+    .domain(d3.extent(matrix, d => d.decade))
+    .range([0, plotW]);
+
+  // Stack
+  const stack = d3.stack()
+    .keys(topNames)
+    .offset(chartMode === 'stream' ? d3.stackOffsetSilhouette : d3.stackOffsetNone)
+    .order(d3.stackOrderInsideOut);
+
+  const series = stack(matrix);
+
+  const y = d3.scaleLinear()
+    .domain([
+      d3.min(series, s => d3.min(s, d => d[0])),
+      d3.max(series, s => d3.max(s, d => d[1]))
+    ])
+    .range([plotH, 0]);
+
+  const color = d3.scaleOrdinal()
+    .domain(topNames)
+    .range(palette);
+
+  // Area generator
+  const area = d3.area()
+    .x(d => x(d.data.decade))
+    .y0(d => y(d[0]))
+    .y1(d => y(d[1]))
+    .curve(d3.curveBasis);
+
+  // ── Grid ──
+  // Century lines
+  const decades = matrix.map(d => d.decade);
+  const minDec = Math.min(...decades), maxDec = Math.max(...decades);
+  for (let yr = Math.ceil(minDec / 100) * 100; yr <= maxDec; yr += 100) {
+    g.append('line')
+      .attr('x1', x(yr)).attr('x2', x(yr))
+      .attr('y1', 0).attr('y2', plotH)
+      .attr('stroke', 'rgba(255,255,255,0.05)')
+      .attr('stroke-width', 1);
+  }
+
+  // ── Streams ──
+  const tooltip = document.getElementById('tooltip');
+  let highlighted = null;
+
+  const streams = g.selectAll('.stream-area')
+    .data(series)
+    .join('path')
+    .attr('class', 'stream-area')
+    .attr('d', area)
+    .attr('fill', d => color(d.key))
+    .attr('stroke', d => color(d.key))
+    .attr('stroke-width', 0.5)
+    .attr('stroke-opacity', 0.3)
+    .attr('opacity', 0.75)
+    .on('mouseenter', function(event, d) {
+      highlighted = d.key;
+      streams.attr('opacity', s => s.key === d.key ? 0.95 : 0.15);
+      d3.select(this).attr('stroke-width', 1.5).attr('stroke-opacity', 0.8);
+
+      const ppl = peopleLookup[d.key] || [];
+      const total = nameCounts[d.key] || 0;
+      const firstYear = ppl.length ? ppl[0].birthYear : '?';
+      const lastYear = ppl.length ? ppl[ppl.length - 1].birthYear : '?';
+      const sample = ppl.slice(0, 6).map(p => `${p.fullName} (${p.birthYear})`).join('<br>');
+
+      tooltip.innerHTML = `
+        <div class="t-name">${d.key}</div>
+        <div class="t-count">${total} people carry this name</div>
+        <div class="t-span">${firstYear} — ${lastYear} (${lastYear - firstYear} years)</div>
+        <div class="t-people">${sample}${ppl.length > 6 ? `<br>+${ppl.length - 6} more` : ''}</div>
+      `;
+      tooltip.style.opacity = '1';
+    })
+    .on('mousemove', function(event) {
+      let tx = event.clientX + 15, ty = event.clientY - 10;
+      if (tx + 300 > window.innerWidth) tx = event.clientX - 310;
+      tooltip.style.left = tx + 'px';
+      tooltip.style.top = ty + 'px';
+    })
+    .on('mouseleave', function() {
+      highlighted = null;
+      streams.attr('opacity', 0.75).attr('stroke-width', 0.5).attr('stroke-opacity', 0.3);
+      tooltip.style.opacity = '0';
+    })
+    .on('click', function(event, d) {
+      // Open search for this name
+      window.open(`/search.html?q=${encodeURIComponent(d.key)}`, '_blank');
+    });
+
+  // ── Name labels on widest part of each stream ──
+  series.forEach(s => {
+    // Find the point where this stream is widest
+    let maxWidth = 0, maxIdx = 0;
+    s.forEach((d, i) => {
+      const w = d[1] - d[0];
+      if (w > maxWidth) { maxWidth = w; maxIdx = i; }
+    });
+
+    if (maxWidth > 0) {
+      const d = s[maxIdx];
+      const cx = x(d.data.decade);
+      const cy = y(d[0]) + (y(d[1]) - y(d[0])) / 2;
+      const pixelHeight = Math.abs(y(d[0]) - y(d[1]));
+
+      // Only label if stream is wide enough
+      if (pixelHeight > 14) {
+        g.append('text')
+          .attr('class', 'stream-label')
+          .attr('x', cx)
+          .attr('y', cy)
+          .attr('font-size', Math.min(12, Math.max(8, pixelHeight * 0.5)) + 'px')
+          .text(s.key);
+      }
+    }
+  });
+
+  // ── Axes ──
+  const xAxis = d3.axisBottom(x)
+    .tickFormat(d => d + 's')
+    .tickValues(d3.range(Math.ceil(minDec / 50) * 50, maxDec + 1, 50));
+
+  g.append('g')
+    .attr('transform', `translate(0,${plotH})`)
+    .call(xAxis)
+    .call(g => g.select('.domain').attr('stroke', 'rgba(255,255,255,0.1)'))
+    .call(g => g.selectAll('.tick line').attr('stroke', 'rgba(255,255,255,0.06)'))
+    .call(g => g.selectAll('.tick text')
+      .attr('fill', '#9e9688')
+      .attr('font-family', 'Consolas, monospace')
+      .attr('font-size', '10px'));
+
+  if (chartMode !== 'stream') {
+    const yAxis = d3.axisLeft(y).ticks(5);
+    g.append('g')
+      .call(yAxis)
+      .call(g => g.select('.domain').attr('stroke', 'rgba(255,255,255,0.1)'))
+      .call(g => g.selectAll('.tick line').attr('stroke', 'rgba(255,255,255,0.06)'))
+      .call(g => g.selectAll('.tick text')
+        .attr('fill', '#9e9688')
+        .attr('font-family', 'Consolas, monospace')
+        .attr('font-size', '10px'));
+  }
+}
+
+// ── Controls ──
+document.getElementById('sex-filter').addEventListener('change', renderChart);
+document.getElementById('top-n').addEventListener('change', renderChart);
+
+document.querySelectorAll('.mode-pills button').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.mode-pills button').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    chartMode = this.dataset.mode;
+    renderChart();
+  });
+});
+
+window.addEventListener('resize', renderChart);
+
+loadData();
+</script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'The Name River',
+  intro: 'First names flow through the family like rivers — swelling when popular, narrowing when forgotten. Each colored stream represents a name. Watch "Mary" dominate for 200 years, then vanish. See "Johann" arrive with the German immigrants and fade as the family Americanized.',
+  keyboard: [
+    { key: '?', action: 'Toggle this help panel' }
+  ],
+  mouse: [
+    { key: 'Hover stream', action: 'Highlight that name, see who carried it and when' },
+    { key: 'Click stream', action: 'Search for everyone with that first name' }
+  ],
+  sections: [
+    { title: 'Reading the Streams', icon: '🌊', html: `
+      <p>The width of each colored stream at any point in time shows how many people born in that period carried that name.</p>
+      <p>In <strong>Stream</strong> mode, the streams flow around a center line — wider names are more popular.</p>
+      <p>In <strong>Ridge</strong> mode, the streams stack from zero — easier to read individual counts.</p>
+    ` },
+    { title: 'Filtering', icon: '🔍', html: `
+      <ul>
+        <li><strong>Sex</strong> — Show only female names (Mary, Elizabeth, Sarah...) or male names (John, William, George...)</li>
+        <li><strong>Top names</strong> — How many name streams to show (10, 15, 20, or 30)</li>
+        <li><strong>Stream / Ridge</strong> — Toggle between centered streamgraph and stacked area chart</li>
+      </ul>
+    ` },
+    { title: 'What to Look For', icon: '👁', html: `
+      <p>Interesting patterns:</p>
+      <ul>
+        <li><strong>Names that span centuries</strong> — traditions carried forward</li>
+        <li><strong>Names that suddenly appear</strong> — new family lines marrying in</li>
+        <li><strong>Names that vanish</strong> — fashions change, or a branch ends</li>
+        <li><strong>German vs. English names</strong> — Johann/Maria vs. John/Mary shows assimilation</li>
+      </ul>
+    ` }
+  ]
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lack Lineage — Heartbeat</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #1a1714;
+  --bg2: #242018;
+  --fg: #e8e2d8;
+  --fg2: #9e9688;
+  --accent: #c9a84c;
+  --birth: #4caf50;
+  --death: #e05555;
+  --net: #5ba8bd;
+  --border: #3a352e;
+  --font: 'Georgia', 'Times New Roman', serif;
+  --mono: 'Consolas', 'Monaco', monospace;
+}
+html, body { height: 100%; overflow: hidden; }
+body { font-family: var(--font); color: var(--fg); background: var(--bg); display: flex; flex-direction: column; }
+
+header {
+  background: #2a2520; color: #f8f6f1; padding: 0.75rem 2rem;
+  display: flex; align-items: center; gap: 2rem; z-index: 20; flex-shrink: 0;
+}
+header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
+header h1 span { font-weight: 300; opacity: 0.6; }
+header h1 a { color: inherit; text-decoration: none; }
+nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+nav a {
+  background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #f8f6f1;
+  padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.8rem;
+  text-decoration: none; transition: all 0.15s;
+}
+nav a:hover, nav a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+nav a.active { font-weight: bold; }
+
+.chart-wrap {
+  flex: 1; position: relative; overflow: hidden;
+}
+
+/* Subtitle + legend */
+.subtitle-bar {
+  position: absolute; top: 1rem; left: 2rem; right: 2rem; z-index: 10;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  pointer-events: none;
+}
+.subtitle {
+  font-size: 1.5rem; font-weight: 300; color: var(--fg2); letter-spacing: 0.02em;
+}
+.subtitle small { display: block; font-size: 0.8rem; margin-top: 0.3rem; color: var(--fg2); opacity: 0.7; }
+.legend-box {
+  display: flex; flex-direction: column; gap: 0.35rem;
+  background: rgba(36,32,24,0.85); border: 1px solid var(--border);
+  border-radius: 6px; padding: 0.6rem 0.9rem; font-size: 0.72rem;
+  pointer-events: auto;
+}
+.legend-row { display: flex; align-items: center; gap: 0.4rem; }
+.legend-swatch { width: 14px; height: 3px; border-radius: 1.5px; }
+
+/* Tooltip */
+.tooltip {
+  position: fixed; pointer-events: none; background: #2a2520; color: var(--fg);
+  padding: 0.6rem 0.9rem; border-radius: 6px; font-size: 0.8rem; line-height: 1.5;
+  max-width: 320px; z-index: 30; opacity: 0; transition: opacity 0.12s;
+  border: 1px solid var(--border); box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+
+/* Pulse animation for the subtitle */
+@keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+.pulse-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--birth); margin-right: 0.4rem; animation: pulse 2s ease-in-out infinite;
+}
+
+/* Era labels */
+.era-label {
+  position: absolute; bottom: -22px; font-size: 0.65rem; color: var(--fg2);
+  opacity: 0.5; white-space: nowrap; pointer-events: none; font-family: var(--mono);
+}
+
+@media (max-width: 700px) {
+  .subtitle { font-size: 1rem; }
+  .legend-box { display: none; }
+  header { padding: 0.5rem 1rem; gap: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Lack <span>Lineage</span></a></h1>
+  <nav>
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/search.html">Search</a>
+    <a href="/research.html">Research</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/places.html">Places</a>
+    <a href="/tree.html">Tree</a>
+    <a href="/globe.html">Globe</a>
+    <a href="/atlas.html">Atlas</a>
+    <a href="/rivers.html">Rivers</a>
+    <a href="/sunburst.html">Sunburst</a>
+    <a href="/living.html">Living</a>
+    <a href="/lifespan.html">Lifespan</a>
+    <a href="/heartbeat.html" class="active">Heartbeat</a>
+    <a href="/nameriver.html">Names</a>
+  </nav>
+</header>
+
+<div class="chart-wrap" id="chart-wrap">
+  <div class="subtitle-bar">
+    <div class="subtitle">
+      <span class="pulse-dot"></span>The Family Heartbeat
+      <small>Births, deaths, and net growth across 500+ years</small>
+    </div>
+    <div class="legend-box">
+      <div class="legend-row"><div class="legend-swatch" style="background:var(--birth)"></div> Births</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:var(--death)"></div> Deaths</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:var(--net)"></div> Net growth</div>
+      <div class="legend-row"><div class="legend-swatch" style="background:var(--accent); height:1px; opacity:0.4"></div> Historical events</div>
+    </div>
+  </div>
+  <canvas id="canvas"></canvas>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// Heartbeat — the family's vital signs
+// ══════════════════════════════════════════════
+
+const MARGIN = { top: 80, right: 30, bottom: 60, left: 60 };
+
+const historicalEvents = [
+  { year: 1620, label: 'Mayflower' },
+  { year: 1776, label: 'Independence' },
+  { year: 1812, label: 'War of 1812' },
+  { year: 1845, label: 'Famine' },
+  { year: 1861, label: 'Civil War' },
+  { year: 1914, label: 'WWI' },
+  { year: 1929, label: 'Depression' },
+  { year: 1939, label: 'WWII' },
+  { year: 1969, label: 'Moon' },
+];
+
+function parseYear(s) {
+  if (!s) return null;
+  const m = String(s).match(/(\d{4})/);
+  return m ? parseInt(m[1]) : null;
+}
+
+async function init() {
+  const resp = await fetch('/data/people.json');
+  const raw = await resp.json();
+
+  // Build decade data
+  const births = {}, deaths = {};
+  const names = {};
+
+  raw.forEach(p => {
+    const by = parseYear(p.birth_date);
+    const dy = parseYear(p.death_date);
+    const name = `${p.given_name || ''} ${p.surname || ''}`.trim();
+
+    if (by) {
+      const dec = Math.floor(by / 10) * 10;
+      if (!births[dec]) births[dec] = [];
+      births[dec].push({ name, year: by, sex: p.sex, place: p.birth_place });
+    }
+    if (dy) {
+      const dec = Math.floor(dy / 10) * 10;
+      if (!deaths[dec]) deaths[dec] = [];
+      deaths[dec].push({ name, year: dy, sex: p.sex, place: p.death_place });
+    }
+  });
+
+  // Determine range
+  const allDecades = new Set([...Object.keys(births), ...Object.keys(deaths)].map(Number));
+  const minDec = Math.min(...allDecades);
+  const maxDec = Math.max(...allDecades);
+
+  // Build unified array
+  const data = [];
+  for (let d = minDec; d <= maxDec; d += 10) {
+    const b = (births[d] || []).length;
+    const dd = (deaths[d] || []).length;
+    data.push({
+      decade: d,
+      births: b,
+      deaths: dd,
+      net: b - dd,
+      birthPeople: births[d] || [],
+      deathPeople: deaths[d] || [],
+    });
+  }
+
+  render(data);
+  window.addEventListener('resize', () => render(data));
+}
+
+function render(data) {
+  const wrap = document.getElementById('chart-wrap');
+  const canvas = document.getElementById('canvas');
+  const W = wrap.offsetWidth;
+  const H = wrap.offsetHeight;
+  canvas.width = W * devicePixelRatio;
+  canvas.height = H * devicePixelRatio;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+
+  const plotW = W - MARGIN.left - MARGIN.right;
+  const plotH = H - MARGIN.top - MARGIN.bottom;
+
+  // Scales
+  const decades = data.map(d => d.decade);
+  const minDec = Math.min(...decades);
+  const maxDec = Math.max(...decades);
+  const maxVal = Math.max(...data.map(d => Math.max(d.births, d.deaths)));
+
+  function xScale(dec) { return MARGIN.left + ((dec - minDec) / (maxDec - minDec)) * plotW; }
+  function yScale(val) { return MARGIN.top + plotH - (val / maxVal) * plotH; }
+  // Net can be negative
+  const maxNet = Math.max(...data.map(d => Math.abs(d.net)));
+  const midY = MARGIN.top + plotH * 0.5;
+  function yScaleNet(val) { return midY - (val / Math.max(maxNet, 1)) * (plotH * 0.3); }
+
+  // ── Background ──
+  ctx.fillStyle = '#1a1714';
+  ctx.fillRect(0, 0, W, H);
+
+  // ── Grid ──
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let v = 0; v <= maxVal; v += 10) {
+    const y = yScale(v);
+    ctx.beginPath(); ctx.moveTo(MARGIN.left, y); ctx.lineTo(W - MARGIN.right, y); ctx.stroke();
+  }
+
+  // Century lines
+  for (let yr = Math.ceil(minDec / 100) * 100; yr <= maxDec; yr += 100) {
+    const x = xScale(yr);
+    ctx.beginPath(); ctx.moveTo(x, MARGIN.top); ctx.lineTo(x, MARGIN.top + plotH); ctx.stroke();
+  }
+
+  // ── Historical events ──
+  historicalEvents.forEach(ev => {
+    if (ev.year < minDec || ev.year > maxDec + 10) return;
+    const x = xScale(ev.year);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(201,168,76,0.15)';
+    ctx.setLineDash([3, 5]);
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, MARGIN.top); ctx.lineTo(x, MARGIN.top + plotH); ctx.stroke();
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(x, MARGIN.top + plotH + 8);
+    ctx.rotate(-Math.PI / 4);
+    ctx.font = '9px Consolas, monospace';
+    ctx.fillStyle = 'rgba(201,168,76,0.4)';
+    ctx.textAlign = 'right';
+    ctx.fillText(ev.label, 0, 0);
+    ctx.restore();
+  });
+
+  // ── Filled areas ──
+  // Birth area (green, top)
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(xScale(data[0].decade), yScale(0));
+  data.forEach(d => ctx.lineTo(xScale(d.decade), yScale(d.births)));
+  ctx.lineTo(xScale(data[data.length - 1].decade), yScale(0));
+  ctx.closePath();
+  const birthGrad = ctx.createLinearGradient(0, MARGIN.top, 0, MARGIN.top + plotH);
+  birthGrad.addColorStop(0, 'rgba(76,175,80,0.25)');
+  birthGrad.addColorStop(1, 'rgba(76,175,80,0.02)');
+  ctx.fillStyle = birthGrad;
+  ctx.fill();
+  ctx.restore();
+
+  // Death area (red, top)
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(xScale(data[0].decade), yScale(0));
+  data.forEach(d => ctx.lineTo(xScale(d.decade), yScale(d.deaths)));
+  ctx.lineTo(xScale(data[data.length - 1].decade), yScale(0));
+  ctx.closePath();
+  const deathGrad = ctx.createLinearGradient(0, MARGIN.top, 0, MARGIN.top + plotH);
+  deathGrad.addColorStop(0, 'rgba(224,85,85,0.2)');
+  deathGrad.addColorStop(1, 'rgba(224,85,85,0.02)');
+  ctx.fillStyle = deathGrad;
+  ctx.fill();
+  ctx.restore();
+
+  // ── Lines ──
+  // Birth line
+  ctx.save();
+  ctx.strokeStyle = '#4caf50';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  data.forEach((d, i) => {
+    const x = xScale(d.decade), y = yScale(d.births);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  // Glow
+  ctx.strokeStyle = 'rgba(76,175,80,0.3)';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  data.forEach((d, i) => {
+    const x = xScale(d.decade), y = yScale(d.births);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.restore();
+
+  // Death line
+  ctx.save();
+  ctx.strokeStyle = '#e05555';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  data.forEach((d, i) => {
+    const x = xScale(d.decade), y = yScale(d.deaths);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(224,85,85,0.3)';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  data.forEach((d, i) => {
+    const x = xScale(d.decade), y = yScale(d.deaths);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.restore();
+
+  // ── Dots on peaks ──
+  data.forEach(d => {
+    const x = xScale(d.decade);
+    // Birth dots
+    ctx.beginPath();
+    ctx.arc(x, yScale(d.births), 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#4caf50';
+    ctx.fill();
+    // Death dots
+    ctx.beginPath();
+    ctx.arc(x, yScale(d.deaths), 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#e05555';
+    ctx.fill();
+  });
+
+  // ── Net growth bar chart at bottom ──
+  const barW = Math.max(2, (plotW / data.length) * 0.5);
+  const netBaseY = MARGIN.top + plotH + 30;
+  const netH = 20;
+
+  // Draw baseline
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(MARGIN.left, netBaseY);
+  ctx.lineTo(W - MARGIN.right, netBaseY);
+  ctx.stroke();
+
+  data.forEach(d => {
+    const x = xScale(d.decade) - barW / 2;
+    const h = (d.net / Math.max(maxNet, 1)) * netH;
+    ctx.fillStyle = d.net >= 0 ? 'rgba(91,168,189,0.6)' : 'rgba(224,85,85,0.5)';
+    if (h >= 0) {
+      ctx.fillRect(x, netBaseY - h, barW, h);
+    } else {
+      ctx.fillRect(x, netBaseY, barW, -h);
+    }
+  });
+
+  // ── Axes ──
+  // Y axis labels
+  ctx.font = '10px Consolas, monospace';
+  ctx.fillStyle = '#9e9688';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (let v = 0; v <= maxVal; v += 20) {
+    ctx.fillText(v, MARGIN.left - 8, yScale(v));
+  }
+
+  // X axis labels  
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  for (let dec = Math.ceil(minDec / 50) * 50; dec <= maxDec; dec += 50) {
+    ctx.fillText(dec + 's', xScale(dec), MARGIN.top + plotH + 4);
+  }
+
+  // Y axis title
+  ctx.save();
+  ctx.translate(14, MARGIN.top + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#9e9688';
+  ctx.font = '11px Georgia, serif';
+  ctx.fillText('People per decade', 0, 0);
+  ctx.restore();
+
+  // ── Peak annotations ──
+  const peakBirth = data.reduce((a, b) => b.births > a.births ? b : a);
+  const peakDeath = data.reduce((a, b) => b.deaths > a.deaths ? b : a);
+
+  ctx.font = '10px Georgia, serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(76,175,80,0.7)';
+  ctx.fillText(`${peakBirth.births} births`, xScale(peakBirth.decade), yScale(peakBirth.births) - 14);
+
+  ctx.fillStyle = 'rgba(224,85,85,0.7)';
+  const peakDeathX = xScale(peakDeath.decade);
+  const peakDeathY = yScale(peakDeath.deaths);
+  // Avoid overlap with birth peak
+  const yOff = Math.abs(peakDeathX - xScale(peakBirth.decade)) < 50 ? 14 : -14;
+  ctx.fillText(`${peakDeath.deaths} deaths`, peakDeathX, peakDeathY + yOff);
+
+  // ── Store positions for hover ──
+  window._chartData = { data, xScale, yScale, plotW, plotH, minDec, maxDec, maxVal, decadeWidth: plotW / data.length };
+}
+
+// ── Hover interaction ──
+const canvas = document.getElementById('canvas');
+const tooltip = document.getElementById('tooltip');
+
+canvas.addEventListener('mousemove', function(e) {
+  const cd = window._chartData;
+  if (!cd) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  // Find nearest decade
+  const { data, xScale, yScale, decadeWidth } = cd;
+  let closest = null, closestDist = Infinity;
+  data.forEach(d => {
+    const dx = Math.abs(mx - xScale(d.decade));
+    if (dx < closestDist && dx < decadeWidth) {
+      closestDist = dx;
+      closest = d;
+    }
+  });
+
+  if (closest && my > MARGIN.top && my < MARGIN.top + (canvas.height / devicePixelRatio) - MARGIN.bottom) {
+    const topBirths = closest.birthPeople.slice(0, 5).map(p => p.name || '?').join(', ');
+    const topDeaths = closest.deathPeople.slice(0, 5).map(p => p.name || '?').join(', ');
+
+    tooltip.innerHTML = `
+      <div style="font-family:var(--mono); color:var(--accent); font-size:0.9rem; margin-bottom:0.3rem">${closest.decade}s</div>
+      <div style="color:var(--birth)">&#9650; ${closest.births} born${closest.birthPeople.length > 0 ? ':' : ''}</div>
+      ${topBirths ? `<div style="font-size:0.72rem; color:var(--fg2); margin-left:0.8rem">${topBirths}${closest.birthPeople.length > 5 ? ` +${closest.birthPeople.length - 5} more` : ''}</div>` : ''}
+      <div style="color:var(--death); margin-top:0.3rem">&#9660; ${closest.deaths} died${closest.deathPeople.length > 0 ? ':' : ''}</div>
+      ${topDeaths ? `<div style="font-size:0.72rem; color:var(--fg2); margin-left:0.8rem">${topDeaths}${closest.deathPeople.length > 5 ? ` +${closest.deathPeople.length - 5} more` : ''}</div>` : ''}
+      <div style="color:var(--net); margin-top:0.3rem; font-weight:600">Net: ${closest.net > 0 ? '+' : ''}${closest.net}</div>
+    `;
+    tooltip.style.opacity = '1';
+    let tx = e.clientX + 15, ty = e.clientY - 10;
+    if (tx + 320 > window.innerWidth) tx = e.clientX - 330;
+    tooltip.style.left = tx + 'px';
+    tooltip.style.top = ty + 'px';
+
+    // Highlight column
+    const ctx2 = canvas.getContext('2d');
+    render(data); // redraw base
+    ctx2.save();
+    ctx2.fillStyle = 'rgba(201,168,76,0.06)';
+    const cx = xScale(closest.decade);
+    const hw = cd.decadeWidth * 0.5;
+    ctx2.fillRect(cx - hw, MARGIN.top, hw * 2, cd.plotH);
+    ctx2.restore();
+  } else {
+    tooltip.style.opacity = '0';
+  }
+});
+
+canvas.addEventListener('mouseleave', () => { tooltip.style.opacity = '0'; });
+
+init();
+</script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'The Family Heartbeat',
+  intro: 'The family has a pulse. Births push it up, deaths pull it down. This chart shows the vital signs of the Lack lineage across 500+ years — see when the family surged, when it contracted, and the historical events that shaped it.',
+  keyboard: [
+    { key: '?', action: 'Toggle this help panel' }
+  ],
+  mouse: [
+    { key: 'Hover chart', action: 'Show decade details — births, deaths, names, net growth' }
+  ],
+  sections: [
+    { title: 'Reading the Chart', icon: '💓', html: `
+      <p>The main chart shows two lines across time:</p>
+      <ul>
+        <li><strong>Green line</strong> — Births per decade (the family growing)</li>
+        <li><strong>Red line</strong> — Deaths per decade (the family losing members)</li>
+        <li><strong>Blue bars</strong> at bottom — Net growth (births minus deaths)</li>
+      </ul>
+      <p>When the green line is above the red, the family was expanding. When they cross, something changed.</p>
+    ` },
+    { title: 'Historical Context', icon: '📅', html: `
+      <p>Dashed gold lines mark major historical events — famines, wars, revolutions. Watch how these events correlate with the family's vital signs.</p>
+    ` },
+    { title: 'Reading the Peaks', icon: '📊', html: `
+      <p>The peak birth decades often correlate with immigration waves and settlement periods. Peak death decades show wars, pandemics, and the inevitable catching-up of large earlier generations.</p>
+    ` }
+  ]
+});
+</script>
+</body>
+</html>
