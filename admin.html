@@ -13,6 +13,7 @@
   --sans: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   --mono: 'Consolas','Monaco',monospace;
   --green: #2d9a2d; --yellow: #c9a100; --orange: #d4740a; --red: #c0392b;
+  --blue: #2980b9;
   --radius: 8px;
 }
 html { font-size: 16px; }
@@ -49,20 +50,29 @@ nav a.active { font-weight: bold; }
   font-size: 0.75rem; font-weight: 700; font-family: var(--sans);
   letter-spacing: 0.04em; display: flex; align-items: center; gap: 0.3rem;
 }
+.backup-indicator {
+  font-size: 0.68rem; color: var(--green); font-family: var(--sans);
+  display: flex; align-items: center; gap: 0.3rem;
+}
 
 /* ── Layout ── */
 .app { max-width: 1200px; margin: 0 auto; padding: 1.5rem 2rem 4rem; }
 
 /* ── Stats bar ── */
 .stats-bar {
-  display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+  display: flex; gap: 0.8rem; margin-bottom: 1.5rem; flex-wrap: wrap;
 }
 .stat-card {
   background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 0.8rem 1.2rem; flex: 1; min-width: 120px; text-align: center;
+  padding: 0.7rem 1rem; flex: 1; min-width: 100px; text-align: center;
 }
-.stat-num { font-size: 1.8rem; font-weight: 700; font-family: var(--mono); color: var(--accent); line-height: 1; }
-.stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg3); font-family: var(--sans); margin-top: 0.2rem; }
+.stat-num { font-size: 1.6rem; font-weight: 700; font-family: var(--mono); color: var(--accent); line-height: 1; }
+.stat-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg3); font-family: var(--sans); margin-top: 0.2rem; }
+
+/* ── Action buttons ── */
+.action-bar {
+  display: flex; gap: 0.6rem; margin-bottom: 1.5rem; flex-wrap: wrap;
+}
 
 /* ── Two-column layout ── */
 .main-grid {
@@ -91,35 +101,21 @@ nav a.active { font-weight: bold; }
   font-size: 0.85rem; outline: none;
 }
 .search-row input:focus { border-color: var(--accent); }
-.search-row select {
-  padding: 0.4rem 0.5rem; border: 1px solid var(--border); border-radius: var(--radius);
-  font-size: 0.75rem; background: var(--card); outline: none;
-}
 
-.people-list { max-height: calc(100vh - 250px); overflow-y: auto; }
+.people-list { max-height: calc(100vh - 280px); overflow-y: auto; }
 .person-item {
   padding: 0.55rem 0.9rem; border-bottom: 1px solid #f0ede6; cursor: pointer;
   display: flex; align-items: center; gap: 0.6rem; transition: all 0.1s;
 }
 .person-item:hover { background: #fefcf6; }
 .person-item.selected { background: #fdf6e3; border-left: 3px solid var(--accent); }
-.person-dot {
-  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-}
+.person-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .dot-m { background: #93c5fd; }
 .dot-f { background: #f9a8d4; }
 .dot-u { background: #d1d5db; }
 .person-info { flex: 1; min-width: 0; }
 .person-name { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .person-meta { font-size: 0.7rem; color: var(--fg3); font-family: var(--sans); }
-.person-tier {
-  font-size: 0.55rem; padding: 0.1rem 0.35rem; border-radius: 3px; font-weight: 700;
-  text-transform: uppercase; font-family: var(--sans); flex-shrink: 0;
-}
-.tier-high { background: #e8f5e9; color: #2d9a2d; }
-.tier-medium { background: #fff8e1; color: #c9a100; }
-.tier-low { background: #fff3e0; color: #d4740a; }
-.tier-speculative { background: #fde8e8; color: #c0392b; }
 
 .list-paging {
   padding: 0.5rem 0.8rem; border-top: 1px solid var(--border);
@@ -133,10 +129,8 @@ nav a.active { font-weight: bold; }
 .list-paging button:hover { border-color: var(--accent); }
 .list-paging button:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ── Detail panel (right side) ── */
-.detail-panel {
-  display: flex; flex-direction: column; gap: 1.2rem;
-}
+/* ── Detail panel ── */
+.detail-panel { display: flex; flex-direction: column; gap: 1.2rem; }
 .detail-empty {
   background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 4rem 2rem; text-align: center; color: var(--fg3);
@@ -158,31 +152,15 @@ nav a.active { font-weight: bold; }
 }
 .card-body { padding: 1rem; }
 
-/* ── Person Header Card ── */
-.person-header {
-  display: flex; gap: 1.5rem; align-items: flex-start;
-}
+/* ── Person header ── */
+.person-header { display: flex; gap: 1.5rem; align-items: flex-start; }
 .person-header-left { flex: 1; }
 .person-header h2 { font-size: 1.5rem; font-weight: 400; margin-bottom: 0.3rem; }
 .person-header .ph-dates { font-size: 0.9rem; color: var(--fg2); }
-.person-header .ph-tier {
-  display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px;
-  font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
-  font-family: var(--sans); margin-top: 0.4rem;
-}
-.person-header .ph-score {
-  font-size: 2rem; font-weight: 700; font-family: var(--mono);
-  color: var(--accent); text-align: center;
-}
-.person-header .ph-score-label {
-  font-size: 0.6rem; text-transform: uppercase; color: var(--fg3);
-  font-family: var(--sans); text-align: center;
-}
+.person-header .ph-id { font-size: 0.7rem; color: var(--fg3); font-family: var(--mono); margin-top: 0.3rem; }
 
 /* ── Edit form ── */
-.edit-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;
-}
+.edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
 .edit-grid .full { grid-column: 1 / -1; }
 .field-group { display: flex; flex-direction: column; gap: 0.25rem; }
 .field-label {
@@ -194,15 +172,16 @@ nav a.active { font-weight: bold; }
   font-size: 0.88rem; outline: none; background: var(--card);
 }
 .field-input:focus { border-color: var(--accent); background: #fffff8; }
-.field-input.changed { border-color: var(--accent); background: #fdf6e3; }
+.field-input.changed {
+  border-color: var(--accent); background: #fdf6e3;
+  box-shadow: 0 0 0 2px rgba(139,105,20,0.15);
+}
 .field-select {
   padding: 0.5rem 0.7rem; border: 1px solid var(--border); border-radius: var(--radius);
   font-size: 0.85rem; background: var(--card); outline: none;
 }
 
-.save-bar {
-  display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.5rem;
-}
+/* ── Buttons ── */
 .btn {
   padding: 0.5rem 1.2rem; border-radius: var(--radius); font-size: 0.82rem;
   font-weight: 600; border: none; transition: all 0.15s; display: inline-flex;
@@ -214,16 +193,14 @@ nav a.active { font-weight: bold; }
 .btn-secondary:hover { background: #d4cfc7; }
 .btn-danger { background: var(--red); color: #fff; }
 .btn-danger:hover { background: #a93226; }
+.btn-success { background: var(--green); color: #fff; }
+.btn-success:hover { background: #248924; }
+.btn-blue { background: var(--blue); color: #fff; }
+.btn-blue:hover { background: #2171a3; }
 .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.72rem; }
+.btn-lg { padding: 0.6rem 1.5rem; font-size: 0.95rem; }
 
-.save-toast {
-  position: fixed; bottom: 2rem; right: 2rem; background: #2d9a2d; color: #fff;
-  padding: 0.6rem 1.2rem; border-radius: var(--radius); font-family: var(--sans);
-  font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-  opacity: 0; transform: translateY(8px); transition: all 0.25s;
-  z-index: 300; pointer-events: none;
-}
-.save-toast.show { opacity: 1; transform: translateY(0); }
+.save-bar { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.8rem; }
 
 /* ── Family cards ── */
 .fam-group { margin-bottom: 0.8rem; }
@@ -236,11 +213,11 @@ nav a.active { font-weight: bold; }
 .fam-link {
   display: flex; align-items: center; gap: 0.5rem;
   padding: 0.35rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius);
-  cursor: pointer; transition: all 0.1s; color: var(--fg);
-  font-size: 0.82rem; text-decoration: none;
+  cursor: pointer; transition: all 0.1s; color: var(--fg); font-size: 0.82rem; text-decoration: none;
 }
 .fam-link:hover { border-color: var(--accent); background: #fefcf6; text-decoration: none; }
 .fam-link .fam-dates { font-size: 0.68rem; color: var(--fg3); margin-left: auto; }
+.fam-actions { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
 
 /* ── Notes ── */
 .note-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.8rem; }
@@ -261,63 +238,9 @@ nav a.active { font-weight: bold; }
 .note-form { display: flex; gap: 0.4rem; }
 .note-form textarea {
   flex: 1; padding: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius);
-  font-size: 0.85rem; resize: vertical; min-height: 60px; outline: none;
-  font-family: var(--font);
+  font-size: 0.85rem; resize: vertical; min-height: 60px; outline: none; font-family: var(--font);
 }
 .note-form textarea:focus { border-color: var(--accent); }
-
-/* ── Upload ── */
-.upload-zone {
-  border: 2px dashed var(--border); border-radius: var(--radius);
-  padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s;
-  background: #faf8f4;
-}
-.upload-zone:hover, .upload-zone.dragover {
-  border-color: var(--accent); background: #fdf6e3;
-}
-.upload-zone .icon { font-size: 2rem; margin-bottom: 0.4rem; }
-.upload-zone p { font-size: 0.85rem; color: var(--fg2); }
-.upload-zone .sub { font-size: 0.7rem; color: var(--fg3); margin-top: 0.2rem; }
-
-.upload-form { display: none; margin-top: 0.8rem; }
-.upload-form.active { display: block; }
-.upload-preview {
-  display: flex; gap: 0.8rem; align-items: flex-start; margin-bottom: 0.8rem;
-}
-.upload-preview img {
-  width: 120px; height: 90px; object-fit: cover; border-radius: var(--radius);
-  border: 1px solid var(--border);
-}
-.upload-fields { flex: 1; display: flex; flex-direction: column; gap: 0.5rem; }
-.upload-progress {
-  height: 4px; background: #e0ddd6; border-radius: 2px; overflow: hidden;
-  margin-top: 0.5rem; display: none;
-}
-.upload-progress.active { display: block; }
-.upload-progress-bar { height: 100%; background: var(--accent); width: 0; transition: width 0.3s; }
-
-/* ── Documents grid ── */
-.doc-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.6rem;
-}
-.doc-thumb {
-  border: 1px solid var(--border); border-radius: var(--radius);
-  overflow: hidden; cursor: pointer; transition: all 0.2s;
-}
-.doc-thumb:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.12); transform: translateY(-2px); }
-.doc-thumb img {
-  width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: #f0ede6;
-}
-.doc-thumb-placeholder {
-  width: 100%; aspect-ratio: 4/3; background: linear-gradient(135deg, #f0ede6, #e2ddd4);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.5rem; color: var(--fg3);
-}
-.doc-thumb-label {
-  padding: 0.3rem 0.45rem; font-size: 0.65rem; color: var(--fg2);
-  font-family: var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  border-top: 1px solid var(--border);
-}
 
 /* ── Edit history ── */
 .edit-item {
@@ -328,6 +251,61 @@ nav a.active { font-weight: bold; }
 .edit-old { color: var(--red); text-decoration: line-through; }
 .edit-new { color: var(--green); }
 .edit-date { font-size: 0.65rem; color: var(--fg3); font-family: var(--sans); }
+
+/* ── Confirmation Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: auto; }
+.modal {
+  background: var(--card); border-radius: 12px; max-width: 520px; width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;
+  max-height: 85vh; display: flex; flex-direction: column;
+}
+.modal-header {
+  padding: 1rem 1.2rem; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.modal-header .modal-icon { font-size: 1.3rem; }
+.modal-header h3 { font-size: 1rem; font-weight: 600; }
+.modal-body { padding: 1.2rem; overflow-y: auto; flex: 1; }
+.modal-footer {
+  padding: 0.8rem 1.2rem; border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: 0.5rem; background: #faf8f4;
+}
+
+/* Change preview in modal */
+.change-list { margin: 0.5rem 0; }
+.change-row {
+  display: grid; grid-template-columns: 100px 1fr; gap: 0.4rem;
+  padding: 0.4rem 0; border-bottom: 1px solid #f0ede6; font-size: 0.85rem;
+}
+.change-row:last-child { border-bottom: none; }
+.change-label { font-weight: 600; color: var(--fg2); font-family: var(--sans); font-size: 0.75rem; text-transform: uppercase; }
+.change-values { display: flex; flex-direction: column; gap: 0.15rem; }
+.change-old { color: var(--red); font-size: 0.8rem; }
+.change-old::before { content: '✕ '; font-size: 0.65rem; }
+.change-new { color: var(--green); font-weight: 600; font-size: 0.85rem; }
+.change-new::before { content: '✓ '; font-size: 0.65rem; }
+.change-set::before { content: '→ '; color: var(--fg3); }
+
+.backup-note {
+  margin-top: 0.8rem; padding: 0.5rem 0.7rem; background: #e8f5e9;
+  border-radius: 6px; font-size: 0.78rem; color: #1b5e20;
+  font-family: var(--sans); display: flex; align-items: center; gap: 0.4rem;
+}
+
+/* ── Toast ── */
+.save-toast {
+  position: fixed; bottom: 2rem; right: 2rem; background: #2d9a2d; color: #fff;
+  padding: 0.7rem 1.4rem; border-radius: var(--radius); font-family: var(--sans);
+  font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  opacity: 0; transform: translateY(8px); transition: all 0.25s;
+  z-index: 300; pointer-events: none; max-width: 400px;
+}
+.save-toast.show { opacity: 1; transform: translateY(0); }
 
 /* ── Responsive ── */
 @media (max-width: 800px) {
@@ -361,37 +339,33 @@ nav a.active { font-weight: bold; }
     <a href="/nameriver.html">Names</a>
   </nav>
   <div class="header-right">
-    <span class="dad-badge" id="mode-badge">★ Dad's Desk</span>
+    <div class="backup-indicator" id="backup-indicator">🛡️ Protected</div>
+    <span class="dad-badge">★ Dad's Desk</span>
   </div>
 </header>
-
-<script>
-if(sessionStorage.getItem('dad-auth')!=='1'){
-  document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;font-family:Georgia,serif;color:#2a2520">' +
-    '<h2 style="margin:0 0 0.5rem">🔒 Access Required</h2>' +
-    '<p style="color:#6b5d4f;margin:0 0 1.5rem;font-size:0.9rem">Enter the password to access Dad\'s Desk</p>' +
-    '<input type="password" id="gate-pw" placeholder="Password" autocomplete="off" style="padding:0.6rem 1rem;border:1px solid #d5cdbf;border-radius:8px;font-size:1rem;text-align:center;font-family:Consolas,monospace;width:220px">' +
-    '<div id="gate-err" style="color:#c0392b;font-size:0.78rem;margin-top:0.5rem;min-height:1.2em"></div>' +
-    '<button onclick="if(document.getElementById(\'gate-pw\').value===\'lack2026\'){sessionStorage.setItem(\'dad-auth\',\'1\');location.reload();}else{document.getElementById(\'gate-err\').textContent=\'Wrong password\';document.getElementById(\'gate-pw\').value=\'\';document.getElementById(\'gate-pw\').focus();}" style="margin-top:0.75rem;padding:0.5rem 2rem;background:#8b6914;color:#fff;border:none;border-radius:8px;font-size:0.9rem;cursor:pointer;font-weight:600">Enter</button>' +
-    '<a href="/" style="margin-top:1.5rem;font-size:0.8rem;color:#8b6914">← Back to Home</a></div>';
-  document.getElementById('gate-pw').addEventListener('keydown',function(e){
-    if(e.key==='Enter')document.querySelector('button').click();
-  });
-}
-</script>
-
-<!-- Static data shim — serves /api/admin/* from JSON files + localStorage -->
-<script src="/data/admin-shim.js"></script>
 
 <div class="app">
 
   <!-- Stats bar -->
   <div class="stats-bar" id="stats-bar">
     <div class="stat-card"><div class="stat-num" id="stat-people">—</div><div class="stat-label">People</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-docs">—</div><div class="stat-label">Documents</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-verified">—</div><div class="stat-label">Verified</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-rels">—</div><div class="stat-label">Relationships</div></div>
     <div class="stat-card"><div class="stat-num" id="stat-notes">—</div><div class="stat-label">Notes</div></div>
     <div class="stat-card"><div class="stat-num" id="stat-edits">—</div><div class="stat-label">Edits</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-backups">—</div><div class="stat-label">Backups</div></div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="action-bar">
+    <button class="btn btn-success btn-lg" onclick="showAddPerson()">
+      ➕ Add New Person
+    </button>
+    <button class="btn btn-blue" onclick="showRecentEdits()">
+      📋 Recent Changes
+    </button>
+    <button class="btn btn-secondary" onclick="rebuildData()">
+      🔄 Rebuild Site Data
+    </button>
   </div>
 
   <!-- Main grid -->
@@ -405,13 +379,6 @@ if(sessionStorage.getItem('dad-auth')!=='1'){
       </div>
       <div class="search-row">
         <input type="text" id="search-input" placeholder="Search by name…" autocomplete="off">
-        <select id="tier-filter">
-          <option value="">All tiers</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-          <option value="speculative">Speculative</option>
-        </select>
       </div>
       <div class="people-list" id="people-list"></div>
       <div class="list-paging">
@@ -426,10 +393,27 @@ if(sessionStorage.getItem('dad-auth')!=='1'){
       <div class="detail-empty" id="detail-empty">
         <div class="icon">👨‍👩‍👧‍👦</div>
         <h3>Select a person</h3>
-        <p>Choose someone from the list to view, edit, add photos, or leave notes.</p>
+        <p>Choose someone from the list to view or edit their information, add notes, or connect family members.</p>
+        <p style="margin-top:1rem;font-size:0.8rem;color:var(--fg3)">
+          Every change creates a backup first. Nothing can be lost.
+        </p>
       </div>
     </div>
+  </div>
+</div>
 
+<!-- Confirmation Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <div class="modal-header" id="modal-header">
+      <span class="modal-icon">⚠️</span>
+      <h3 id="modal-title">Confirm Changes</h3>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="modal-confirm">Confirm & Save</button>
+    </div>
   </div>
 </div>
 
@@ -440,58 +424,73 @@ if(sessionStorage.getItem('dad-auth')!=='1'){
 /* ═══════════════════════════════════════════════
    State
    ═══════════════════════════════════════════════ */
-const API = '';  // same origin
 let currentPerson = null;
 let currentPage = 1;
 let totalPages = 1;
 let searchTimeout = null;
-
-const TIER_COLORS = { high:'#2d9a2d', medium:'#c9a100', low:'#d4740a', speculative:'#c0392b' };
-const TIER_BG    = { high:'#e8f5e9', medium:'#fff8e1', low:'#fff3e0', speculative:'#fde8e8' };
-const DOC_ICONS  = { photo:'📷', certificate:'📋', obituary:'🕯️', newspaper:'📰',
-                     census:'📊', military:'🎖️', other:'📄' };
+let isServerMode = false; // true if admin_server.py is running
 
 /* ═══════════════════════════════════════════════
-   Init
+   Init — detect admin server
    ═══════════════════════════════════════════════ */
-loadStats();
-loadPeople();
+async function init() {
+  // Check if the admin server is running by hitting the stats endpoint
+  try {
+    const resp = await fetch('/api/admin/stats');
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.total_people !== undefined && data.total_backups !== undefined) {
+        isServerMode = true;
+        document.getElementById('backup-indicator').innerHTML = '🛡️ Server Mode — All changes backed up';
+        document.getElementById('backup-indicator').style.color = '#2d9a2d';
+      }
+    }
+  } catch (e) {
+    // No server — will load shim fallback
+  }
 
-// Detect static mode (admin-shim loaded)
-if (window._adminShimActive !== undefined || document.querySelector('script[src*="admin-shim"]')) {
-  const badge = document.getElementById('mode-badge');
-  if (badge) badge.innerHTML = '📋 Static Mode';
+  if (!isServerMode) {
+    // Load the static shim for GitHub Pages
+    const script = document.createElement('script');
+    script.src = '/data/admin-shim.js';
+    script.onload = () => {
+      document.getElementById('backup-indicator').innerHTML = '📋 View Only — run admin_server.py to edit';
+      document.getElementById('backup-indicator').style.color = 'var(--orange)';
+      loadStats();
+      loadPeople();
+    };
+    document.head.appendChild(script);
+    return;
+  }
+
+  loadStats();
+  loadPeople();
 }
-
-document.getElementById('search-input').addEventListener('input', () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => { currentPage = 1; loadPeople(); }, 300);
-});
-document.getElementById('tier-filter').addEventListener('change', () => { currentPage = 1; loadPeople(); });
-document.getElementById('prev-btn').addEventListener('click', () => { if (currentPage > 1) { currentPage--; loadPeople(); } });
-document.getElementById('next-btn').addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; loadPeople(); } });
 
 /* ═══════════════════════════════════════════════
    Load functions
    ═══════════════════════════════════════════════ */
-function loadStats() {
-  fetch(API + '/api/admin/stats').then(r => r.json()).then(d => {
+async function loadStats() {
+  try {
+    const resp = await fetch('/api/admin/stats');
+    const d = await resp.json();
     document.getElementById('stat-people').textContent = d.total_people || 0;
-    document.getElementById('stat-docs').textContent = d.total_documents || 0;
-    document.getElementById('stat-verified').textContent = d.verified_matches || 0;
+    document.getElementById('stat-rels').textContent = d.total_relationships || 0;
     document.getElementById('stat-notes').textContent = d.total_notes || 0;
     document.getElementById('stat-edits').textContent = d.total_edits || 0;
-  }).catch(() => {});
+    document.getElementById('stat-backups').textContent = d.total_backups || 0;
+  } catch (e) { console.error('Stats load failed:', e); }
 }
 
-function loadPeople() {
+async function loadPeople() {
   const q = document.getElementById('search-input').value.trim();
-  const tier = document.getElementById('tier-filter').value;
-  const params = new URLSearchParams({ q, tier, page: currentPage, sort: 'name' });
+  const params = new URLSearchParams({ q, page: currentPage });
 
-  fetch(API + '/api/admin/people?' + params).then(r => r.json()).then(d => {
+  try {
+    const resp = await fetch('/api/admin/people?' + params);
+    const d = await resp.json();
     totalPages = d.pages || 1;
-    document.getElementById('people-count').textContent = `${d.total} total`;
+    document.getElementById('people-count').textContent = `${d.total} people`;
     document.getElementById('page-info').textContent = `Page ${d.page} of ${totalPages}`;
     document.getElementById('prev-btn').disabled = d.page <= 1;
     document.getElementById('next-btn').disabled = d.page >= totalPages;
@@ -499,36 +498,36 @@ function loadPeople() {
     const list = document.getElementById('people-list');
     list.innerHTML = d.people.map(p => {
       const dotCls = p.sex === 'M' ? 'dot-m' : p.sex === 'F' ? 'dot-f' : 'dot-u';
-      const tierCls = 'tier-' + (p.confidence_tier || 'speculative');
+      const name = p.name || `${p.given_name || ''} ${p.surname || ''}`.trim();
       const dates = fmtRange(p.birth_date, p.death_date);
       const sel = currentPerson && currentPerson.id === p.id ? ' selected' : '';
       return `<div class="person-item${sel}" data-id="${p.id}">
         <span class="person-dot ${dotCls}"></span>
         <div class="person-info">
-          <div class="person-name">${esc(p.name)}</div>
-          <div class="person-meta">${dates}${p.doc_count ? ' · ' + p.doc_count + ' docs' : ''}</div>
+          <div class="person-name">${esc(name)}</div>
+          <div class="person-meta">${esc(dates)}</div>
         </div>
-        <span class="person-tier ${tierCls}">${p.confidence_tier || '?'}</span>
       </div>`;
     }).join('');
 
     list.querySelectorAll('.person-item').forEach(el => {
       el.addEventListener('click', () => loadPerson(parseInt(el.dataset.id)));
     });
-  }).catch(err => console.error('Failed to load people:', err));
+  } catch (e) { console.error('People load failed:', e); }
 }
 
-function loadPerson(id) {
-  fetch(API + '/api/admin/person/' + id).then(r => r.json()).then(p => {
+async function loadPerson(id) {
+  try {
+    const resp = await fetch('/api/admin/person/' + id);
+    const p = await resp.json();
     if (p.error) { showToast(p.error, true); return; }
     currentPerson = p;
     renderDetail(p);
 
-    // Highlight in list
     document.querySelectorAll('.person-item').forEach(el => {
       el.classList.toggle('selected', parseInt(el.dataset.id) === id);
     });
-  }).catch(err => console.error('Failed to load person:', err));
+  } catch (e) { showToast('Failed to load person', true); }
 }
 
 /* ═══════════════════════════════════════════════
@@ -536,8 +535,7 @@ function loadPerson(id) {
    ═══════════════════════════════════════════════ */
 function renderDetail(p) {
   const panel = document.getElementById('detail-panel');
-  const tier = p.confidence_tier || 'speculative';
-  const tierCls = 'tier-' + tier;
+  const name = `${p.given_name || ''} ${p.surname || ''}`.trim();
 
   panel.innerHTML = `
     <!-- Person header -->
@@ -545,13 +543,12 @@ function renderDetail(p) {
       <div class="card-body">
         <div class="person-header">
           <div class="person-header-left">
-            <h2>${esc(p.given_name || '')} ${esc(p.surname || '')}${p.suffix ? ' <span style="font-size:0.8rem;color:var(--fg2)">' + esc(p.suffix) + '</span>' : ''}</h2>
+            <h2>${esc(p.given_name || '')} ${esc(p.surname || '')}${p.suffix ? ' <small style="color:var(--fg2)">' + esc(p.suffix) + '</small>' : ''}</h2>
             <div class="ph-dates">${fmtRange(p.birth_date, p.death_date)}</div>
-            <span class="ph-tier ${tierCls}" style="background:${TIER_BG[tier]||'#f0f0f0'};color:${TIER_COLORS[tier]||'#999'}">${tier}</span>
+            <div class="ph-id">ID: ${p.id}${p.birth_place ? ' · Born: ' + esc(p.birth_place) : ''}${p.death_place ? ' · Died: ' + esc(p.death_place) : ''}</div>
           </div>
-          <div>
-            <div class="ph-score">${p.confidence || 0}</div>
-            <div class="ph-score-label">Confidence</div>
+          <div style="text-align:center">
+            <a href="/tree.html?id=${p.id}" class="btn btn-secondary btn-sm" target="_blank">🌳 View Tree</a>
           </div>
         </div>
       </div>
@@ -561,24 +558,25 @@ function renderDetail(p) {
     <div class="card">
       <div class="card-head">
         <span class="card-title">✏️ Edit Person</span>
+        <span style="font-size:0.7rem;color:var(--fg3);font-family:var(--sans)">Changed fields highlight in gold</span>
       </div>
       <div class="card-body">
         <div class="edit-grid">
           <div class="field-group">
             <label class="field-label">Given Name</label>
-            <input class="field-input" id="f-given" value="${esc(p.given_name || '')}" data-orig="${esc(p.given_name || '')}">
+            <input class="field-input edit-field" id="f-given" value="${esc(p.given_name || '')}" data-orig="${esc(p.given_name || '')}" data-field="given_name">
           </div>
           <div class="field-group">
             <label class="field-label">Surname</label>
-            <input class="field-input" id="f-surname" value="${esc(p.surname || '')}" data-orig="${esc(p.surname || '')}">
+            <input class="field-input edit-field" id="f-surname" value="${esc(p.surname || '')}" data-orig="${esc(p.surname || '')}" data-field="surname">
           </div>
           <div class="field-group">
             <label class="field-label">Suffix</label>
-            <input class="field-input" id="f-suffix" value="${esc(p.suffix || '')}" data-orig="${esc(p.suffix || '')}">
+            <input class="field-input edit-field" id="f-suffix" value="${esc(p.suffix || '')}" data-orig="${esc(p.suffix || '')}" data-field="suffix">
           </div>
           <div class="field-group">
             <label class="field-label">Sex</label>
-            <select class="field-select" id="f-sex">
+            <select class="field-select edit-field" id="f-sex" data-orig="${p.sex || ''}" data-field="sex">
               <option value="" ${!p.sex ? 'selected' : ''}>Unknown</option>
               <option value="M" ${p.sex === 'M' ? 'selected' : ''}>Male</option>
               <option value="F" ${p.sex === 'F' ? 'selected' : ''}>Female</option>
@@ -586,72 +584,60 @@ function renderDetail(p) {
           </div>
           <div class="field-group">
             <label class="field-label">Birth Date</label>
-            <input class="field-input" id="f-birth-date" value="${esc(p.birth_date || '')}" data-orig="${esc(p.birth_date || '')}" placeholder="e.g. 1850-03-15">
+            <input class="field-input edit-field" id="f-birth-date" value="${esc(p.birth_date || '')}" data-orig="${esc(p.birth_date || '')}" data-field="birth_date" placeholder="YYYY-MM-DD or YYYY">
           </div>
           <div class="field-group">
             <label class="field-label">Birth Place</label>
-            <input class="field-input" id="f-birth-place" value="${esc(p.birth_place || '')}" data-orig="${esc(p.birth_place || '')}">
+            <input class="field-input edit-field" id="f-birth-place" value="${esc(p.birth_place || '')}" data-orig="${esc(p.birth_place || '')}" data-field="birth_place">
           </div>
           <div class="field-group">
             <label class="field-label">Death Date</label>
-            <input class="field-input" id="f-death-date" value="${esc(p.death_date || '')}" data-orig="${esc(p.death_date || '')}" placeholder="e.g. 1920-11-02">
+            <input class="field-input edit-field" id="f-death-date" value="${esc(p.death_date || '')}" data-orig="${esc(p.death_date || '')}" data-field="death_date" placeholder="YYYY-MM-DD or YYYY">
           </div>
           <div class="field-group">
             <label class="field-label">Death Place</label>
-            <input class="field-input" id="f-death-place" value="${esc(p.death_place || '')}" data-orig="${esc(p.death_place || '')}">
+            <input class="field-input edit-field" id="f-death-place" value="${esc(p.death_place || '')}" data-orig="${esc(p.death_place || '')}" data-field="death_place">
+          </div>
+          <div class="field-group full">
+            <label class="field-label">Notes</label>
+            <textarea class="field-input edit-field" id="f-notes" data-orig="${esc(p.notes || '')}" data-field="notes" rows="2" style="resize:vertical">${esc(p.notes || '')}</textarea>
           </div>
         </div>
         <div class="save-bar">
           <button class="btn btn-secondary" id="reset-btn">Reset</button>
-          <button class="btn btn-primary" id="save-btn">💾 Save Changes</button>
+          <button class="btn btn-primary btn-lg" id="save-btn">💾 Review & Save</button>
         </div>
       </div>
     </div>
 
     <!-- Family -->
     <div class="card">
-      <div class="card-head"><span class="card-title">👨‍👩‍👧 Family</span></div>
+      <div class="card-head">
+        <span class="card-title">👨‍👩‍👧 Family</span>
+      </div>
       <div class="card-body" id="family-body"></div>
     </div>
 
-    <!-- Upload Photos -->
-    <div class="card">
-      <div class="card-head"><span class="card-title">📷 Upload Photos & Documents</span></div>
+    <!-- Add Relationship -->
+    <div class="card" id="add-rel-card" ${isServerMode ? '' : 'style="display:none"'}>
+      <div class="card-head"><span class="card-title">🔗 Add Family Connection</span></div>
       <div class="card-body">
-        <div class="upload-zone" id="upload-zone">
-          <div class="icon">📁</div>
-          <p>Drop files here or click to browse</p>
-          <div class="sub">JPG, PNG, TIFF, PDF — max 50 MB</div>
-        </div>
-        <input type="file" id="file-input" accept="image/*,.pdf,.tif,.tiff" multiple style="display:none">
-        <div class="upload-form" id="upload-form">
-          <div class="upload-preview" id="upload-preview"></div>
-          <div style="display:flex;gap:0.5rem;align-items:center;">
-            <select class="field-select" id="upload-type">
-              <option value="photo">Photo</option>
-              <option value="certificate">Certificate</option>
-              <option value="obituary">Obituary</option>
-              <option value="census">Census</option>
-              <option value="newspaper">Newspaper</option>
-              <option value="military">Military</option>
-              <option value="other">Other</option>
+        <div class="edit-grid">
+          <div class="field-group">
+            <label class="field-label">Relationship Type</label>
+            <select class="field-select" id="rel-type">
+              <option value="parent_child_parent">This person is PARENT of…</option>
+              <option value="parent_child_child">This person is CHILD of…</option>
+              <option value="spouse">This person is SPOUSE of…</option>
             </select>
-            <input class="field-input" id="upload-desc" placeholder="Description (optional)" style="flex:1">
-            <button class="btn btn-primary" id="upload-btn">⬆️ Upload</button>
           </div>
-          <div class="upload-progress" id="upload-progress"><div class="upload-progress-bar" id="upload-bar"></div></div>
+          <div class="field-group">
+            <label class="field-label">Other Person (search)</label>
+            <input class="field-input" id="rel-search" placeholder="Type a name to search…" autocomplete="off">
+            <div id="rel-results" style="max-height:150px;overflow-y:auto;font-size:0.82rem;margin-top:0.3rem"></div>
+          </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Existing Documents -->
-    <div class="card" id="docs-card" style="display:none">
-      <div class="card-head">
-        <span class="card-title">📄 Documents</span>
-        <span class="panel-count" id="doc-count"></span>
-      </div>
-      <div class="card-body">
-        <div class="doc-grid" id="doc-grid"></div>
+        <div id="rel-selected" style="margin-top:0.5rem"></div>
       </div>
     </div>
 
@@ -661,7 +647,7 @@ function renderDetail(p) {
       <div class="card-body">
         <div class="note-list" id="note-list"></div>
         <div class="note-form">
-          <textarea id="note-text" placeholder="Add a note about this person…"></textarea>
+          <textarea id="note-text" placeholder="Add a note about this person… (research findings, corrections, questions)"></textarea>
           <button class="btn btn-primary btn-sm" id="add-note-btn" style="align-self:flex-end">Add Note</button>
         </div>
       </div>
@@ -669,21 +655,17 @@ function renderDetail(p) {
 
     <!-- Edit History -->
     <div class="card" id="history-card" style="display:none">
-      <div class="card-head"><span class="card-title">📋 Edit History</span></div>
+      <div class="card-head"><span class="card-title">📋 Change History</span></div>
       <div class="card-body" id="history-body"></div>
     </div>
   `;
 
-  // Render sub-sections
   renderFamily(p);
-  renderDocuments(p);
   renderNotes(p);
   renderHistory(p);
-
-  // Wire up event listeners
   wireEditForm(p);
-  wireUpload(p);
   wireNotes(p);
+  wireRelationship(p);
 }
 
 /* ── Family ── */
@@ -695,7 +677,10 @@ function renderFamily(p) {
   if (p.children?.length) groups.push({ label: 'Children', list: p.children });
   if (p.siblings?.length) groups.push({ label: 'Siblings', list: p.siblings });
 
-  if (!groups.length) { body.innerHTML = '<div style="color:var(--fg3);font-size:0.85rem;">No family links found.</div>'; return; }
+  if (!groups.length) {
+    body.innerHTML = '<div style="color:var(--fg3);font-size:0.85rem;">No family links yet. Use "Add Family Connection" below to link parents, children, or spouses.</div>';
+    return;
+  }
 
   body.innerHTML = groups.map(g => {
     const items = g.list.map(r => {
@@ -703,7 +688,7 @@ function renderFamily(p) {
       const name = `${r.given_name || ''} ${r.surname || ''}`.trim();
       return `<a class="fam-link" data-id="${r.id}">
         <span class="person-dot ${dotCls}"></span>
-        ${esc(name)}
+        ${esc(name || 'Unknown')}
         <span class="fam-dates">${fmtRange(r.birth_date, r.death_date)}</span>
       </a>`;
     }).join('');
@@ -721,206 +706,492 @@ function renderFamily(p) {
   });
 }
 
-/* ── Documents ── */
-function renderDocuments(p) {
-  const card = document.getElementById('docs-card');
-  const grid = document.getElementById('doc-grid');
-  if (!p.documents?.length) { card.style.display = 'none'; return; }
-  card.style.display = '';
-  document.getElementById('doc-count').textContent = p.documents.length;
-
-  grid.innerHTML = p.documents.map(d => {
-    const icon = DOC_ICONS[d.doc_type] || DOC_ICONS.other;
-    const label = d.description || d.filename || `Doc #${d.id}`;
-    const imgSrc = d.filepath ? encPath(d.filepath) : null;
-    return `<div class="doc-thumb" title="${esc(label)}">
-      ${imgSrc
-        ? `<img src="${imgSrc}" loading="lazy" data-lightbox data-lb-title="${esc(label)}" onerror="this.outerHTML='<div class=\\'doc-thumb-placeholder\\'>${icon}</div>'">`
-        : `<div class="doc-thumb-placeholder">${icon}</div>`}
-      <div class="doc-thumb-label">${esc(label)}</div>
-    </div>`;
-  }).join('');
-}
-
 /* ── Notes ── */
 function renderNotes(p) {
   const list = document.getElementById('note-list');
-  if (!p.notes?.length) { list.innerHTML = '<div style="color:var(--fg3);font-size:0.8rem;margin-bottom:0.5rem;">No notes yet.</div>'; return; }
-  list.innerHTML = p.notes.map(n => `
+  const notes = p.admin_notes || [];
+  if (!notes.length) {
+    list.innerHTML = '<div style="color:var(--fg3);font-size:0.8rem;margin-bottom:0.5rem;">No notes yet.</div>';
+    return;
+  }
+  list.innerHTML = notes.map(n => `
     <div class="note-item">
       <div class="note-text">${esc(n.note)}</div>
-      <div class="note-meta">${n.reviewer || 'Dad'} · ${fmtDate(n.created_date)}</div>
+      <div class="note-meta">${esc(n.author || n.reviewer || 'Dad')} · ${fmtDate(n.created_at || n.created_date)}</div>
       <button class="note-delete" data-nid="${n.id}" title="Delete note">×</button>
     </div>
   `).join('');
 }
 
-/* ── Edit History ── */
+/* ── History ── */
 function renderHistory(p) {
   const card = document.getElementById('history-card');
   const body = document.getElementById('history-body');
   const edits = p.edit_history || [];
   if (!edits.length) { card.style.display = 'none'; return; }
   card.style.display = '';
-  body.innerHTML = edits.slice(0, 20).map(e => `
+  body.innerHTML = edits.slice(0, 30).map(e => `
     <div class="edit-item">
-      <span class="edit-field">${e.field}</span>:
-      <span class="edit-old">${esc(e.old_value || '(empty)')}</span> →
-      <span class="edit-new">${esc(e.new_value || '(empty)')}</span>
-      <div class="edit-date">${fmtDate(e.edit_date)} · ${e.reviewer || 'Dad'}</div>
+      <span class="edit-field">${esc(e.field || e.action)}</span>:
+      ${e.old_value ? '<span class="edit-old">' + esc(e.old_value) + '</span> → ' : ''}
+      <span class="edit-new">${esc(e.new_value || '')}</span>
+      <div class="edit-date">${fmtDate(e.edit_date)} · ${esc(e.editor || 'Dad')}${e.backup_file ? ' · 🛡️' + esc(e.backup_file) : ''}</div>
     </div>
   `).join('');
 }
 
 /* ═══════════════════════════════════════════════
-   Wire up interactions
+   Wire up edit form — with CONFIRMATION
    ═══════════════════════════════════════════════ */
 function wireEditForm(p) {
-  const fields = ['f-given', 'f-surname', 'f-suffix', 'f-birth-date', 'f-birth-place', 'f-death-date', 'f-death-place'];
-
   // Highlight changed fields
-  fields.forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('input', () => {
-      el.classList.toggle('changed', el.value !== el.dataset.orig);
-    });
+  document.querySelectorAll('.edit-field').forEach(el => {
+    const handler = () => {
+      const val = el.tagName === 'TEXTAREA' ? el.value : el.value;
+      el.classList.toggle('changed', val !== (el.dataset.orig || ''));
+    };
+    el.addEventListener('input', handler);
+    el.addEventListener('change', handler);
   });
 
   // Reset
   document.getElementById('reset-btn').addEventListener('click', () => {
-    fields.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) { el.value = el.dataset.orig; el.classList.remove('changed'); }
+    document.querySelectorAll('.edit-field').forEach(el => {
+      if (el.tagName === 'TEXTAREA') el.value = el.dataset.orig || '';
+      else el.value = el.dataset.orig || '';
+      el.classList.remove('changed');
     });
-    document.getElementById('f-sex').value = p.sex || '';
   });
 
-  // Save
+  // Save — shows confirmation modal FIRST
   document.getElementById('save-btn').addEventListener('click', () => {
-    const body = {
-      given_name: document.getElementById('f-given').value.trim(),
-      surname: document.getElementById('f-surname').value.trim(),
-      suffix: document.getElementById('f-suffix').value.trim(),
-      sex: document.getElementById('f-sex').value || null,
-      birth_date: document.getElementById('f-birth-date').value.trim() || null,
-      birth_place: document.getElementById('f-birth-place').value.trim() || null,
-      death_date: document.getElementById('f-death-date').value.trim() || null,
-      death_place: document.getElementById('f-death-place').value.trim() || null,
-      reviewer: 'Dad',
-    };
-
-    fetch(API + '/api/admin/person/' + p.id, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    }).then(r => r.json()).then(d => {
-      if (d.error) { showToast(d.error, true); return; }
-      showToast(`Saved ${d.changes} change${d.changes !== 1 ? 's' : ''}`);
-      loadPerson(p.id);
-      loadStats();
-    }).catch(() => showToast('Save failed', true));
+    const changes = getFormChanges();
+    if (!changes.length) {
+      showToast('No changes to save');
+      return;
+    }
+    showSaveConfirmation(p, changes);
   });
 }
 
-function wireUpload(p) {
-  const zone = document.getElementById('upload-zone');
-  const fileInput = document.getElementById('file-input');
-  const form = document.getElementById('upload-form');
-  let selectedFiles = [];
-
-  zone.addEventListener('click', () => fileInput.click());
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-  zone.addEventListener('drop', e => {
-    e.preventDefault(); zone.classList.remove('dragover');
-    handleFiles(e.dataTransfer.files);
+function getFormChanges() {
+  const changes = [];
+  document.querySelectorAll('.edit-field').forEach(el => {
+    const val = el.value;
+    const orig = el.dataset.orig || '';
+    if (val !== orig) {
+      changes.push({
+        field: el.dataset.field,
+        old_value: orig || '(empty)',
+        new_value: val || '(empty)',
+        raw_new: val,
+      });
+    }
   });
-  fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+  return changes;
+}
 
-  function handleFiles(files) {
-    selectedFiles = Array.from(files);
-    if (!selectedFiles.length) return;
-    form.classList.add('active');
+function showSaveConfirmation(person, changes) {
+  const name = `${person.given_name || ''} ${person.surname || ''}`.trim();
+  const fieldLabels = {
+    given_name: 'Given Name', surname: 'Surname', suffix: 'Suffix',
+    sex: 'Sex', birth_date: 'Birth Date', birth_place: 'Birth Place',
+    death_date: 'Death Date', death_place: 'Death Place', notes: 'Notes',
+  };
 
-    const preview = document.getElementById('upload-preview');
-    preview.innerHTML = selectedFiles.map(f => {
-      const url = URL.createObjectURL(f);
-      return `<img src="${url}" alt="${esc(f.name)}">`;
-    }).join('') + `<div class="upload-fields">
-      <div style="font-size:0.85rem;font-weight:600;">${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} selected</div>
-      <div style="font-size:0.72rem;color:var(--fg3)">${selectedFiles.map(f => f.name).join(', ')}</div>
+  let html = `
+    <p style="margin-bottom:0.8rem;font-size:0.9rem">
+      You are about to update <strong>${esc(name)}</strong> (ID: ${person.id}).
+      Please review these ${changes.length} change${changes.length > 1 ? 's' : ''}:
+    </p>
+    <div class="change-list">
+  `;
+
+  for (const ch of changes) {
+    const label = fieldLabels[ch.field] || ch.field;
+    html += `<div class="change-row">
+      <div class="change-label">${label}</div>
+      <div class="change-values">
+        <div class="change-old">${esc(ch.old_value)}</div>
+        <div class="change-new">${esc(ch.new_value)}</div>
+      </div>
     </div>`;
   }
 
-  document.getElementById('upload-btn').addEventListener('click', async () => {
-    if (!selectedFiles.length) return;
-    const prog = document.getElementById('upload-progress');
-    const bar = document.getElementById('upload-bar');
-    prog.classList.add('active');
+  html += `</div>
+    <div class="backup-note">
+      🛡️ A backup of the database will be created automatically before saving.
+    </div>
+  `;
 
-    const docType = document.getElementById('upload-type').value;
-    const desc = document.getElementById('upload-desc').value.trim();
-    let done = 0;
+  openModal('⚠️', `Confirm ${changes.length} Change${changes.length > 1 ? 's' : ''}`, html, 'Save Changes', async () => {
+    closeModal();
 
-    for (const file of selectedFiles) {
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('doc_type', docType);
-      fd.append('description', desc || file.name);
+    // Build the change body
+    const body = { editor: 'Dad' };
+    changes.forEach(ch => { body[ch.field] = ch.raw_new; });
 
-      try {
-        const r = await fetch(API + '/api/admin/person/' + p.id + '/upload', { method: 'POST', body: fd });
-        const d = await r.json();
-        if (d.error) { showToast(`${file.name}: ${d.error}`, true); }
-        else { done++; }
-      } catch (err) { showToast(`Upload failed: ${file.name}`, true); }
+    const endpoint = isServerMode
+      ? `/api/admin/person/${person.id}/save`
+      : `/api/admin/person/${person.id}`;
 
-      bar.style.width = ((done / selectedFiles.length) * 100) + '%';
+    try {
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const result = await resp.json();
+      if (result.error) {
+        showToast(result.error, true);
+        return;
+      }
+      showToast(result.message || `Saved ${result.changes} change(s)!`);
+      loadPerson(person.id);
+      loadStats();
+    } catch (e) {
+      showToast('Save failed: ' + e.message, true);
     }
-
-    showToast(`Uploaded ${done} file${done !== 1 ? 's' : ''}`);
-    selectedFiles = [];
-    form.classList.remove('active');
-    prog.classList.remove('active');
-    bar.style.width = '0';
-    fileInput.value = '';
-    loadPerson(p.id);
-    loadStats();
   });
 }
 
+/* ═══════════════════════════════════════════════
+   Wire notes
+   ═══════════════════════════════════════════════ */
 function wireNotes(p) {
-  // Add note
-  document.getElementById('add-note-btn').addEventListener('click', () => {
+  document.getElementById('add-note-btn').addEventListener('click', async () => {
     const textarea = document.getElementById('note-text');
     const note = textarea.value.trim();
     if (!note) return;
 
-    fetch(API + '/api/admin/person/' + p.id + '/note', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ note, reviewer: 'Dad' }),
-    }).then(r => r.json()).then(d => {
-      if (d.error) { showToast(d.error, true); return; }
+    try {
+      const resp = await fetch(`/api/admin/person/${p.id}/note`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note, author: 'Dad' }),
+      });
+      const result = await resp.json();
+      if (result.error) { showToast(result.error, true); return; }
       textarea.value = '';
       showToast('Note added');
       loadPerson(p.id);
-    }).catch(() => showToast('Failed to add note', true));
+    } catch (e) { showToast('Failed to add note', true); }
   });
 
-  // Delete notes
   document.querySelectorAll('.note-delete[data-nid]').forEach(btn => {
     btn.addEventListener('click', () => {
       const nid = btn.dataset.nid;
-      if (!confirm('Delete this note?')) return;
-      fetch(API + '/api/admin/note/' + nid + '/delete', { method: 'POST' })
-        .then(r => r.json())
-        .then(() => { showToast('Note deleted'); loadPerson(p.id); })
-        .catch(() => showToast('Failed to delete', true));
+      const noteText = btn.parentElement.querySelector('.note-text')?.textContent || '';
+
+      openModal('🗑️', 'Delete Note?', `
+        <p>Are you sure you want to delete this note?</p>
+        <div class="note-item" style="margin-top:0.5rem">
+          <div class="note-text">${esc(noteText.substring(0, 200))}${noteText.length > 200 ? '…' : ''}</div>
+        </div>
+        <div class="backup-note">🛡️ A backup will be created before deleting.</div>
+      `, 'Delete Note', async () => {
+        closeModal();
+        try {
+          const resp = await fetch(`/api/admin/note/${nid}/delete`, { method: 'POST' });
+          const result = await resp.json();
+          if (result.error) { showToast(result.error, true); return; }
+          showToast('Note deleted');
+          loadPerson(currentPerson.id);
+        } catch (e) { showToast('Delete failed', true); }
+      }, true);
     });
   });
 }
+
+/* ═══════════════════════════════════════════════
+   Wire relationship adding
+   ═══════════════════════════════════════════════ */
+function wireRelationship(p) {
+  const searchInput = document.getElementById('rel-search');
+  if (!searchInput) return;
+  const resultsDiv = document.getElementById('rel-results');
+  const selectedDiv = document.getElementById('rel-selected');
+  let relSearchTimeout = null;
+  let selectedOther = null;
+
+  searchInput.addEventListener('input', () => {
+    clearTimeout(relSearchTimeout);
+    const q = searchInput.value.trim();
+    if (q.length < 2) { resultsDiv.innerHTML = ''; return; }
+
+    relSearchTimeout = setTimeout(async () => {
+      try {
+        const resp = await fetch('/api/admin/people?q=' + encodeURIComponent(q) + '&page=1');
+        const data = await resp.json();
+        resultsDiv.innerHTML = data.people
+          .filter(r => r.id !== p.id)
+          .slice(0, 10)
+          .map(r => {
+            const name = r.name || `${r.given_name || ''} ${r.surname || ''}`.trim();
+            return `<div style="padding:0.3rem 0.5rem;cursor:pointer;border-bottom:1px solid #f0ede6"
+                         class="rel-option" data-id="${r.id}" data-name="${esc(name)}"
+                         data-dates="${esc(fmtRange(r.birth_date, r.death_date))}"
+                         onmouseover="this.style.background='#fdf6e3'"
+                         onmouseout="this.style.background=''">
+              ${esc(name)} <span style="color:var(--fg3);font-size:0.7rem">${fmtRange(r.birth_date, r.death_date)}</span>
+            </div>`;
+          }).join('') || '<div style="padding:0.3rem;color:var(--fg3)">No matches</div>';
+
+        resultsDiv.querySelectorAll('.rel-option').forEach(opt => {
+          opt.addEventListener('click', () => {
+            selectedOther = {
+              id: parseInt(opt.dataset.id),
+              name: opt.dataset.name,
+              dates: opt.dataset.dates,
+            };
+            resultsDiv.innerHTML = '';
+            searchInput.value = '';
+
+            const relType = document.getElementById('rel-type').value;
+            const thisName = `${p.given_name || ''} ${p.surname || ''}`.trim();
+            let desc;
+            if (relType === 'parent_child_parent') desc = `${thisName} is parent of ${selectedOther.name}`;
+            else if (relType === 'parent_child_child') desc = `${thisName} is child of ${selectedOther.name}`;
+            else desc = `${thisName} is spouse of ${selectedOther.name}`;
+
+            selectedDiv.innerHTML = `
+              <div style="padding:0.5rem 0.7rem;background:#e8f5e9;border-radius:6px;font-size:0.85rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+                <span>✓ ${esc(desc)}</span>
+                <button class="btn btn-success btn-sm" id="confirm-rel-btn" style="margin-left:auto">
+                  Confirm & Add
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('rel-selected').innerHTML='';document.getElementById('rel-search').value=''">
+                  Cancel
+                </button>
+              </div>
+            `;
+
+            document.getElementById('confirm-rel-btn').addEventListener('click', () => {
+              addRelationshipConfirm(p, selectedOther, relType, desc);
+            });
+          });
+        });
+      } catch (e) { resultsDiv.innerHTML = '<div style="color:var(--red)">Search failed</div>'; }
+    }, 300);
+  });
+}
+
+function addRelationshipConfirm(person, other, relTypeRaw, description) {
+  openModal('🔗', 'Add Family Connection?', `
+    <p style="font-size:0.9rem;margin-bottom:0.5rem;">You're about to add this family connection:</p>
+    <div style="padding:0.8rem;background:#e3f2fd;border-radius:6px;font-size:1rem;text-align:center;font-weight:600;margin-bottom:0.5rem;">
+      ${esc(description)}
+    </div>
+    <div class="backup-note">🛡️ A backup will be created before adding this connection.</div>
+  `, 'Add Connection', async () => {
+    closeModal();
+
+    let p1, p2, relType;
+    if (relTypeRaw === 'parent_child_parent') {
+      p1 = person.id; p2 = other.id; relType = 'parent_child';
+    } else if (relTypeRaw === 'parent_child_child') {
+      p1 = other.id; p2 = person.id; relType = 'parent_child';
+    } else {
+      p1 = person.id; p2 = other.id; relType = 'spouse';
+    }
+
+    try {
+      const resp = await fetch('/api/admin/relationship/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ person1_id: p1, person2_id: p2, rel_type: relType, editor: 'Dad' }),
+      });
+      const result = await resp.json();
+      if (result.error) { showToast(result.error, true); return; }
+      showToast(result.message || 'Relationship added!');
+      loadPerson(person.id);
+      loadStats();
+    } catch (e) { showToast('Failed: ' + e.message, true); }
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   Add New Person
+   ═══════════════════════════════════════════════ */
+function showAddPerson() {
+  if (!isServerMode) {
+    showToast('Adding people requires the admin server. Run: python admin_server.py', true);
+    return;
+  }
+
+  const fieldLabels = [
+    ['given_name', 'Given Name *', 'text', 'First name(s)'],
+    ['surname', 'Surname', 'text', 'Family name'],
+    ['sex', 'Sex', 'select', ''],
+    ['birth_date', 'Birth Date', 'text', 'YYYY-MM-DD or just YYYY'],
+    ['birth_place', 'Birth Place', 'text', 'City, State, Country'],
+    ['death_date', 'Death Date', 'text', 'YYYY-MM-DD or just YYYY'],
+    ['death_place', 'Death Place', 'text', 'City, State, Country'],
+    ['notes', 'Notes', 'textarea', 'Any notes about this person'],
+  ];
+
+  let html = `<p style="margin-bottom:0.8rem;font-size:0.9rem">Add a new person to the family tree:</p>
+    <div class="edit-grid">`;
+
+  for (const [field, label, type, placeholder] of fieldLabels) {
+    if (type === 'select') {
+      html += `<div class="field-group">
+        <label class="field-label">${label}</label>
+        <select class="field-select" id="add-${field}">
+          <option value="">Unknown</option>
+          <option value="M">Male</option>
+          <option value="F">Female</option>
+        </select>
+      </div>`;
+    } else if (type === 'textarea') {
+      html += `<div class="field-group full">
+        <label class="field-label">${label}</label>
+        <textarea class="field-input" id="add-${field}" rows="2" placeholder="${placeholder}"></textarea>
+      </div>`;
+    } else {
+      html += `<div class="field-group">
+        <label class="field-label">${label}</label>
+        <input class="field-input" id="add-${field}" placeholder="${placeholder}">
+      </div>`;
+    }
+  }
+
+  html += `</div>
+    <div class="backup-note">🛡️ A backup will be created before adding.</div>`;
+
+  openModal('➕', 'Add New Person', html, 'Add Person', async () => {
+    const data = {};
+    for (const [field] of fieldLabels) {
+      const el = document.getElementById('add-' + field);
+      if (el && el.value.trim()) data[field] = el.value.trim();
+    }
+
+    if (!data.given_name) {
+      showToast('Given name is required', true);
+      return;
+    }
+
+    closeModal();
+
+    // Second confirmation with summary
+    const name = `${data.given_name || ''} ${data.surname || ''}`.trim();
+    const fieldNames = { given_name: 'Given Name', surname: 'Surname', sex: 'Sex', birth_date: 'Birth Date', birth_place: 'Birth Place', death_date: 'Death Date', death_place: 'Death Place', notes: 'Notes' };
+    const summary = Object.entries(data)
+      .map(([k, v]) => `<div class="change-row"><div class="change-label">${fieldNames[k] || k}</div><div class="change-values"><div class="change-set">${esc(v)}</div></div></div>`)
+      .join('');
+
+    openModal('✅', 'Confirm New Person', `
+      <p style="margin-bottom:0.5rem">Please confirm you want to add <strong>${esc(name)}</strong>:</p>
+      <div class="change-list">${summary}</div>
+      <div class="backup-note">🛡️ Database will be backed up first.</div>
+    `, 'Confirm & Add', async () => {
+      closeModal();
+      try {
+        const resp = await fetch('/api/admin/person/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...data, editor: 'Dad' }),
+        });
+        const result = await resp.json();
+        if (result.error) { showToast(result.error, true); return; }
+        showToast(result.message || `Added ${name}`);
+        loadStats();
+        loadPeople();
+        if (result.id) setTimeout(() => loadPerson(result.id), 500);
+      } catch (e) { showToast('Failed: ' + e.message, true); }
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   Recent Edits
+   ═══════════════════════════════════════════════ */
+async function showRecentEdits() {
+  try {
+    const resp = await fetch('/api/admin/edits?limit=30');
+    const edits = await resp.json();
+
+    let html;
+    if (!edits.length) {
+      html = '<p style="color:var(--fg3)">No edits yet.</p>';
+    } else {
+      html = edits.map(e => {
+        const name = `${e.given_name || ''} ${e.surname || ''}`.trim();
+        return `<div class="edit-item">
+          <strong style="cursor:pointer;color:var(--accent)" onclick="closeModal();loadPerson(${e.person_id})">${esc(name || 'Person #' + e.person_id)}</strong> —
+          <span class="edit-field">${esc(e.action || '')}: ${esc(e.field || '')}</span>
+          ${e.old_value ? '<span class="edit-old">' + esc(e.old_value) + '</span> → ' : ''}
+          <span class="edit-new">${esc(e.new_value || '')}</span>
+          <div class="edit-date">${fmtDate(e.edit_date)} · ${esc(e.editor || 'Dad')}${e.backup_file ? ' · 🛡️' : ''}</div>
+        </div>`;
+      }).join('');
+    }
+
+    openModal('📋', 'Recent Changes', html, null);
+  } catch (e) { showToast('Could not load edits', true); }
+}
+
+/* ═══════════════════════════════════════════════
+   Rebuild site data
+   ═══════════════════════════════════════════════ */
+function rebuildData() {
+  if (!isServerMode) {
+    showToast('Rebuild requires the admin server. Run: python admin_server.py', true);
+    return;
+  }
+
+  openModal('🔄', 'Rebuild Site Data?', `
+    <p>This will regenerate all JSON data files from the database so the live site reflects your changes.</p>
+    <p style="margin-top:0.5rem;font-size:0.85rem;color:var(--fg2)">This runs build.py and takes a few seconds.</p>
+  `, 'Rebuild Now', async () => {
+    closeModal();
+    showToast('Rebuilding data files…');
+    try {
+      const resp = await fetch('/api/admin/rebuild', { method: 'POST' });
+      const result = await resp.json();
+      if (result.error) { showToast(result.error, true); return; }
+      showToast(result.message || 'Data rebuilt successfully!');
+    } catch (e) { showToast('Rebuild failed: ' + e.message, true); }
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   Modal system
+   ═══════════════════════════════════════════════ */
+function openModal(icon, title, bodyHtml, confirmText, onConfirm, isDanger) {
+  document.getElementById('modal-header').innerHTML = `
+    <span class="modal-icon">${icon}</span>
+    <h3>${title}</h3>
+  `;
+  document.getElementById('modal-body').innerHTML = bodyHtml;
+
+  const footer = document.getElementById('modal-footer');
+  if (confirmText && onConfirm) {
+    footer.innerHTML = `
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn ${isDanger ? 'btn-danger' : 'btn-primary'}" id="modal-confirm-btn">${confirmText}</button>
+    `;
+    document.getElementById('modal-confirm-btn').addEventListener('click', onConfirm);
+  } else {
+    footer.innerHTML = `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`;
+  }
+
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// Close modal on overlay click
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// Close modal on Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
 
 /* ═══════════════════════════════════════════════
    Helpers
@@ -930,7 +1201,7 @@ function showToast(msg, isError) {
   t.textContent = msg;
   t.style.background = isError ? 'var(--red)' : '#2d9a2d';
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+  setTimeout(() => t.classList.remove('show'), 3000);
 }
 
 function fmtRange(b, d) {
@@ -939,35 +1210,47 @@ function fmtRange(b, d) {
   const dy = d ? (yr(d) || d) : '';
   return dy ? `${by} – ${dy}` : `b. ${by}`;
 }
-function yr(s) { if (!s) return null; const m = s.match(/(\d{4})/); return m ? m[1] : null; }
+function yr(s) { if (!s) return null; const m = String(s).match(/(\d{4})/); return m ? m[1] : null; }
 function fmtDate(s) {
   if (!s) return '';
   try { return new Date(s).toLocaleDateString(); } catch { return s; }
 }
-function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-function encPath(p) {
-  if (!p) return '';
-  return p.replace(/\\/g, '/').split('/').map(s => encodeURIComponent(s)).join('/');
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
 }
+
+/* ═══════════════════════════════════════════════
+   Controls
+   ═══════════════════════════════════════════════ */
+document.getElementById('search-input').addEventListener('input', () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => { currentPage = 1; loadPeople(); }, 300);
+});
+document.getElementById('prev-btn').addEventListener('click', () => { if (currentPage > 1) { currentPage--; loadPeople(); } });
+document.getElementById('next-btn').addEventListener('click', () => { if (currentPage < totalPages) { currentPage++; loadPeople(); } });
+
+// Start
+init();
 </script>
-<script src="/data/lightbox.js"></script>
+
 <script src="/data/help-widget.js"></script>
 <script>
-initHelp({
-  title: 'Dad\'s Desk — Admin',
-  intro: 'The admin panel for editing person records, uploading documents, and managing notes. Changes save directly to the database via the review server.',
-  sections: [
-    { title: 'Editing', icon: '✏️', html: `
-      <p>Click any person to open their edit form. You can update names, dates, places, and confidence. Changes save when you click <strong>Save</strong>.</p>
-    ` },
-    { title: 'Documents', icon: '📄', html: `
-      <p>Upload new document scans from the person\'s detail view. Drag & drop or use the file picker. The server processes OCR automatically.</p>
-    ` },
-    { title: 'Notes', icon: '📝', html: `
-      <p>Add research notes to any person. Notes are timestamped and attributed to the current reviewer name (top right).</p>
-    ` }
-  ]
-});
+if (typeof initHelp === 'function') {
+  initHelp({
+    title: "Dad's Desk — Admin",
+    intro: 'Add and edit people in the family tree. Every change creates an automatic database backup first — nothing can be lost.',
+    sections: [
+      { title: 'Safety', icon: '🛡️', html: '<p><strong>Every change is safe.</strong> Before any edit, the database is automatically backed up. You can always undo.</p><p>The green "Protected" indicator in the header confirms backups are active.</p>' },
+      { title: 'Editing People', icon: '✏️', html: '<ul><li>Click a person from the list</li><li>Edit any field — changed fields glow gold</li><li>Click <strong>Review &amp; Save</strong></li><li>Review the exact changes in the confirmation popup</li><li>Click <strong>Save Changes</strong> to confirm</li></ul>' },
+      { title: 'Adding People', icon: '➕', html: '<p>Click the green <strong>Add New Person</strong> button. Fill in what you know. You\'ll get a confirmation before anything is saved.</p>' },
+      { title: 'Family Connections', icon: '🔗', html: '<p>When viewing a person, use "Add Family Connection" to link them as parent, child, or spouse of someone already in the database.</p>' },
+      { title: 'Rebuilding', icon: '🔄', html: '<p>After making changes, click <strong>Rebuild Site Data</strong> to regenerate the JSON files. Then push to GitHub to update the live site.</p>' }
+    ]
+  });
+}
 </script>
 </body>
 </html>
