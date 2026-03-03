@@ -11,11 +11,9 @@
   --fg: #2a2520;
   --fg2: #6b6360;
   --accent: #8b6914;
-  --accent2: #b8860b;
   --border: #d8d2c8;
   --font: 'Georgia', 'Times New Roman', serif;
   --mono: 'Consolas', 'Monaco', monospace;
-  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 html { font-size: 16px; }
 body {
@@ -26,18 +24,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  position: relative;
 }
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: url('img/back.svg') center center / 100% auto no-repeat;
-  opacity: 0.05;
-  pointer-events: none;
-  z-index: 0;
-}
-body > * { position: relative; z-index: 1; }
 a { color: var(--accent); }
 
 /* ── Header ── */
@@ -49,9 +36,8 @@ header {
   align-items: center;
   gap: 2rem;
 }
-header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
+header h1 { font-size: 1.1rem; letter-spacing: 0.05em; }
 header h1 span { font-weight: 300; opacity: 0.6; }
-header h1 a { color: inherit; text-decoration: none; }
 nav { display: flex; gap: 0.5rem; }
 nav a {
   background: transparent;
@@ -63,296 +49,94 @@ nav a {
   text-decoration: none;
   transition: all 0.15s;
 }
-nav a:hover, nav a.active { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
-nav a.active { font-weight: bold; }
-.header-right { margin-left: auto; display: flex; align-items: center; }
-.maint-btn {
-  background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--bg);
-  padding: 0.3rem 0.65rem; border-radius: 6px; font-size: 0.85rem;
-  cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.35rem;
-}
-.maint-btn:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
-.maint-btn .maint-label { font-size: 0.75rem; font-family: var(--sans); }
-/* Password modal */
-.pw-overlay {
-  display: none; position: fixed; inset: 0; z-index: 9999;
-  background: rgba(0,0,0,0.55); align-items: center; justify-content: center;
-}
-.pw-overlay.open { display: flex; }
-.pw-box {
-  background: var(--bg); border-radius: 12px; padding: 2rem 2.5rem;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3); text-align: center;
-  max-width: 340px; width: 90%;
-}
-.pw-box h3 { margin: 0 0 0.3rem; font-size: 1.1rem; color: var(--fg); }
-.pw-box p { font-size: 0.8rem; color: var(--fg2); margin: 0 0 1.2rem; }
-.pw-box input {
-  width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border);
-  border-radius: 8px; font-size: 0.95rem; font-family: var(--mono);
-  text-align: center; box-sizing: border-box;
-}
-.pw-box input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(139,105,20,0.15); }
-.pw-box .pw-err { color: #c0392b; font-size: 0.78rem; margin-top: 0.5rem; min-height: 1.2em; }
-.pw-box .pw-actions { display: flex; gap: 0.75rem; margin-top: 1rem; justify-content: center; }
-.pw-box button {
-  padding: 0.5rem 1.4rem; border-radius: 8px; font-size: 0.85rem; cursor: pointer;
-  font-family: var(--sans); border: 1px solid var(--border); transition: all 0.15s;
-}
-.pw-box .pw-cancel { background: #fff; color: var(--fg); }
-.pw-box .pw-cancel:hover { background: #f0ede6; }
-.pw-box .pw-submit { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
-.pw-box .pw-submit:hover { background: var(--accent2); }
+nav a:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
 
-/* ── Hero ── */
-.hero {
-  text-align: center;
-  padding: 1.5rem 2rem 2rem;
-}
-.hero img {
-  height: 20rem;
-  display: block;
-  margin: 0 auto 1.5rem;
-}
-.hero h2 {
-  font-size: 1.1rem;
-  font-weight: 400;
-  color: var(--fg2);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  font-family: var(--sans);
-  margin-bottom: 1rem;
-}
-.hero .tagline {
-  font-size: 1.5rem;
-  font-weight: 400;
-  max-width: 600px;
-  margin: 0 auto 1.5rem;
-  line-height: 1.5;
-  color: var(--fg);
-}
-.hero .enter-btn {
-  display: inline-block;
-  padding: 0.75rem 2.5rem;
-  background: var(--accent);
-  color: #fff;
-  border-radius: 8px;
-  text-decoration: none;
-  font-size: 1rem;
-  font-family: var(--sans);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  transition: all 0.2s;
-  border: 2px solid var(--accent);
-}
-.hero .enter-btn:hover { background: var(--accent2); border-color: var(--accent2); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(139,105,20,0.3); }
-
-/* ── Stats Bar ── */
-.stats-bar {
-  display: flex;
-  justify-content: center;
-  gap: 2.5rem;
-  padding: 1.5rem 2rem;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  background: #fff;
-  flex-wrap: wrap;
-}
-.stats-bar .sb {
-  text-align: center;
-}
-.stats-bar .sb .n {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--accent);
-  font-family: var(--mono);
-  display: block;
-}
-.stats-bar .sb .label {
-  font-size: 0.7rem;
-  color: var(--fg2);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-family: var(--sans);
-  font-weight: 600;
-}
-
-/* ── Content sections ── */
-.content {
-  max-width: 860px;
+/* ── Main ── */
+main {
+  flex: 1;
+  max-width: 680px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 4rem 2rem 3rem;
 }
-
-/* ── About section ── */
-.about {
-  padding: 3rem 0;
-}
-.about h3 {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--fg2);
-  margin-bottom: 1.2rem;
-  font-family: var(--sans);
-  font-weight: 700;
-}
-.about-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-.about-block h4 {
-  font-size: 1rem;
-  font-weight: 700;
-  margin-bottom: 0.4rem;
+h2 {
+  font-size: 2rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  margin-bottom: 1.5rem;
   color: var(--fg);
 }
-.about-block p {
-  font-size: 0.92rem;
+.subtitle {
+  font-size: 1.1rem;
   color: var(--fg2);
-  line-height: 1.6;
+  margin-bottom: 2.5rem;
+  max-width: 500px;
 }
-
-/* ── Features grid ── */
-.features {
-  padding: 2rem 0 3rem;
-  border-top: 1px solid var(--border);
-}
-.features h3 {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--fg2);
-  margin-bottom: 1.2rem;
-  font-family: var(--sans);
-  font-weight: 700;
-}
-.feat-grid {
+.stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
+  gap: 1rem;
+  margin-bottom: 3rem;
 }
-.feat-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  padding: 1.1rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+.stat {
   background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.2rem;
+  text-align: center;
+}
+.stat .n {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  display: block;
+  font-family: var(--mono);
+}
+.stat .label {
+  font-size: 0.75rem;
+  color: var(--fg2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 0.3rem;
+  display: block;
+}
+
+.pieces {
+  margin-top: 2rem;
+}
+.pieces h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--fg2);
+  margin-bottom: 1rem;
+}
+.piece-list { list-style: none; }
+.piece-list li { margin-bottom: 0.5rem; }
+.piece-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
   text-decoration: none;
   color: var(--fg);
+  background: #fff;
   transition: all 0.15s;
+  width: 100%;
 }
-.feat-card:hover {
+.piece-list a:hover {
   border-color: var(--accent);
   background: #fefcf6;
-  box-shadow: 0 2px 8px rgba(139,105,20,0.1);
-  transform: translateY(-1px);
-  text-decoration: none;
 }
-.feat-icon { font-size: 1.3rem; }
-.feat-title { font-weight: 700; font-size: 0.88rem; }
-.feat-desc { font-size: 0.72rem; color: var(--fg2); line-height: 1.4; }
-
-/* ── Coverage section ── */
-.coverage {
-  padding: 2rem 0 3rem;
-  border-top: 1px solid var(--border);
-}
-.coverage h3 {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
+.piece-list .icon { font-size: 1.2rem; width: 2rem; text-align: center; }
+.piece-list .title { font-weight: 600; }
+.piece-list .desc {
+  font-size: 0.8rem;
   color: var(--fg2);
-  margin-bottom: 1.2rem;
-  font-family: var(--sans);
-  font-weight: 700;
-}
-.coverage-items {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-}
-.cov-item {
-  text-align: center;
-  padding: 1rem 0.5rem;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-.cov-item .cov-icon { font-size: 1.5rem; margin-bottom: 0.3rem; }
-.cov-item .cov-label {
-  font-size: 0.72rem;
-  font-family: var(--sans);
-  font-weight: 600;
-  color: var(--fg);
-  display: block;
-}
-.cov-item .cov-detail {
-  font-size: 0.65rem;
-  color: var(--fg2);
-  margin-top: 0.15rem;
-  display: block;
+  margin-left: auto;
 }
 
-/* ── Project info ── */
-.project-info {
-  padding: 2rem 0 3rem;
-  border-top: 1px solid var(--border);
-}
-.project-info h3 {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--fg2);
-  margin-bottom: 1.2rem;
-  font-family: var(--sans);
-  font-weight: 700;
-}
-.project-text {
-  font-size: 0.95rem;
-  color: var(--fg);
-  line-height: 1.8;
-  max-width: 700px;
-}
-.project-text p { margin-bottom: 1rem; }
-.project-text a { text-decoration: underline; }
-
-/* ── Confidence breakdown ── */
-.confidence-bar {
-  display: flex;
-  height: 6px;
-  border-radius: 3px;
-  overflow: hidden;
-  margin: 1rem 0 0.5rem;
-  background: #eae6dd;
-}
-.confidence-bar .seg { height: 100%; }
-.conf-legend {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.68rem;
-  font-family: var(--sans);
-  color: var(--fg2);
-  flex-wrap: wrap;
-}
-.conf-legend span::before {
-  content: '';
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  margin-right: 0.3rem;
-  vertical-align: middle;
-}
-.conf-legend .high::before { background: #2d9a2d; }
-.conf-legend .med::before { background: #c9a100; }
-.conf-legend .low::before { background: #d4740a; }
-.conf-legend .spec::before { background: #c0392b; }
-
-/* ── Footer ── */
 footer {
   text-align: center;
   padding: 2rem;
@@ -360,264 +144,53 @@ footer {
   color: var(--fg2);
   border-top: 1px solid var(--border);
 }
-
-/* ── Responsive ── */
-@media (max-width: 600px) {
-  header { padding: 0.75rem 1rem; gap: 0.75rem; flex-wrap: wrap; }
-  nav { gap: 0.3rem; }
-  nav a { padding: 0.25rem 0.5rem; font-size: 0.7rem; }
-  .maint-btn .maint-label { display: none; }
-  .hero { padding: 1rem 1rem 1.5rem; }
-  .hero img { height: 14rem; }
-  .hero .tagline { font-size: 1.2rem; }
-  .stats-bar { gap: 1.5rem; padding: 1rem 1rem; }
-  .stats-bar .sb .n { font-size: 1.3rem; }
-  .content { padding: 0 1rem; }
-  .about-grid { grid-template-columns: 1fr; gap: 1rem; }
-  .feat-grid { grid-template-columns: 1fr; }
-  .coverage-items { grid-template-columns: repeat(2, 1fr); }
-}
 </style>
 </head>
 <body>
 
 <header>
-  <h1><a href="/">Lack <span>Lineage</span></a></h1>
+  <h1>Lack <span>Lineage</span></h1>
   <nav>
-    <a href="/dashboard.html">Dashboard</a>
-    <a href="/search.html">Search</a>
-    <a href="/research.html">Research</a>
     <a href="/graph.html">Graph</a>
-    <a href="/places.html">Places</a>
     <a href="/tree.html">Tree</a>
-    <a href="/globe.html">Globe</a>
-    <a href="/atlas.html">Atlas</a>
-    <a href="/rivers.html">Rivers</a>
     <a href="/sunburst.html">Sunburst</a>
   </nav>
-  <div class="header-right">
-    <button class="maint-btn" onclick="document.getElementById('pw-modal').classList.add('open')" title="Dad's Desk — Maintenance">
-      🔧 <span class="maint-label">Maintenance</span>
-    </button>
-  </div>
 </header>
 
-<div id="pw-modal" class="pw-overlay" onclick="if(event.target===this)this.classList.remove('open')">
-  <div class="pw-box">
-    <h3>🔒 Dad's Desk</h3>
-    <p>Enter the password to access maintenance tools</p>
-    <input type="password" id="pw-input" placeholder="Password" autocomplete="off">
-    <div class="pw-err" id="pw-err"></div>
-    <div class="pw-actions">
-      <button class="pw-cancel" onclick="document.getElementById('pw-modal').classList.remove('open')">Cancel</button>
-      <button class="pw-submit" onclick="checkMaintPw()">Enter</button>
-    </div>
-  </div>
-</div>
-<script>
-function checkMaintPw(){
-  var v=document.getElementById('pw-input').value;
-  if(v==='lack2026'){sessionStorage.setItem('dad-auth','1');window.location.href='/admin.html';}
-  else{document.getElementById('pw-err').textContent='Wrong password — try again';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();}
-}
-document.getElementById('pw-input').addEventListener('keydown',function(e){if(e.key==='Enter')checkMaintPw();});
-</script>
-
-<section class="hero">
-  <img src="img/logo-header.svg" alt="LACK LINEAGE">
-  <h2>A Family History Database</h2>
-  <p class="tagline">
-    Five centuries of births, marriages, migrations, and forgettings —
-    traced from German villages and Irish parishes to the coal towns of Pennsylvania.
+<main>
+  <h2>LACK</h2>
+  <p class="subtitle">
+    A family database. 2,152 people across five centuries.
+    What we know, what we don't, and the shape of forgetting.
   </p>
-  <a href="/dashboard.html" class="enter-btn">Enter the Archive</a>
-</section>
 
-<div class="stats-bar" id="stats-bar">
-  <div class="sb"><span class="n" id="s-people">—</span><span class="label">People</span></div>
-  <div class="sb"><span class="n" id="s-surnames">—</span><span class="label">Surnames</span></div>
-  <div class="sb"><span class="n" id="s-rels">—</span><span class="label">Relationships</span></div>
-  <div class="sb"><span class="n" id="s-docs">—</span><span class="label">Documents</span></div>
-  <div class="sb"><span class="n" id="s-matches">—</span><span class="label">Doc Matches</span></div>
-  <div class="sb"><span class="n" id="s-events">—</span><span class="label">Events</span></div>
-</div>
+  <div class="stats" id="stats">
+    <div class="stat"><span class="n" id="s-people">—</span><span class="label">People</span></div>
+    <div class="stat"><span class="n" id="s-surnames">—</span><span class="label">Surnames</span></div>
+    <div class="stat"><span class="n" id="s-rels">—</span><span class="label">Relationships</span></div>
+  </div>
 
-<div class="content">
+  <div class="pieces">
+    <h3>Pieces</h3>
+    <ul class="piece-list">
+      <li>
+        <a href="/graph.html">
+          <span class="icon">◉</span>
+          <span class="title">Family Graph</span>
+          <span class="desc">Force-directed network</span>
+        </a>
+      </li>
+    </ul>
+  </div>
 
-  <!-- About -->
-  <section class="about">
-    <h3>About This Project</h3>
-    <div class="about-grid">
-      <div class="about-block">
-        <h4>The Database</h4>
-        <p>
-          Built from the lifelong genealogical research of George Lack — boxes of birth certificates,
-          obituaries, census records, military papers, and handwritten notes — digitized, indexed,
-          and cross-referenced into a searchable archive. Every person has a confidence score.
-          Every document is linked to every name it mentions.
-        </p>
-      </div>
-      <div class="about-block">
-        <h4>The Practice</h4>
-        <p>
-          Extended by <a href="https://monospacepoetry.com">Ryan Lack</a> as a project at the intersection
-          of genealogy and art practice — measuring what survives, performing what doesn't,
-          and refusing to let people be forgotten. The site itself is a living research instrument:
-          every visualization is built from the raw data.
-        </p>
-      </div>
-      <div class="about-block">
-        <h4>What's Here</h4>
-        <p>
-          <span id="about-people">1,251</span> individuals across <span id="about-surnames">600</span> family names,
-          connected by <span id="about-rels">2,046</span> relationships. <span id="about-docs">1,463</span>
-          scanned documents — photographs, certificates, wills, newspaper clippings — with OCR text
-          extraction and AI-assisted vision analysis.
-        </p>
-      </div>
-      <div class="about-block">
-        <h4>Data Confidence</h4>
-        <p>
-          Every record is scored for reliability. Some people are documented with a dozen primary sources.
-          Others exist only as a name on a census line. The system tracks this honestly — no invented certainty.
-        </p>
-        <div class="confidence-bar" id="conf-bar"></div>
-        <div class="conf-legend">
-          <span class="high" id="cl-high">High: —</span>
-          <span class="med" id="cl-med">Medium: —</span>
-          <span class="low" id="cl-low">Low: —</span>
-          <span class="spec" id="cl-spec">Speculative: —</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Features -->
-  <section class="features">
-    <h3>Explore</h3>
-    <div class="feat-grid">
-      <a href="/dashboard.html" class="feat-card">
-        <span class="feat-icon">📊</span>
-        <span class="feat-title">Dashboard</span>
-        <span class="feat-desc">Live statistics, quick search, recent updates, and activity feed</span>
-      </a>
-      <a href="/search.html" class="feat-card">
-        <span class="feat-icon">🔍</span>
-        <span class="feat-title">Advanced Search</span>
-        <span class="feat-desc">Query by name, date, place, confidence, document type, OCR text</span>
-      </a>
-      <a href="/research.html" class="feat-card">
-        <span class="feat-icon">🧩</span>
-        <span class="feat-title">Research Hub</span>
-        <span class="feat-desc">Duplicates, missing data, anomalies, unmatched docs — ranked leads</span>
-      </a>
-      <a href="/graph.html" class="feat-card">
-        <span class="feat-icon">🕸️</span>
-        <span class="feat-title">Family Graph</span>
-        <span class="feat-desc">Force-directed network of all people and relationships — 7 color modes</span>
-      </a>
-      <a href="/places.html" class="feat-card">
-        <span class="feat-icon">📍</span>
-        <span class="feat-title">Places Map</span>
-        <span class="feat-desc">Precision-aware map with German heritage glow, migration arcs, time filtering</span>
-      </a>
-      <a href="/tree.html" class="feat-card">
-        <span class="feat-icon">📜</span>
-        <span class="feat-title">Tree View</span>
-        <span class="feat-desc">Traditional pedigree chart — ancestors and descendants from any root</span>
-      </a>
-      <a href="/globe.html" class="feat-card">
-        <span class="feat-icon">🌍</span>
-        <span class="feat-title">3D Globe</span>
-        <span class="feat-desc">Interactive globe with migration arcs, era colors, and location clusters</span>
-      </a>
-      <a href="/atlas.html" class="feat-card">
-        <span class="feat-icon">🗺️</span>
-        <span class="feat-title">Atlas</span>
-        <span class="feat-desc">Geographic deep-dive — regions, counties, and country breakdowns</span>
-      </a>
-      <a href="/rivers.html" class="feat-card">
-        <span class="feat-icon">🌊</span>
-        <span class="feat-title">Rivers</span>
-        <span class="feat-desc">Streaming visualization of lineage flows across time</span>
-      </a>
-      <a href="/documents.html" class="feat-card">
-        <span class="feat-icon">📄</span>
-        <span class="feat-title">Documents</span>
-        <span class="feat-desc">Browse the full archive — photos, certificates, wills, obituaries</span>
-      </a>
-      <a href="/profile.html" class="feat-card">
-        <span class="feat-icon">👤</span>
-        <span class="feat-title">People</span>
-        <span class="feat-desc">Individual profiles with events, relationships, documents, and confidence</span>
-      </a>
-      <a href="/surnames.html" class="feat-card">
-        <span class="feat-icon">🔤</span>
-        <span class="feat-title">Surnames</span>
-        <span class="feat-desc">Browse all family names — origins, frequency, and lineage threads</span>
-      </a>
-    </div>
-  </section>
-
-  <!-- Coverage -->
-  <section class="coverage">
-    <h3>Coverage</h3>
-    <div class="coverage-items">
-      <div class="cov-item">
-        <div class="cov-icon">🇩🇪</div>
-        <span class="cov-label">Germany</span>
-        <span class="cov-detail">Württemberg, Hessen, Pfalz, Elsass</span>
-      </div>
-      <div class="cov-item">
-        <div class="cov-icon">🇮🇪</div>
-        <span class="cov-label">Ireland</span>
-        <span class="cov-detail">Cork, Tipperary, Waterford</span>
-      </div>
-      <div class="cov-item">
-        <div class="cov-icon">🇺🇸</div>
-        <span class="cov-label">Pennsylvania</span>
-        <span class="cov-detail">Cambria, Blair, Centre, Bedford</span>
-      </div>
-      <div class="cov-item">
-        <div class="cov-icon">🇨🇦</div>
-        <span class="cov-label">Canada</span>
-        <span class="cov-detail">Québec, Ontario — French & British lines</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- More about the project -->
-  <section class="project-info">
-    <h3>How It Works</h3>
-    <div class="project-text">
-      <p>
-        The database was built from a GEDCOM export of George Lack's genealogical research,
-        enriched with document scanning, OCR text extraction, and AI-assisted vision analysis.
-        Every scanned photograph, certificate, and newspaper clipping has been indexed and
-        cross-referenced against the people in the database.
-      </p>
-      <p>
-        Confidence scores are computed from the number and quality of supporting documents.
-        A person backed by a birth certificate, census records, and family photographs scores higher
-        than someone known only from a single marriage record. The system is honest about what it
-        knows and what it's guessing.
-      </p>
-      <p>
-        The visualizations — graph, tree, globe, atlas, rivers, places map — are all generated
-        from the same underlying SQLite database. Nothing is decorative. Every node is a person.
-        Every edge is a documented relationship. Every dot on the map is a real place where
-        someone was born, married, or buried.
-      </p>
-      <p>
-        This is also an <a href="/letter.html">art project</a>. A letter to a dead grandfather.
-        A <a href="/related.html">tool for tracing connection</a>.
-        A <a href="/living.html">machine for watching time pass through families</a>.
-        And a <a href="/visualizations.html">set of thirteen ways of looking at lineage</a>.
-      </p>
-    </div>
-  </section>
-
-</div>
+  <p style="margin-top: 3rem; font-size: 0.85rem; color: var(--fg2); line-height: 1.8;">
+    Built from a database started by George Lack. Extended by
+    <a href="https://monospacepoetry.com">Ryan Lack</a>.
+    This project lives at the intersection of genealogy and art practice —
+    measuring what survives, performing what doesn't, and refusing to let
+    people be forgotten.
+  </p>
+</main>
 
 <footer>
   lacklineage.com · 2026
@@ -630,55 +203,8 @@ fetch('/data/stats.json')
     document.getElementById('s-people').textContent = s.total_people.toLocaleString();
     document.getElementById('s-surnames').textContent = s.unique_surnames.toLocaleString();
     document.getElementById('s-rels').textContent = s.total_relationships.toLocaleString();
-    document.getElementById('s-docs').textContent = (s.documents||0).toLocaleString();
-    document.getElementById('s-matches').textContent = (s.document_matches||0).toLocaleString();
-    document.getElementById('s-events').textContent = (s.total_events||0).toLocaleString();
-
-    // About section
-    document.getElementById('about-people').textContent = s.total_people.toLocaleString();
-    document.getElementById('about-surnames').textContent = s.unique_surnames.toLocaleString();
-    document.getElementById('about-rels').textContent = s.total_relationships.toLocaleString();
-    document.getElementById('about-docs').textContent = (s.documents||0).toLocaleString();
-
-    // Confidence breakdown
-    if (s.confidence) {
-      const c = s.confidence;
-      const total = c.high + c.medium + c.low + c.speculative;
-      const bar = document.getElementById('conf-bar');
-      bar.innerHTML = `
-        <div class="seg" style="width:${(c.high/total*100).toFixed(1)}%; background:#2d9a2d;"></div>
-        <div class="seg" style="width:${(c.medium/total*100).toFixed(1)}%; background:#c9a100;"></div>
-        <div class="seg" style="width:${(c.low/total*100).toFixed(1)}%; background:#d4740a;"></div>
-        <div class="seg" style="width:${(c.speculative/total*100).toFixed(1)}%; background:#c0392b;"></div>
-      `;
-      document.getElementById('cl-high').textContent = `High: ${c.high}`;
-      document.getElementById('cl-med').textContent = `Medium: ${c.medium}`;
-      document.getElementById('cl-low').textContent = `Low: ${c.low}`;
-      document.getElementById('cl-spec').textContent = `Speculative: ${c.speculative}`;
-    }
   })
   .catch(() => {});
-</script>
-<script src="/data/help-widget.js"></script>
-<script>
-initHelp({
-  title: 'Lack Lineage',
-  intro: 'The home page of Lack Lineage — a family history database built from George Lack\'s genealogical research, extended by Ryan Lack.',
-  keyboard: [
-    { key: '?', action: 'Toggle this help panel' }
-  ],
-  sections: [
-    { title: 'Getting Started', icon: '🏠', html: `
-      <p><strong>Enter the Archive</strong> to reach the Dashboard with live stats, quick search, and recent updates.</p>
-      <p>Use the navigation bar to jump directly to any tool: Search, Graph, Places, Tree, Globe, Atlas, or Rivers.</p>
-    ` },
-    { title: 'About the Data', icon: '📊', html: `
-      <p>The database contains over 1,200 people across 600 surnames, linked by 2,000+ relationships.</p>
-      <p>Over 1,400 scanned documents are indexed with OCR and AI vision analysis.</p>
-      <p>Confidence scores rate every record for reliability — from well-documented to speculative.</p>
-    ` }
-  ]
-});
 </script>
 </body>
 </html>

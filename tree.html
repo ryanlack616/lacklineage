@@ -19,8 +19,8 @@
   --shadow: 0 1px 3px rgba(0,0,0,0.08);
   --font: 'Georgia', 'Times New Roman', serif;
   --mono: 'Consolas', 'Monaco', monospace;
-  --male: #3b82f6;
-  --female: #ec4899;
+  --male: #4a7fb5;
+  --female: #b5564a;
   --unknown: #888;
 }
 html, body { height: 100%; overflow: hidden; }
@@ -39,7 +39,7 @@ header {
 header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
 header h1 span { font-weight: 300; opacity: 0.6; }
 header h1 a { color: inherit; text-decoration: none; }
-nav { display: flex; gap: 0.5rem; flex-wrap: wrap; flex: 1; }
+nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 nav a {
   background: transparent;
   border: 1px solid rgba(255,255,255,0.2);
@@ -57,79 +57,10 @@ nav a:hover, nav a.active {
 }
 nav a.active { font-weight: bold; }
 
-/* ── Header search ── */
-.header-search { position: relative; flex-shrink: 0; }
-.header-search input {
-  width: 200px;
-  font-family: var(--font);
-  font-size: 0.8rem;
-  padding: 0.3rem 0.6rem;
-  border: 1px solid rgba(255,255,255,0.25);
-  border-radius: var(--radius);
-  background: rgba(255,255,255,0.1);
-  color: var(--bg);
-  outline: none;
-  transition: all 0.15s;
-}
-.header-search input::placeholder { color: rgba(255,255,255,0.4); }
-.header-search input:focus {
-  background: rgba(255,255,255,0.18);
-  border-color: rgba(255,255,255,0.5);
-  width: 260px;
-}
-.header-search .search-results {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  width: 300px;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 0 0 var(--radius) var(--radius);
-  max-height: 250px;
-  overflow-y: auto;
-  z-index: 25;
-  display: none;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-.header-search .search-results .result {
-  padding: 0.4rem 0.6rem;
-  cursor: pointer;
-  font-size: 0.78rem;
-  border-bottom: 1px solid var(--border);
-  color: var(--fg);
-}
-.header-search .search-results .result:hover { background: #f0ece4; }
-.header-search .search-results .result .rname { font-weight: bold; }
-.header-search .search-results .result .rmeta { color: var(--fg2); font-size: 0.7rem; }
-
-/* ── Options toggle ── */
-.options-toggle {
-  position: fixed;
-  top: 60px;
-  left: 1rem;
-  z-index: 6;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.35rem 0.7rem;
-  font-family: var(--font);
-  font-size: 0.8rem;
-  cursor: pointer;
-  box-shadow: var(--shadow);
-  color: var(--fg2);
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  transition: all 0.15s;
-}
-.options-toggle:hover { color: var(--fg); border-color: var(--accent); }
-.options-toggle .arrow { transition: transform 0.2s; font-size: 0.6rem; }
-.options-toggle.open .arrow { transform: rotate(180deg); }
-
 /* ── Controls ── */
 .controls {
   position: fixed;
-  top: 90px;
+  top: 60px;
   left: 1rem;
   z-index: 5;
   background: var(--bg2);
@@ -139,15 +70,8 @@ nav a.active { font-weight: bold; }
   box-shadow: var(--shadow);
   font-size: 0.8rem;
   max-width: 260px;
-  max-height: calc(100vh - 110px);
+  max-height: calc(100vh - 80px);
   overflow-y: auto;
-  transition: transform 0.25s ease, opacity 0.25s ease;
-  transform-origin: top left;
-}
-.controls.collapsed {
-  transform: scaleY(0);
-  opacity: 0;
-  pointer-events: none;
 }
 .controls h3 { font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--accent); }
 .controls label { display: block; margin: 0.4rem 0 0.15rem; color: var(--fg2); font-size: 0.75rem; }
@@ -199,40 +123,33 @@ nav a.active { font-weight: bold; }
   border-color: var(--accent);
 }
 
-/* ── Marquee selection ── */
-.marquee {
-  fill: rgba(139,105,20,0.1);
-  stroke: var(--accent);
-  stroke-width: 1.5;
-  stroke-dasharray: 5 3;
-  pointer-events: none;
-}
-
-/* ── Selected nodes ── */
-.node.selected rect {
-  stroke-width: 3;
-  filter: drop-shadow(0 0 6px rgba(139,105,20,0.4));
-}
-.node.dragging { opacity: 0.85; cursor: grabbing; }
-
-/* ── Selection badge ── */
-.selection-badge {
-  position: fixed;
-  bottom: 3.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 6;
-  background: var(--accent);
-  color: #fff;
-  padding: 0.3rem 0.8rem;
-  border-radius: var(--radius);
-  font-size: 0.75rem;
+/* ── Search dropdown ── */
+.search-wrap { position: relative; }
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 20;
+  display: none;
   box-shadow: var(--shadow);
-  opacity: 0;
-  transition: opacity 0.2s;
-  pointer-events: none;
 }
-.selection-badge.visible { opacity: 1; }
+.search-results .result {
+  padding: 0.35rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.78rem;
+  border-bottom: 1px solid var(--border);
+  line-height: 1.3;
+}
+.search-results .result:hover { background: #f0ece4; }
+.search-results .result .rname { font-weight: bold; }
+.search-results .result .rmeta { color: var(--fg2); font-size: 0.7rem; }
 
 /* ── Tooltip ── */
 .tooltip {
@@ -263,14 +180,12 @@ svg:active { cursor: grabbing; }
   fill: var(--bg2);
   stroke-width: 2;
   cursor: pointer;
-  transition: fill 0.15s, stroke-width 0.15s;
+  transition: fill 0.15s;
 }
-.node rect:hover { fill: #f5f0e5; stroke-width: 2.5; }
-.node.root-node rect { stroke-width: 3; filter: drop-shadow(0 0 4px rgba(139,105,20,0.25)); }
+.node rect:hover { fill: #f5f0e5; }
 .node text { pointer-events: none; font-family: var(--font); }
 .node .node-name { font-size: 11px; font-weight: bold; fill: var(--fg); }
 .node .node-dates { font-size: 9px; fill: var(--fg2); }
-.node .node-place { font-size: 8px; fill: var(--fg2); font-style: italic; opacity: 0.7; }
 .node .node-spouse { font-size: 8.5px; fill: var(--fg2); font-style: italic; }
 .node .expand-indicator {
   font-size: 10px;
@@ -278,41 +193,16 @@ svg:active { cursor: grabbing; }
   font-weight: bold;
   cursor: pointer;
 }
-.node .confidence-dot {
-  pointer-events: none;
-}
 
 /* ── Links ── */
 .link {
   fill: none;
   stroke: var(--border);
   stroke-width: 1.5;
-  transition: stroke 0.2s, stroke-width 0.2s;
 }
 .link-highlight {
   stroke: var(--accent);
   stroke-width: 2.5;
-}
-
-/* ── Confidence legend ── */
-.conf-legend {
-  display: flex;
-  gap: 0.6rem;
-  margin-top: 0.6rem;
-  flex-wrap: wrap;
-}
-.conf-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.68rem;
-  color: var(--fg2);
-}
-.conf-swatch {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
 }
 
 /* ── Detail panel ── */
@@ -447,20 +337,17 @@ svg:active { cursor: grabbing; }
     <a href="/rivers.html">Rivers</a>
     <a href="/sunburst.html">Sunburst</a>
   </nav>
-  <div class="header-search">
-    <input type="text" id="search-input" placeholder="Find person… (/)" autocomplete="off">
-    <div class="search-results" id="search-results"></div>
-  </div>
 </header>
 
-<!-- Options toggle -->
-<button class="options-toggle" id="options-toggle">
-  <span class="arrow">▼</span> Options
-</button>
-
 <!-- Controls panel -->
-<div class="controls collapsed" id="controls-panel">
+<div class="controls">
   <h3>Tree Explorer</h3>
+
+  <label>Find person</label>
+  <div class="search-wrap">
+    <input type="text" id="search-input" placeholder="Type a name…" autocomplete="off">
+    <div class="search-results" id="search-results"></div>
+  </div>
 
   <label>Mode</label>
   <div class="mode-group">
@@ -475,24 +362,7 @@ svg:active { cursor: grabbing; }
   <button id="btn-fit">Fit to view</button>
 
   <div class="stat" id="stat-info"></div>
-
-  <label>Lines</label>
-  <div class="mode-group">
-    <button data-line="curved" class="active">Curved</button>
-    <button data-line="straight">Straight</button>
-    <button data-line="step">Step</button>
-  </div>
-
-  <div class="conf-legend">
-    <div class="conf-legend-item"><span class="conf-swatch" style="background:#2d9a2d"></span>High</div>
-    <div class="conf-legend-item"><span class="conf-swatch" style="background:#c9a100"></span>Medium</div>
-    <div class="conf-legend-item"><span class="conf-swatch" style="background:#d47a1a"></span>Low</div>
-    <div class="conf-legend-item"><span class="conf-swatch" style="background:#c44"></span>Speculative</div>
-  </div>
 </div>
-
-<!-- Selection badge -->
-<div class="selection-badge" id="selection-badge"></div>
 
 <!-- Tooltip -->
 <div class="tooltip" id="tooltip"></div>
@@ -517,7 +387,6 @@ svg:active { cursor: grabbing; }
   <button id="btn-reset">Reset</button>
   <button id="btn-collapse-all">Collapse all</button>
   <button id="btn-expand-all">Expand all</button>
-  <button id="btn-download-png" title="Save as PNG">&#128247; PNG</button>
 </div>
 
 <!-- Loading indicator -->
@@ -526,13 +395,12 @@ svg:active { cursor: grabbing; }
 <!-- SVG canvas -->
 <svg id="tree-svg"></svg>
 
-<script src="/data/lineage-shim.js"></script>
 <script>
 // ── Constants ──
-const NODE_W = 160, NODE_H = 60, NODE_RX = 6;
+const NODE_W = 150, NODE_H = 56, NODE_RX = 6;
 const LEVEL_GAP_H = 200;  // horizontal gap between generations
 const NODE_GAP_V = 8;     // vertical gap between sibling nodes
-const DEFAULT_ROOT = 1; // George l Lack — 10 gens up, deepest connected tree
+const DEFAULT_ROOT = 2161; // George l Lack — 10 gens up, deepest connected tree
 const DEFAULT_DEPTH = 6;
 const COLLAPSE_DEPTH = 4;  // auto-collapse beyond this depth
 const MAX_VISIBLE_CHILDREN = 10; // show "…+N more" beyond this
@@ -541,13 +409,8 @@ const MAX_VISIBLE_CHILDREN = 10; // show "…+N more" beyond this
 let currentRoot = DEFAULT_ROOT;
 let currentMode = 'ancestors';
 let currentDepth = DEFAULT_DEPTH;
-let currentLineStyle = 'curved';
 let treeData = null;
 let svg, g, zoom, treeSvg;
-let selectedNodes = new Set();
-let dragState = null;
-let marqueeState = null;
-let allRenderedNodes = [];  // keeps track of all rendered d3 hierarchy nodes
 
 // ── Helpers ──
 function sexColor(sex) {
@@ -556,8 +419,8 @@ function sexColor(sex) {
   return 'var(--unknown)';
 }
 function sexFill(sex) {
-  if (sex === 'M') return '#eff6ff';
-  if (sex === 'F') return '#fdf2f8';
+  if (sex === 'M') return '#eef3f9';
+  if (sex === 'F') return '#f9eeee';
   return '#f2f2f2';
 }
 
@@ -673,101 +536,10 @@ function initSVG() {
 
   zoom = d3.zoom()
     .scaleExtent([0.05, 3])
-    .filter(event => {
-      // Allow scroll-wheel zoom always; block left-click pan (we use it for marquee)
-      if (event.type === 'wheel') return true;
-      if (event.type === 'mousedown' && event.button === 0) return false;
-      // Middle-click pan is fine
-      return !event.ctrlKey;
-    })
     .on('zoom', (event) => {
       g.attr('transform', event.transform);
     });
   svg.call(zoom);
-  // Allow middle-click drag to pan
-  svg.on('mousedown.zoom', function(event) {
-    if (event.button === 1) {
-      event.preventDefault();
-    }
-  });
-
-  // ── Marquee rectangle selection (left-click drag on background) ──
-  svg.on('mousedown.marquee', function(event) {
-    if (event.button !== 0) return;
-    // Only start marquee if clicking on empty SVG background
-    if (event.target !== svg.node() && event.target.tagName !== 'svg') return;
-    event.preventDefault();
-    const pt = getSVGPoint(event);
-    const rect = g.append('rect').attr('class', 'marquee')
-      .attr('x', pt.x).attr('y', pt.y).attr('width', 0).attr('height', 0);
-    marqueeState = { rect, sx: pt.x, sy: pt.y };
-  });
-  svg.on('mousemove.marquee', function(event) {
-    if (!marqueeState) return;
-    event.preventDefault();
-    const pt = getSVGPoint(event);
-    const x = Math.min(marqueeState.sx, pt.x);
-    const y = Math.min(marqueeState.sy, pt.y);
-    const w = Math.abs(pt.x - marqueeState.sx);
-    const h = Math.abs(pt.y - marqueeState.sy);
-    marqueeState.rect.attr('x', x).attr('y', y).attr('width', w).attr('height', h);
-  });
-  svg.on('mouseup.marquee', function(event) {
-    if (!marqueeState) return;
-    const pt = getSVGPoint(event);
-    const x1 = Math.min(marqueeState.sx, pt.x);
-    const y1 = Math.min(marqueeState.sy, pt.y);
-    const x2 = Math.max(marqueeState.sx, pt.x);
-    const y2 = Math.max(marqueeState.sy, pt.y);
-    marqueeState.rect.remove();
-    marqueeState = null;
-
-    // Only select if dragged a meaningful distance
-    if (Math.abs(x2 - x1) < 5 && Math.abs(y2 - y1) < 5) return;
-
-    if (!event.ctrlKey && !event.metaKey) selectedNodes.clear();
-    for (const nd of allRenderedNodes) {
-      const cx = nd.y;  // node center x (d3 tree uses y for horizontal)
-      const cy = nd.x;  // node center y
-      if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
-        selectedNodes.add(nd.data.id);
-      }
-    }
-    updateSelectionVisuals();
-  });
-
-  // Deselect on background click (only if no drag happened)
-  svg.on('click.deselect', function(event) {
-    if (event.target === svg.node() || event.target.tagName === 'svg') {
-      if (selectedNodes.size > 0) {
-        selectedNodes.clear();
-        updateSelectionVisuals();
-      }
-    }
-  });
-}
-
-// ── SVG coordinate helper ──
-function getSVGPoint(event) {
-  const pt = svg.node().createSVGPoint();
-  pt.x = event.clientX;
-  pt.y = event.clientY;
-  const ctm = g.node().getScreenCTM();
-  return ctm ? pt.matrixTransform(ctm.inverse()) : pt;
-}
-
-// ── Selection visuals ──
-function updateSelectionVisuals() {
-  g.selectAll('.node').each(function(d) {
-    d3.select(this).classed('selected', selectedNodes.has(d.data.id));
-  });
-  const badge = document.getElementById('selection-badge');
-  if (selectedNodes.size > 0) {
-    badge.textContent = `${selectedNodes.size} selected`;
-    badge.classList.add('visible');
-  } else {
-    badge.classList.remove('visible');
-  }
 }
 
 // ── Fetch tree data ──
@@ -869,29 +641,11 @@ function renderFromRoot(root, direction) {
     .attr('stroke', d => sexColor(d.data.sex))
     .attr('fill', d => sexFill(d.data.sex));
 
-  // Root node highlight
-  nodes.filter(d => d.depth === 0).classed('root-node', true);
-
-  // Confidence dot (top-right corner)
-  nodes.append('circle')
-    .attr('class', 'confidence-dot')
-    .attr('cx', NODE_W - 8)
-    .attr('cy', 8)
-    .attr('r', 3.5)
-    .attr('fill', d => {
-      const tier = d.data.confidence_tier || 'speculative';
-      if (tier === 'high') return '#2d9a2d';
-      if (tier === 'medium') return '#c9a100';
-      if (tier === 'low') return '#d47a1a';
-      return '#c44';
-    })
-    .attr('opacity', 0.8);
-
   // Name text
   nodes.append('text')
     .attr('class', 'node-name')
     .attr('x', NODE_W / 2)
-    .attr('y', 15)
+    .attr('y', 16)
     .attr('text-anchor', 'middle')
     .text(d => {
       const name = d.data.name || 'Unknown';
@@ -902,30 +656,15 @@ function renderFromRoot(root, direction) {
   nodes.append('text')
     .attr('class', 'node-dates')
     .attr('x', NODE_W / 2)
-    .attr('y', 27)
+    .attr('y', 30)
     .attr('text-anchor', 'middle')
     .text(d => lifespan(d));
-
-  // Birthplace text (short)
-  nodes.append('text')
-    .attr('class', 'node-place')
-    .attr('x', NODE_W / 2)
-    .attr('y', 38)
-    .attr('text-anchor', 'middle')
-    .text(d => {
-      if (!d.data.birth_place) return '';
-      const place = d.data.birth_place;
-      // Show just city/state or first 22 chars
-      const parts = place.split(',').map(s => s.trim());
-      const short = parts.length >= 2 ? parts[0] + ', ' + parts[1] : parts[0];
-      return short.length > 22 ? short.slice(0, 20) + '…' : short;
-    });
 
   // Spouse text
   nodes.append('text')
     .attr('class', 'node-spouse')
     .attr('x', NODE_W / 2)
-    .attr('y', 49)
+    .attr('y', 42)
     .attr('text-anchor', 'middle')
     .text(d => {
       if (!d.data.spouses || d.data.spouses.length === 0) return '';
@@ -951,66 +690,13 @@ function renderFromRoot(root, direction) {
       return '−';
     });
 
-  // Store rendered nodes for marquee selection
-  allRenderedNodes = root.descendants();
-
-  // ── Drag behaviour ──
-  nodes.call(d3.drag()
-    .on('start', function(event, d) {
-      event.sourceEvent.stopPropagation();
-      if (!selectedNodes.has(d.data.id)) {
-        if (!event.sourceEvent.ctrlKey && !event.sourceEvent.metaKey) selectedNodes.clear();
-        selectedNodes.add(d.data.id);
-        updateSelectionVisuals();
-      }
-      const pt = getSVGPoint(event.sourceEvent);
-      dragState = { starts: new Map(), sx: pt.x, sy: pt.y };
-      for (const nd of allRenderedNodes) {
-        if (selectedNodes.has(nd.data.id)) {
-          dragState.starts.set(nd.data.id, { x: nd.x, y: nd.y });
-        }
-      }
-      for (const id of selectedNodes) {
-        g.selectAll('.node').filter(dd => dd.data.id === id).classed('dragging', true);
-      }
-    })
-    .on('drag', function(event, d) {
-      if (!dragState) return;
-      const pt = getSVGPoint(event.sourceEvent);
-      const dx = pt.x - dragState.sx;
-      const dy = pt.y - dragState.sy;
-      for (const [id, start] of dragState.starts) {
-        const nd = allRenderedNodes.find(n => n.data.id === id);
-        if (!nd) continue;
-        nd.x = start.x + dy;  // d3 tree: x is vertical
-        nd.y = start.y + dx;  // d3 tree: y is horizontal
-        g.selectAll('.node').filter(dd => dd.data.id === id)
-          .attr('transform', `translate(${nd.y - NODE_W/2}, ${nd.x - NODE_H/2})`);
-      }
-      // Update links
-      linkGroup.selectAll('path').data(linkData)
-        .attr('d', dd => linkPath(dd, direction));
-    })
-    .on('end', function(event, d) {
-      dragState = null;
-      g.selectAll('.node.dragging').classed('dragging', false);
-    })
-  );
-
-  // Click to expand/collapse or select
+  // Click to expand/collapse
   nodes.on('click', function(event, d) {
     event.stopPropagation();
     if (event.shiftKey) {
       // Shift+click = re-root on this person
       currentRoot = d.data.id;
       loadAndRender();
-      return;
-    }
-    if (event.ctrlKey || event.metaKey) {
-      // Ctrl+click = toggle selection
-      if (selectedNodes.has(d.data.id)) selectedNodes.delete(d.data.id);
-      else selectedNodes.add(d.data.id);
-      updateSelectionVisuals();
       return;
     }
     if (d.data._children || d.children) {
@@ -1032,13 +718,13 @@ function renderFromRoot(root, direction) {
     let html = `<div class="name">${d.data.name || 'Unknown'}</div>`;
     const ls = lifespan(d);
     if (ls) html += `<div class="dates">${ls}</div>`;
-    if (d.data.birth_place) html += `<div class="place">${d.data.birth_place}</div>`;
+    if (d.data.birth) html += `<div class="place">${d.data.birth}</div>`;
     if (d.data.spouses && d.data.spouses.length > 0) {
       html += `<div class="spouse-info">Spouse: ${d.data.spouses.map(s => s.name).join(', ')}</div>`;
     }
     const hidden = d.data._children ? d.data._children.length : 0;
     if (hidden) html += `<div class="spouse-info">${hidden} hidden ${currentMode === 'ancestors' ? 'ancestors' : 'descendants'}</div>`;
-    html += `<div class="spouse-info" style="margin-top:0.3rem;opacity:0.5">Click to expand · Ctrl+click to select<br>Shift+click to re-root · Right-click for details<br>Drag to move selected nodes</div>`;
+    html += `<div class="spouse-info" style="margin-top:0.3rem;opacity:0.5">Click to expand/collapse<br>Shift+click to re-root<br>Right-click for details</div>`;
     tip.innerHTML = html;
     tip.style.opacity = '1';
     tip.style.left = (event.clientX + 15) + 'px';
@@ -1068,38 +754,24 @@ function renderFromRoot(root, direction) {
     linkGroup.selectAll('path').classed('link-highlight', false);
   });
 
-  // Apply selection visuals if any nodes are still selected
-  updateSelectionVisuals();
-
   // Save root ref for re-render on collapse toggle
   root._direction = direction;
   window._currentRoot = root;
 }
 
-// Re-render tree from treeData with smooth crossfade
+// Re-render tree from treeData
 function rerender(direction) {
-  g.transition().duration(120).style('opacity', 0).on('end', () => {
-    g.selectAll('*').remove();
-    const root = d3.hierarchy(treeData, d => d.children);
-    renderFromRoot(root, direction);
-    g.style('opacity', 0).transition().duration(200).style('opacity', 1);
-  });
+  g.selectAll('*').remove();
+  const root = d3.hierarchy(treeData, d => d.children);
+  renderFromRoot(root, direction);
 }
 
-// Link path generator — supports curved, straight, step
+// Recursive link path generator using cubic bezier
 function linkPath(d, direction) {
   const sx = d.source.y + (direction === 1 ? NODE_W/2 : -NODE_W/2);
   const sy = d.source.x;
   const tx = d.target.y + (direction === 1 ? -NODE_W/2 : NODE_W/2);
   const ty = d.target.x;
-  if (currentLineStyle === 'straight') {
-    return `M${sx},${sy} L${tx},${ty}`;
-  }
-  if (currentLineStyle === 'step') {
-    const mx = (sx + tx) / 2;
-    return `M${sx},${sy} H${mx} V${ty} H${tx}`;
-  }
-  // curved (default)
   const mx = (sx + tx) / 2;
   return `M${sx},${sy} C${mx},${sy} ${mx},${ty} ${tx},${ty}`;
 }
@@ -1137,9 +809,6 @@ function renderDualTree(data) {
   renderHalf(ancestorRoot, -1, 'ancestor');
   renderHalf(descendantRoot, 1, 'descendant');
 
-  // Store all rendered nodes for marquee
-  allRenderedNodes = [...ancestorRoot.descendants(), ...descendantRoot.descendants()];
-
   // Stats
   let totalNodes = 0;
   ancestorRoot.each(() => totalNodes++);
@@ -1175,28 +844,10 @@ function renderHalf(root, direction, className) {
     .attr('stroke', d => sexColor(d.data.sex))
     .attr('fill', d => sexFill(d.data.sex));
 
-  // Root node highlight (depth 0 in either half)
-  nodes.filter(d => d.depth === 0).classed('root-node', true);
-
-  // Confidence dot
-  nodes.append('circle')
-    .attr('class', 'confidence-dot')
-    .attr('cx', NODE_W - 8)
-    .attr('cy', 8)
-    .attr('r', 3.5)
-    .attr('fill', d => {
-      const tier = d.data.confidence_tier || 'speculative';
-      if (tier === 'high') return '#2d9a2d';
-      if (tier === 'medium') return '#c9a100';
-      if (tier === 'low') return '#d47a1a';
-      return '#c44';
-    })
-    .attr('opacity', 0.8);
-
   nodes.append('text')
     .attr('class', 'node-name')
     .attr('x', NODE_W / 2)
-    .attr('y', 15)
+    .attr('y', 16)
     .attr('text-anchor', 'middle')
     .text(d => {
       const name = d.data.name || 'Unknown';
@@ -1206,27 +857,14 @@ function renderHalf(root, direction, className) {
   nodes.append('text')
     .attr('class', 'node-dates')
     .attr('x', NODE_W / 2)
-    .attr('y', 27)
+    .attr('y', 30)
     .attr('text-anchor', 'middle')
     .text(d => lifespan(d));
-
-  // Birthplace
-  nodes.append('text')
-    .attr('class', 'node-place')
-    .attr('x', NODE_W / 2)
-    .attr('y', 38)
-    .attr('text-anchor', 'middle')
-    .text(d => {
-      if (!d.data.birth_place) return '';
-      const parts = d.data.birth_place.split(',').map(s => s.trim());
-      const short = parts.length >= 2 ? parts[0] + ', ' + parts[1] : parts[0];
-      return short.length > 22 ? short.slice(0, 20) + '…' : short;
-    });
 
   nodes.append('text')
     .attr('class', 'node-spouse')
     .attr('x', NODE_W / 2)
-    .attr('y', 49)
+    .attr('y', 42)
     .attr('text-anchor', 'middle')
     .text(d => {
       if (!d.data.spouses || d.data.spouses.length === 0) return '';
@@ -1253,13 +891,10 @@ function renderHalf(root, direction, className) {
     let html = `<div class="name">${d.data.name || 'Unknown'}</div>`;
     const ls = lifespan(d);
     if (ls) html += `<div class="dates">${ls}</div>`;
-    if (d.data.birth_place) html += `<div class="place">${d.data.birth_place}</div>`;
     if (d.data.spouses && d.data.spouses.length > 0) {
       html += `<div class="spouse-info">Spouse: ${d.data.spouses.map(s => s.name).join(', ')}</div>`;
     }
-    const hidden = d.data._children ? d.data._children.length : 0;
-    if (hidden) html += `<div class="spouse-info">${hidden} hidden nodes</div>`;
-    html += `<div class="spouse-info" style="margin-top:0.3rem;opacity:0.5">Ctrl+click to select · Drag to move<br>Shift+click to re-root · Right-click for details</div>`;
+    html += `<div class="spouse-info" style="margin-top:0.3rem;opacity:0.5">Shift+click to re-root</div>`;
     tip.innerHTML = html;
     tip.style.opacity = '1';
     tip.style.left = (event.clientX + 15) + 'px';
@@ -1274,70 +909,9 @@ function renderHalf(root, direction, className) {
     document.getElementById('tooltip').style.opacity = '0';
   });
 
-  // ── Drag behaviour ──
-  const linkData = root.links();
-  nodes.call(d3.drag()
-    .on('start', function(event, d) {
-      event.sourceEvent.stopPropagation();
-      if (!selectedNodes.has(d.data.id)) {
-        if (!event.sourceEvent.ctrlKey && !event.sourceEvent.metaKey) selectedNodes.clear();
-        selectedNodes.add(d.data.id);
-        updateSelectionVisuals();
-      }
-      const pt = getSVGPoint(event.sourceEvent);
-      dragState = { starts: new Map(), sx: pt.x, sy: pt.y };
-      for (const nd of allRenderedNodes) {
-        if (selectedNodes.has(nd.data.id)) {
-          dragState.starts.set(nd.data.id, { x: nd.x, y: nd.y });
-        }
-      }
-      for (const id of selectedNodes) {
-        g.selectAll('.node').filter(dd => dd.data.id === id).classed('dragging', true);
-      }
-    })
-    .on('drag', function(event, d) {
-      if (!dragState) return;
-      const pt = getSVGPoint(event.sourceEvent);
-      const dx = pt.x - dragState.sx;
-      const dy = pt.y - dragState.sy;
-      for (const [id, start] of dragState.starts) {
-        const nd = allRenderedNodes.find(n => n.data.id === id);
-        if (!nd) continue;
-        nd.x = start.x + dy;
-        nd.y = start.y + dx;
-        g.selectAll('.node').filter(dd => dd.data.id === id)
-          .attr('transform', `translate(${nd.y - NODE_W/2}, ${nd.x - NODE_H/2})`);
-      }
-      // Update all links in both halves
-      g.selectAll('.link').each(function() {
-        const pathEl = d3.select(this);
-        const linkDatum = pathEl.datum();
-        if (linkDatum) {
-          const dir = linkDatum.source.y <= 0 ? -1 : 1;
-          pathEl.attr('d', linkPath(linkDatum, dir));
-        }
-      });
-    })
-    .on('end', function(event, d) {
-      dragState = null;
-      g.selectAll('.node.dragging').classed('dragging', false);
-    })
-  );
-
-  // Click to select or re-root
+  // Click to re-root
   nodes.on('click', function(event, d) {
     event.stopPropagation();
-    if (event.ctrlKey || event.metaKey) {
-      if (selectedNodes.has(d.data.id)) selectedNodes.delete(d.data.id);
-      else selectedNodes.add(d.data.id);
-      updateSelectionVisuals();
-      return;
-    }
-    if (event.shiftKey) {
-      currentRoot = d.data.id;
-      loadAndRender();
-      return;
-    }
     currentRoot = d.data.id;
     loadAndRender();
   });
@@ -1347,8 +921,6 @@ function renderHalf(root, direction, className) {
     event.preventDefault();
     showDetail(d.data.id);
   });
-
-  updateSelectionVisuals();
 }
 
 // ── Detail panel ──
@@ -1372,14 +944,6 @@ async function showDetail(personId) {
     if (data.death_date || data.death_place)
       html += `<p>Died: ${data.death_date || '?'} ${data.death_place ? '— ' + data.death_place : ''}</p>`;
     if (data.sex) html += `<p>Sex: ${data.sex === 'M' ? 'Male' : data.sex === 'F' ? 'Female' : data.sex}</p>`;
-    if (data.confidence_tier) {
-      const tierColors = { high: '#2d9a2d', medium: '#c9a100', low: '#d47a1a', speculative: '#c44' };
-      const color = tierColors[data.confidence_tier] || '#999';
-      html += `<p>Confidence: <span style="color:${color};font-weight:600">${data.confidence_tier}</span>`;
-      if (data.confidence != null) html += ` (${data.confidence})`;
-      if (data.source_count) html += ` &middot; ${data.source_count} source${data.source_count !== 1 ? 's' : ''}`;
-      html += '</p>';
-    }
     html += '</div>';
 
     // Parents
@@ -1427,15 +991,8 @@ async function showDetail(personId) {
       html += '</ul></div>';
     }
 
-    // Re-root button + cross-links
-    html += `<div class="detail-section">
-      <button onclick="navigateTo(${data.id})" style="width:100%;margin-bottom:0.5rem">View tree from this person</button>
-      <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
-        <a href="/profile.html?id=${data.id}" target="_blank" style="flex:1;text-align:center;display:block;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.75rem;text-decoration:none;color:var(--fg2);transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--fg2)'">Ancestry</a>
-        <a href="/graph.html" target="_blank" style="flex:1;text-align:center;display:block;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.75rem;text-decoration:none;color:var(--fg2);transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--fg2)'">Graph</a>
-        <a href="/related.html" target="_blank" style="flex:1;text-align:center;display:block;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.75rem;text-decoration:none;color:var(--fg2);transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--fg2)'">Related?</a>
-      </div>
-    </div>`;
+    // Re-root button
+    html += `<div class="detail-section"><button onclick="navigateTo(${data.id})">View tree from this person</button></div>`;
 
     content.innerHTML = html;
   } catch (err) {
@@ -1496,47 +1053,18 @@ searchResults.addEventListener('click', function(event) {
 
 // Hide search results on click outside
 document.addEventListener('click', function(e) {
-  if (!e.target.closest('.header-search')) {
+  if (!e.target.closest('.search-wrap')) {
     searchResults.style.display = 'none';
   }
 });
 
-// ── Options toggle ──
-const optionsToggle = document.getElementById('options-toggle');
-const controlsPanel = document.getElementById('controls-panel');
-optionsToggle.addEventListener('click', () => {
-  controlsPanel.classList.toggle('collapsed');
-  optionsToggle.classList.toggle('open');
-});
-
 // ── Mode buttons ──
-document.querySelectorAll('.mode-group button[data-mode]').forEach(btn => {
+document.querySelectorAll('.mode-group button').forEach(btn => {
   btn.addEventListener('click', function() {
-    document.querySelectorAll('.mode-group button[data-mode]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mode-group button').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
     currentMode = this.dataset.mode;
     loadAndRender();
-  });
-});
-
-// ── Line style buttons ──
-document.querySelectorAll('.mode-group button[data-line]').forEach(btn => {
-  btn.addEventListener('click', function() {
-    document.querySelectorAll('.mode-group button[data-line]').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    currentLineStyle = this.dataset.line;
-    // Re-render links without full reload
-    const dir = currentMode === 'ancestors' ? -1 : 1;
-    g.selectAll('.link').each(function() {
-      const pathEl = d3.select(this);
-      const linkDatum = pathEl.datum();
-      if (linkDatum) {
-        const linkDir = currentMode === 'both'
-          ? (linkDatum.source.y <= 0 ? -1 : 1)
-          : dir;
-        pathEl.attr('d', linkPath(linkDatum, linkDir));
-      }
-    });
   });
 });
 
@@ -1559,23 +1087,15 @@ document.getElementById('btn-zoomout').addEventListener('click', () => {
   svg.transition().duration(300).call(zoom.scaleBy, 0.7);
 });
 document.getElementById('btn-reset').addEventListener('click', () => {
-  // Reset all state to defaults
   currentRoot = DEFAULT_ROOT;
   currentMode = 'ancestors';
   currentDepth = DEFAULT_DEPTH;
-  currentLineStyle = 'curved';
   depthRange.value = DEFAULT_DEPTH;
   document.getElementById('depth-val').textContent = DEFAULT_DEPTH;
-  document.querySelectorAll('.mode-group button[data-mode]').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.mode-group button').forEach(b => b.classList.remove('active'));
   document.querySelector('.mode-group button[data-mode="ancestors"]').classList.add('active');
-  document.querySelectorAll('.mode-group button[data-line]').forEach(b => b.classList.remove('active'));
-  document.querySelector('.mode-group button[data-line="curved"]').classList.add('active');
   searchInput.value = '';
-  searchResults.style.display = 'none';
-  document.getElementById('detail-panel').classList.remove('open');
-  selectedNodes.clear();
-  updateSelectionVisuals();
-  loadAndRender().then(() => setTimeout(fitToView, 100));
+  loadAndRender();
 });
 document.getElementById('btn-collapse-all').addEventListener('click', () => {
   if (!treeData) return;
@@ -1660,159 +1180,6 @@ window.addEventListener('popstate', () => {
   readURL();
   loadAndRender().then(() => setTimeout(fitToView, 100));
 });
-
-// Keyboard shortcuts
-document.addEventListener('keydown', (e) => {
-  // / to focus search
-  if (e.key === '/' && !e.ctrlKey && !e.metaKey && document.activeElement !== searchInput) {
-    e.preventDefault();
-    searchInput.focus();
-    searchInput.select();
-  }
-  // Escape to close panels and clear selection
-  if (e.key === 'Escape') {
-    document.getElementById('detail-panel').classList.remove('open');
-    searchResults.style.display = 'none';
-    searchInput.blur();
-    if (selectedNodes.size > 0) {
-      selectedNodes.clear();
-      updateSelectionVisuals();
-    }
-  }
-  // Home key to reset to George
-  if (e.key === 'Home' && !e.ctrlKey && document.activeElement !== searchInput) {
-    e.preventDefault();
-    currentRoot = DEFAULT_ROOT;
-    loadAndRender().then(() => setTimeout(fitToView, 100));
-  }
-});
-
-// ── PNG Download ──
-document.getElementById('btn-download-png').addEventListener('click', () => {
-  const svgEl = document.getElementById('tree-svg');
-  const bbox = g.node().getBBox();
-  const pad = 40;
-
-  // Clone SVG for export
-  const clone = svgEl.cloneNode(true);
-  clone.setAttribute('width', bbox.width + pad * 2);
-  clone.setAttribute('height', bbox.height + pad * 2);
-  clone.setAttribute('viewBox', `${bbox.x - pad} ${bbox.y - pad} ${bbox.width + pad * 2} ${bbox.height + pad * 2}`);
-  // Ensure styles are inlined — add a white background rect
-  const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-  bgRect.setAttribute('x', bbox.x - pad);
-  bgRect.setAttribute('y', bbox.y - pad);
-  bgRect.setAttribute('width', bbox.width + pad * 2);
-  bgRect.setAttribute('height', bbox.height + pad * 2);
-  bgRect.setAttribute('fill', '#f8f6f1');
-  clone.insertBefore(bgRect, clone.firstChild);
-
-  // Serialize and draw to canvas
-  const xml = new XMLSerializer().serializeToString(clone);
-  const blob = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const img = new Image();
-  img.onload = () => {
-    const scale = 2; // hi-res
-    const c = document.createElement('canvas');
-    c.width = img.width * scale;
-    c.height = img.height * scale;
-    const ctx = c.getContext('2d');
-    ctx.scale(scale, scale);
-    ctx.drawImage(img, 0, 0);
-    URL.revokeObjectURL(url);
-    const link = document.createElement('a');
-    link.download = 'lack-lineage-tree.png';
-    link.href = c.toDataURL('image/png');
-    link.click();
-  };
-  img.src = url;
-});
-</script>
-<script src="/data/help-widget.js"></script>
-<script>
-initHelp({
-  title: 'Tree Explorer',
-  intro: 'An interactive collapsible tree view. Browse ancestors, descendants, or both directions from any person. Drag nodes to rearrange, select multiple with marquee, and explore the family structure.',
-  keyboard: [
-    { key: '/', action: 'Focus the search bar' },
-    { key: 'Escape', action: 'Close panels, clear selection' },
-    { key: 'Home', action: 'Reset to George l Lack as root' },
-    { key: '?', action: 'Toggle this help panel' }
-  ],
-  mouse: [
-    { key: 'Left-click node', action: 'Expand or collapse that branch' },
-    { key: 'Ctrl + Left-click node', action: 'Toggle node in/out of selection' },
-    { key: 'Shift + Left-click node', action: 'Re-root the tree on that person' },
-    { key: 'Right-click node', action: 'Open detail panel' },
-    { key: 'Drag node', action: 'Move selected node(s) — lines follow' },
-    { key: 'Drag background', action: 'Draw selection rectangle (marquee)' },
-    { key: 'Ctrl + Release marquee', action: 'Add marquee nodes to existing selection' },
-    { key: 'Hover node', action: 'Show tooltip with name, dates, spouse' },
-    { key: 'Middle-click drag', action: 'Pan the canvas' },
-    { key: 'Scroll wheel', action: 'Zoom in/out' }
-  ],
-  sections: [
-    { title: 'Modes', icon: '🔀', html: `
-      <p>Three modes control what the tree shows:</p>
-      <ul>
-        <li><strong>Ancestors</strong> — Shows parents, grandparents, etc. fanning to the right</li>
-        <li><strong>Descendants</strong> — Shows children, grandchildren, etc. fanning to the right</li>
-        <li><strong>Both</strong> — Ancestors go left, descendants go right from the root</li>
-      </ul>
-      <p>Switch modes using the buttons in the Options panel.</p>
-    ` },
-    { title: 'Selection & Dragging', icon: '✋', html: `
-      <p><strong>Ctrl+click</strong> a node to select it (highlighted). Ctrl+click again to deselect. <strong>Drag</strong> any selected node to reposition all selected nodes — connection lines update in real time.</p>
-      <p>To select multiple nodes at once, <strong>left-click and drag</strong> on empty space to draw a selection rectangle. Any node whose center falls inside gets selected.</p>
-      <p>Hold <strong>Ctrl</strong> when releasing the rectangle to add to an existing selection instead of replacing it.</p>
-      <p>Press <strong>Escape</strong> or click empty space to deselect all.</p>
-    ` },
-    { title: 'Expanding & Collapsing', icon: '🌳', html: `
-      <p><strong>Click</strong> any node to toggle its children visible/hidden. A <code>+N</code> badge shows how many hidden children exist.</p>
-      <p>Use <strong>Collapse All</strong> to close every branch, or <strong>Expand All</strong> to open them. Branches beyond depth 4 auto-collapse on first load for performance.</p>
-    ` },
-    { title: 'Line Styles', icon: '〰️', html: `
-      <p>In the Options panel, choose between three line styles:</p>
-      <ul>
-        <li><strong>Curved</strong> — Smooth bezier curves (default)</li>
-        <li><strong>Straight</strong> — Direct diagonal lines</li>
-        <li><strong>Step</strong> — Right-angle step connectors</li>
-      </ul>
-      <p>Line style changes apply instantly without reloading the tree.</p>
-    ` },
-    { title: 'Depth Slider', icon: '📏', html: `
-      <p>The depth slider (1–14) controls how many generations to load. Increasing depth fetches more data and may take a moment for large trees.</p>
-      <p>The default depth is 6 generations.</p>
-    ` },
-    { title: 'Detail Panel', icon: '📋', html: `
-      <p><strong>Right-click</strong> any node to open the detail panel on the right side. It shows:</p>
-      <ul>
-        <li>Vital dates and birthplace</li>
-        <li>Parents, spouses, children, and siblings</li>
-        <li>Life events from the database</li>
-        <li>Cross-links to Ancestry, Graph, and Related pages</li>
-      </ul>
-      <p>Press <strong>Escape</strong> or click the × to close the panel.</p>
-    ` },
-    { title: 'Re-rooting', icon: '🎯', html: `
-      <p>Hold <strong>Shift</strong> and click any node to make that person the new root. The URL updates to <code>?root=ID</code> so you can bookmark or share any view.</p>
-      <p>Press <strong>Home</strong> to return to George l Lack.</p>
-    ` },
-    { title: 'Node Colors', icon: '🎨', html: `
-      <ul>
-        <li><strong>Blue border</strong> — Male</li>
-        <li><strong>Red border</strong> — Female</li>
-        <li><strong>Gray border</strong> — Unknown sex</li>
-        <li><strong>Confidence dot</strong> — Green (high), Yellow (medium), Orange (low), Red (speculative)</li>
-      </ul>
-    ` },
-    { title: 'Search', icon: '🔍', html: `
-      <p>Press <strong>/</strong> or click the search bar in the header to find anyone by name. Select a result to navigate to them as the new tree root.</p>
-    ` }
-  ]
-});
 </script>
 </body>
 </html>
-
