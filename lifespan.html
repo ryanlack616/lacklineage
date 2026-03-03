@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lack Lineage — Lifespan Bars</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #1a1714;
+  --bg2: #242018;
+  --fg: #e8e2d8;
+  --fg2: #9e9688;
+  --accent: #c9a84c;
+  --male: #5b8abd;
+  --female: #bd5b7a;
+  --unknown: #666;
+  --border: #3a352e;
+  --font: 'Georgia', 'Times New Roman', serif;
+  --mono: 'Consolas', 'Monaco', monospace;
+}
+html, body { height: 100%; overflow: hidden; }
+body { font-family: var(--font); color: var(--fg); background: var(--bg); display: flex; flex-direction: column; }
+
+/* ── Header ── */
+header {
+  background: #2a2520;
+  color: #f8f6f1;
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  z-index: 20;
+  flex-shrink: 0;
+}
+header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
+header h1 span { font-weight: 300; opacity: 0.6; }
+header h1 a { color: inherit; text-decoration: none; }
+nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+nav a {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #f8f6f1;
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+nav a:hover, nav a.active {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.4);
+}
+nav a.active { font-weight: bold; }
+
+/* ── Controls bar ── */
+.controls {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0.6rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  z-index: 15;
+}
+.controls label {
+  font-size: 0.78rem;
+  color: var(--fg2);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.controls select, .controls input[type="text"] {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: var(--font);
+  font-size: 0.78rem;
+}
+.controls select:focus, .controls input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.stat-pills {
+  display: flex;
+  gap: 0.8rem;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.stat-pill {
+  font-size: 0.75rem;
+  color: var(--fg2);
+}
+.stat-pill strong {
+  color: var(--fg);
+  font-family: var(--mono);
+}
+
+/* ── Main chart area ── */
+.chart-area {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Fixed x-axis at top */
+.x-axis-container {
+  flex-shrink: 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  z-index: 10;
+}
+
+/* Scrollable bars area */
+.bars-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+}
+.bars-scroll::-webkit-scrollbar { width: 6px; }
+.bars-scroll::-webkit-scrollbar-track { background: var(--bg); }
+.bars-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.bars-scroll::-webkit-scrollbar-thumb:hover { background: var(--fg2); }
+
+/* Century grid lines */
+.century-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255,255,255,0.04);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Tooltip ── */
+.tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: #2a2520;
+  color: var(--fg);
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  max-width: 300px;
+  z-index: 30;
+  opacity: 0;
+  transition: opacity 0.12s;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.tooltip .t-name { font-weight: bold; color: var(--accent); }
+.tooltip .t-dates { color: var(--fg); font-family: var(--mono); font-size: 0.75rem; margin-top: 0.15rem; }
+.tooltip .t-lifespan { color: var(--fg2); font-size: 0.75rem; }
+.tooltip .t-place { color: var(--fg2); font-style: italic; font-size: 0.75rem; margin-top: 0.15rem; }
+
+/* ── Legend ── */
+.legend {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.72rem;
+  color: var(--fg2);
+  z-index: 15;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.legend-swatch {
+  width: 16px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+/* ── Hover year indicator ── */
+.year-indicator {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  background: rgba(201,168,76,0.4);
+  pointer-events: none;
+  z-index: 5;
+  display: none;
+}
+.year-indicator-label {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* ── Era overlay ── */
+.era-overlay {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.chart-area:hover .era-overlay { opacity: 1; }
+
+/* ── Minimap ── */
+.minimap {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem;
+  z-index: 15;
+}
+.minimap canvas {
+  display: block;
+  border-radius: 3px;
+}
+.minimap-viewport {
+  position: absolute;
+  border: 1px solid var(--accent);
+  background: rgba(201,168,76,0.1);
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+/* ── Loading ── */
+.loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--fg2);
+  font-size: 1rem;
+}
+
+@media (max-width: 800px) {
+  header { padding: 0.5rem 1rem; gap: 1rem; }
+  .controls { padding: 0.4rem 1rem; gap: 0.8rem; }
+  .stat-pills { display: none; }
+  .legend { display: none; }
+  .minimap { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Lack <span>Lineage</span></a></h1>
+  <nav>
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/search.html">Search</a>
+    <a href="/research.html">Research</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/places.html">Places</a>
+    <a href="/tree.html">Tree</a>
+    <a href="/globe.html">Globe</a>
+    <a href="/atlas.html">Atlas</a>
+    <a href="/rivers.html">Rivers</a>
+    <a href="/sunburst.html">Sunburst</a>
+    <a href="/living.html">Living</a>
+    <a href="/lifespan.html" class="active">Lifespan</a>
+  </nav>
+</header>
+
+<div class="controls">
+  <label>
+    Surname
+    <select id="filter-surname">
+      <option value="">All surnames</option>
+    </select>
+  </label>
+  <label>
+    Sort
+    <select id="sort-mode">
+      <option value="birth">Birth year</option>
+      <option value="lifespan-desc">Longest life</option>
+      <option value="lifespan-asc">Shortest life</option>
+      <option value="surname">Surname</option>
+      <option value="death">Death year</option>
+    </select>
+  </label>
+  <label>
+    Show
+    <select id="filter-data">
+      <option value="both">Both dates known</option>
+      <option value="all" selected>All with birth</option>
+      <option value="alive">Possibly alive</option>
+    </select>
+  </label>
+  <div class="stat-pills" id="stat-pills">
+    <span class="stat-pill">Loading...</span>
+  </div>
+</div>
+
+<div class="chart-area" id="chart-area">
+  <div class="x-axis-container" id="x-axis-container"></div>
+  <div class="bars-scroll" id="bars-scroll">
+    <canvas id="bars-canvas"></canvas>
+    <div class="year-indicator" id="year-indicator">
+      <div class="year-indicator-label" id="year-indicator-label"></div>
+    </div>
+    <div class="loading" id="loading">Loading lifespan data...</div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<div class="legend">
+  <span style="color:var(--fg); font-weight:600;">Legend:</span>
+  <div class="legend-item"><div class="legend-swatch" style="background:var(--male)"></div> Male</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:var(--female)"></div> Female</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:var(--unknown)"></div> Unknown</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:linear-gradient(to right, var(--male), transparent)"></div> No death date</div>
+</div>
+
+<div class="minimap" id="minimap-wrap">
+  <canvas id="minimap" width="160" height="80"></canvas>
+  <div class="minimap-viewport" id="minimap-vp"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// Lifespan Bars — Every life is a line
+// ══════════════════════════════════════════════
+
+let allPeople = [];
+let filtered = [];
+let barPositions = []; // {person, x, y, w, h}
+
+const BAR_H = 3;
+const BAR_GAP = 1;
+const ROW_H = BAR_H + BAR_GAP;
+const MARGIN_LEFT = 60;
+const MARGIN_RIGHT = 20;
+const CURRENT_YEAR = new Date().getFullYear();
+
+let minYear = 1500;
+let maxYear = CURRENT_YEAR;
+
+// ── Parse year from date string ──
+function parseYear(dateStr) {
+  if (!dateStr) return null;
+  const m = dateStr.match(/(\d{4})/);
+  return m ? parseInt(m[1]) : null;
+}
+
+// ── Lifespan calculation ──
+function lifespan(p) {
+  if (p.birthYear && p.deathYear) return p.deathYear - p.birthYear;
+  return null;
+}
+
+// ── Color by sex ──
+function barColor(p, alpha) {
+  if (p.sex === 'M') return `rgba(91, 138, 189, ${alpha})`;
+  if (p.sex === 'F') return `rgba(189, 91, 122, ${alpha})`;
+  return `rgba(102, 102, 102, ${alpha})`;
+}
+
+// ── Load ──
+async function loadData() {
+  const resp = await fetch('/data/people.json');
+  const raw = await resp.json();
+
+  allPeople = raw.map(p => ({
+    id: p.id,
+    name: `${p.given_name || ''} ${p.surname || ''}`.trim() || `Person #${p.id}`,
+    givenName: p.given_name,
+    surname: p.surname,
+    sex: p.sex,
+    birthYear: parseYear(p.birth_date),
+    deathYear: parseYear(p.death_date),
+    birthPlace: p.birth_place,
+    deathPlace: p.death_place,
+  }));
+
+  // Populate surname filter
+  const surnames = {};
+  allPeople.forEach(p => { if (p.surname) surnames[p.surname] = (surnames[p.surname] || 0) + 1; });
+  const sortedSN = Object.entries(surnames).sort((a, b) => b[1] - a[1]);
+  const sel = document.getElementById('filter-surname');
+  sortedSN.forEach(([sn, ct]) => {
+    const opt = document.createElement('option');
+    opt.value = sn;
+    opt.textContent = `${sn} (${ct})`;
+    sel.appendChild(opt);
+  });
+
+  applyFilters();
+}
+
+// ── Filter + Sort ──
+function applyFilters() {
+  const surnameFilter = document.getElementById('filter-surname').value;
+  const sortMode = document.getElementById('sort-mode').value;
+  const dataFilter = document.getElementById('filter-data').value;
+
+  let data = allPeople.filter(p => p.birthYear);
+
+  if (surnameFilter) {
+    data = data.filter(p => p.surname === surnameFilter);
+  }
+
+  if (dataFilter === 'both') {
+    data = data.filter(p => p.birthYear && p.deathYear);
+  } else if (dataFilter === 'alive') {
+    data = data.filter(p => p.birthYear && !p.deathYear && p.birthYear > 1930);
+  }
+
+  // Sort
+  switch (sortMode) {
+    case 'birth':
+      data.sort((a, b) => a.birthYear - b.birthYear);
+      break;
+    case 'death':
+      data.sort((a, b) => (a.deathYear || 9999) - (b.deathYear || 9999));
+      break;
+    case 'lifespan-desc':
+      data.sort((a, b) => (lifespan(b) || 0) - (lifespan(a) || 0));
+      break;
+    case 'lifespan-asc':
+      data.sort((a, b) => {
+        const la = lifespan(a), lb = lifespan(b);
+        if (la === null && lb === null) return 0;
+        if (la === null) return 1;
+        if (lb === null) return -1;
+        return la - lb;
+      });
+      break;
+    case 'surname':
+      data.sort((a, b) => {
+        const sa = (a.surname || '').toLowerCase();
+        const sb = (b.surname || '').toLowerCase();
+        if (sa !== sb) return sa < sb ? -1 : 1;
+        return a.birthYear - b.birthYear;
+      });
+      break;
+  }
+
+  filtered = data;
+
+  // Update year range
+  const years = data.map(p => p.birthYear).filter(Boolean);
+  const deathYears = data.map(p => p.deathYear).filter(Boolean);
+  if (years.length) {
+    minYear = Math.min(...years);
+    maxYear = Math.max(CURRENT_YEAR, ...deathYears);
+  }
+
+  updateStats();
+  renderXAxis();
+  renderBars();
+  renderMinimap();
+}
+
+// ── Stats ──
+function updateStats() {
+  const withBoth = filtered.filter(p => p.birthYear && p.deathYear);
+  const spans = withBoth.map(p => p.deathYear - p.birthYear);
+  const avg = spans.length ? Math.round(spans.reduce((s, v) => s + v, 0) / spans.length) : 0;
+  const maxSpan = spans.length ? Math.max(...spans) : 0;
+  const minSpan = spans.length ? Math.min(...spans) : 0;
+  const median = spans.length ? spans.sort((a, b) => a - b)[Math.floor(spans.length / 2)] : 0;
+
+  // Century breakdown
+  const centuries = {};
+  withBoth.forEach(p => {
+    const c = Math.floor(p.birthYear / 100) * 100;
+    if (!centuries[c]) centuries[c] = { total: 0, sum: 0 };
+    centuries[c].total++;
+    centuries[c].sum += p.deathYear - p.birthYear;
+  });
+
+  let centuryHtml = '';
+  Object.keys(centuries).sort().forEach(c => {
+    const d = centuries[c];
+    const cavg = Math.round(d.sum / d.total);
+    centuryHtml += `<span class="stat-pill">${c}s: <strong>${cavg}</strong> avg</span>`;
+  });
+
+  document.getElementById('stat-pills').innerHTML =
+    `<span class="stat-pill">Showing <strong>${filtered.length}</strong></span>` +
+    `<span class="stat-pill">Avg <strong>${avg}</strong> yrs</span>` +
+    `<span class="stat-pill">Median <strong>${median}</strong></span>` +
+    `<span class="stat-pill">Range <strong>${minSpan}–${maxSpan}</strong></span>` +
+    centuryHtml;
+}
+
+// ── X-Axis ──
+function renderXAxis() {
+  const container = document.getElementById('x-axis-container');
+  const chartW = container.offsetWidth;
+  const plotW = chartW - MARGIN_LEFT - MARGIN_RIGHT;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = chartW * devicePixelRatio;
+  canvas.height = 28 * devicePixelRatio;
+  canvas.style.width = chartW + 'px';
+  canvas.style.height = '28px';
+  canvas.style.display = 'block';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+
+  ctx.fillStyle = '#1a1714';
+  ctx.fillRect(0, 0, chartW, 28);
+
+  // Determine tick spacing
+  const yearRange = maxYear - minYear;
+  let tickInterval = 100;
+  if (yearRange < 200) tickInterval = 25;
+  else if (yearRange < 400) tickInterval = 50;
+
+  ctx.font = '10px Consolas, Monaco, monospace';
+  ctx.textAlign = 'center';
+
+  for (let y = Math.ceil(minYear / tickInterval) * tickInterval; y <= maxYear; y += tickInterval) {
+    const x = MARGIN_LEFT + ((y - minYear) / (maxYear - minYear)) * plotW;
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(x, 18, 1, 10);
+    ctx.fillStyle = '#9e9688';
+    ctx.fillText(y, x, 14);
+  }
+
+  // Minor ticks (decades)
+  const minorInterval = tickInterval === 100 ? 25 : 10;
+  for (let y = Math.ceil(minYear / minorInterval) * minorInterval; y <= maxYear; y += minorInterval) {
+    if (y % tickInterval === 0) continue;
+    const x = MARGIN_LEFT + ((y - minYear) / (maxYear - minYear)) * plotW;
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    ctx.fillRect(x, 22, 1, 6);
+  }
+
+  container.innerHTML = '';
+  container.appendChild(canvas);
+}
+
+// ── Bars canvas ──
+function renderBars() {
+  document.getElementById('loading').style.display = 'none';
+
+  const scrollEl = document.getElementById('bars-scroll');
+  const canvas = document.getElementById('bars-canvas');
+  const chartW = scrollEl.offsetWidth;
+  const plotW = chartW - MARGIN_LEFT - MARGIN_RIGHT;
+  const totalH = filtered.length * ROW_H + 40;
+
+  canvas.width = chartW * devicePixelRatio;
+  canvas.height = totalH * devicePixelRatio;
+  canvas.style.width = chartW + 'px';
+  canvas.style.height = totalH + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+
+  // Background
+  ctx.fillStyle = '#1a1714';
+  ctx.fillRect(0, 0, chartW, totalH);
+
+  // Century grid lines
+  const yearRange = maxYear - minYear;
+  for (let y = Math.ceil(minYear / 100) * 100; y <= maxYear; y += 100) {
+    const x = MARGIN_LEFT + ((y - minYear) / yearRange) * plotW;
+    ctx.fillStyle = 'rgba(255,255,255,0.025)';
+    ctx.fillRect(x, 0, 1, totalH);
+  }
+
+  // Quarter-century grid lines
+  for (let y = Math.ceil(minYear / 25) * 25; y <= maxYear; y += 25) {
+    if (y % 100 === 0) continue;
+    const x = MARGIN_LEFT + ((y - minYear) / yearRange) * plotW;
+    ctx.fillStyle = 'rgba(255,255,255,0.012)';
+    ctx.fillRect(x, 0, 1, totalH);
+  }
+
+  // "Now" line
+  {
+    const x = MARGIN_LEFT + ((CURRENT_YEAR - minYear) / yearRange) * plotW;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(201,168,76,0.2)';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, totalH);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Draw bars
+  barPositions = [];
+  filtered.forEach((p, i) => {
+    const y = i * ROW_H + 20;
+    const startX = MARGIN_LEFT + ((p.birthYear - minYear) / yearRange) * plotW;
+
+    let endX;
+    let hasEnd = true;
+    if (p.deathYear) {
+      endX = MARGIN_LEFT + ((p.deathYear - minYear) / yearRange) * plotW;
+    } else {
+      // No death date — draw to "now" with gradient
+      endX = MARGIN_LEFT + ((CURRENT_YEAR - minYear) / yearRange) * plotW;
+      hasEnd = false;
+    }
+
+    const w = Math.max(1, endX - startX);
+    barPositions.push({ person: p, x: startX, y, w, h: BAR_H, hasEnd });
+
+    if (hasEnd) {
+      ctx.fillStyle = barColor(p, 0.8);
+      ctx.fillRect(startX, y, w, BAR_H);
+    } else {
+      // Gradient fade for unknown death
+      const grad = ctx.createLinearGradient(startX, 0, endX, 0);
+      const base = p.sex === 'M' ? '91,138,189' : p.sex === 'F' ? '189,91,122' : '102,102,102';
+      grad.addColorStop(0, `rgba(${base}, 0.8)`);
+      grad.addColorStop(0.7, `rgba(${base}, 0.4)`);
+      grad.addColorStop(1, `rgba(${base}, 0.05)`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(startX, y, w, BAR_H);
+    }
+  });
+
+  // Draw average lifespan trend line
+  drawTrendLine(ctx, plotW, totalH);
+}
+
+// ── Average lifespan trend line ──
+function drawTrendLine(ctx, plotW, totalH) {
+  // Group by birth decade and compute average lifespan
+  const decades = {};
+  filtered.forEach((p, i) => {
+    if (!p.deathYear) return;
+    const decade = Math.floor(p.birthYear / 10) * 10;
+    if (!decades[decade]) decades[decade] = { sum: 0, count: 0, avgRow: 0, rowCount: 0 };
+    decades[decade].sum += (p.deathYear - p.birthYear);
+    decades[decade].count++;
+  });
+
+  // We need at least a few data points
+  const decKeys = Object.keys(decades).map(Number).sort((a, b) => a - b).filter(d => decades[d].count >= 2);
+  if (decKeys.length < 3) return;
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(201,168,76,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 3]);
+  ctx.beginPath();
+
+  const yearRange = maxYear - minYear;
+  let first = true;
+  decKeys.forEach(decade => {
+    const avg = decades[decade].sum / decades[decade].count;
+    // Position: x = decade midpoint, y = mapped from lifespan (0-100 → totalH-0)
+    const x = MARGIN_LEFT + ((decade + 5 - minYear) / yearRange) * plotW;
+    // Map avg lifespan to a y position on the right margin
+    // Use a secondary scale in the right margin area
+    const yPos = totalH - 40 - (avg / 100) * (totalH - 80);
+
+    if (first) { ctx.moveTo(x, yPos); first = false; }
+    else ctx.lineTo(x, yPos);
+  });
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ── Minimap ──
+function renderMinimap() {
+  const mmCanvas = document.getElementById('minimap');
+  const mmCtx = mmCanvas.getContext('2d');
+  const mmW = 160, mmH = 80;
+
+  mmCtx.clearRect(0, 0, mmW, mmH);
+  mmCtx.fillStyle = '#1a1714';
+  mmCtx.fillRect(0, 0, mmW, mmH);
+
+  if (!filtered.length) return;
+
+  const yearRange = maxYear - minYear;
+  const totalRows = filtered.length;
+  const scaleX = mmW / (maxYear - minYear);
+  const scaleY = mmH / totalRows;
+
+  filtered.forEach((p, i) => {
+    const x = (p.birthYear - minYear) * scaleX;
+    const endYear = p.deathYear || CURRENT_YEAR;
+    const w = Math.max(0.5, (endYear - p.birthYear) * scaleX);
+    const y = i * scaleY;
+    const h = Math.max(0.3, scaleY);
+
+    mmCtx.fillStyle = barColor(p, 0.6);
+    mmCtx.fillRect(x, y, w, h);
+  });
+
+  updateMinimapViewport();
+}
+
+function updateMinimapViewport() {
+  const scrollEl = document.getElementById('bars-scroll');
+  const vp = document.getElementById('minimap-vp');
+  const mmWrap = document.getElementById('minimap-wrap');
+  const totalH = filtered.length * ROW_H + 40;
+  const visibleH = scrollEl.clientHeight;
+  const scrollTop = scrollEl.scrollTop;
+
+  const mmH = 80;
+  const vpTop = (scrollTop / totalH) * mmH;
+  const vpHeight = Math.max(4, (visibleH / totalH) * mmH);
+
+  vp.style.top = (mmWrap.querySelector('canvas').offsetTop + vpTop) + 'px';
+  vp.style.left = '0.4rem';
+  vp.style.right = '0.4rem';
+  vp.style.height = vpHeight + 'px';
+}
+
+// ── Hover + Tooltip ──
+const barsScroll = document.getElementById('bars-scroll');
+const tooltip = document.getElementById('tooltip');
+const yearIndicator = document.getElementById('year-indicator');
+const yearIndicatorLabel = document.getElementById('year-indicator-label');
+let hoveredBar = null;
+
+barsScroll.addEventListener('mousemove', function(e) {
+  const rect = barsScroll.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top + barsScroll.scrollTop;
+
+  // Year indicator
+  const chartW = barsScroll.offsetWidth;
+  const plotW = chartW - MARGIN_LEFT - MARGIN_RIGHT;
+  const yearRange = maxYear - minYear;
+  if (mx >= MARGIN_LEFT && mx <= chartW - MARGIN_RIGHT) {
+    const year = Math.round(minYear + ((mx - MARGIN_LEFT) / plotW) * yearRange);
+    yearIndicator.style.display = 'block';
+    yearIndicator.style.left = mx + 'px';
+    yearIndicator.style.height = (filtered.length * ROW_H + 40) + 'px';
+    yearIndicatorLabel.textContent = year;
+  } else {
+    yearIndicator.style.display = 'none';
+  }
+
+  // Find hovered bar
+  let found = null;
+  for (const bp of barPositions) {
+    if (my >= bp.y && my <= bp.y + bp.h + BAR_GAP && mx >= bp.x - 2 && mx <= bp.x + bp.w + 2) {
+      found = bp;
+      break;
+    }
+  }
+
+  if (found !== hoveredBar) {
+    hoveredBar = found;
+    if (found) {
+      const p = found.person;
+      const span = lifespan(p);
+      let dates = `b. ${p.birthYear}`;
+      if (p.deathYear) dates += ` — d. ${p.deathYear}`;
+      else dates += ' — ?';
+
+      tooltip.innerHTML = `
+        <div class="t-name">${p.name}</div>
+        <div class="t-dates">${dates}</div>
+        ${span !== null ? `<div class="t-lifespan">${span} years</div>` : '<div class="t-lifespan">Lifespan unknown</div>'}
+        ${p.birthPlace ? `<div class="t-place">${p.birthPlace}</div>` : ''}
+      `;
+      tooltip.style.opacity = '1';
+
+      // Redraw with highlight
+      highlightBar(found);
+    } else {
+      tooltip.style.opacity = '0';
+      renderBars(); // redraw without highlight
+    }
+  }
+
+  if (found) {
+    // Position tooltip
+    let tx = e.clientX + 15;
+    let ty = e.clientY - 10;
+    if (tx + 300 > window.innerWidth) tx = e.clientX - 310;
+    if (ty + 100 > window.innerHeight) ty = e.clientY - 100;
+    tooltip.style.left = tx + 'px';
+    tooltip.style.top = ty + 'px';
+  }
+});
+
+barsScroll.addEventListener('mouseleave', function() {
+  hoveredBar = null;
+  tooltip.style.opacity = '0';
+  yearIndicator.style.display = 'none';
+});
+
+function highlightBar(bp) {
+  const canvas = document.getElementById('bars-canvas');
+  const ctx = canvas.getContext('2d');
+  // Draw highlight ring
+  ctx.save();
+  ctx.strokeStyle = '#c9a84c';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(bp.x - 1, bp.y - 1, bp.w + 2, bp.h + 2);
+
+  // Draw name label
+  ctx.font = '11px Georgia, serif';
+  ctx.fillStyle = '#e8e2d8';
+  ctx.textBaseline = 'middle';
+  const labelX = bp.x + bp.w + 6;
+  if (labelX + 150 < canvas.width / devicePixelRatio) {
+    ctx.fillText(bp.person.name, labelX, bp.y + BAR_H / 2);
+  } else {
+    ctx.textAlign = 'right';
+    ctx.fillText(bp.person.name, bp.x - 6, bp.y + BAR_H / 2);
+  }
+  ctx.restore();
+}
+
+// Click → tree view
+barsScroll.addEventListener('click', function(e) {
+  if (hoveredBar) {
+    window.open(`/tree.html?root=${hoveredBar.person.id}`, '_blank');
+  }
+});
+
+// Scroll → update minimap
+barsScroll.addEventListener('scroll', updateMinimapViewport);
+
+// Minimap click → scroll
+document.getElementById('minimap').addEventListener('click', function(e) {
+  const rect = this.getBoundingClientRect();
+  const my = e.clientY - rect.top;
+  const ratio = my / 80;
+  const totalH = filtered.length * ROW_H + 40;
+  barsScroll.scrollTop = ratio * totalH - barsScroll.clientHeight / 2;
+});
+
+// ── Controls ──
+document.getElementById('filter-surname').addEventListener('change', applyFilters);
+document.getElementById('sort-mode').addEventListener('change', applyFilters);
+document.getElementById('filter-data').addEventListener('change', applyFilters);
+
+// ── Resize ──
+window.addEventListener('resize', () => {
+  renderXAxis();
+  renderBars();
+  renderMinimap();
+});
+
+// ── Keyboard ──
+document.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+  if (e.key === 'Home') { barsScroll.scrollTop = 0; e.preventDefault(); }
+  if (e.key === 'End') { barsScroll.scrollTop = barsScroll.scrollHeight; e.preventDefault(); }
+});
+
+// ── Init ──
+loadData();
+</script>
+<script src="/data/help-widget.js"></script>
+<script>
+initHelp({
+  title: 'Lifespan Bars',
+  intro: 'Every life is a line. Each horizontal bar spans from birth to death — stacked by time, colored by sex. See who overlapped, who could have met whom, and how lifespans changed across centuries.',
+  keyboard: [
+    { key: 'Home', action: 'Scroll to top (earliest births)' },
+    { key: 'End', action: 'Scroll to bottom (latest births)' },
+    { key: '?', action: 'Toggle this help panel' }
+  ],
+  mouse: [
+    { key: 'Hover bar', action: 'Show person details (name, dates, lifespan, birthplace)' },
+    { key: 'Click bar', action: 'Open person\'s tree view in new tab' },
+    { key: 'Click minimap', action: 'Jump to that position in the chart' },
+    { key: 'Scroll', action: 'Navigate through the timeline vertically' }
+  ],
+  sections: [
+    { title: 'Reading the Chart', icon: '📊', html: `
+      <p>Each horizontal line is one life. The x-axis is time (years), the y-axis stacks people by birth order.</p>
+      <ul>
+        <li><strong>Blue bars</strong> — Male</li>
+        <li><strong>Pink bars</strong> — Female</li>
+        <li><strong>Gray bars</strong> — Unknown sex</li>
+        <li><strong>Fading bars</strong> — No death date recorded (may still be alive)</li>
+      </ul>
+      <p>Where bars overlap vertically, those people were alive at the same time.</p>
+    ` },
+    { title: 'Filtering & Sorting', icon: '🔍', html: `
+      <p>Use the controls at the top to:</p>
+      <ul>
+        <li><strong>Surname</strong> — Filter to one family line</li>
+        <li><strong>Sort</strong> — By birth year, lifespan length, surname, or death year</li>
+        <li><strong>Show</strong> — "Both dates known" for clean data, "All with birth" for everything, "Possibly alive" for living people</li>
+      </ul>
+    ` },
+    { title: 'Statistics', icon: '📈', html: `
+      <p>The stats bar shows average and median lifespan, the range, and century-by-century averages. Filter or sort to see how different branches compare.</p>
+    ` },
+    { title: 'Minimap', icon: '🗺', html: `
+      <p>The minimap in the bottom-left shows a compressed view of all bars. The highlighted rectangle shows your current scroll position. Click the minimap to jump to that section.</p>
+    ` }
+  ]
+});
+</script>
+</body>
+</html>

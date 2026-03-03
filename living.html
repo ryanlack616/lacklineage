@@ -237,6 +237,8 @@ canvas { display: block; width: 100%; height: 100%; }
     <a href="/atlas.html">Atlas</a>
     <a href="/rivers.html">Rivers</a>
     <a href="/sunburst.html">Sunburst</a>
+    <a href="/living.html" class="active">Living</a>
+    <a href="/lifespan.html">Lifespan</a>
   </nav>
 </header>
 
@@ -325,10 +327,25 @@ function resize() {
   layoutAndDraw();
 }
 
+// ── Parse year from date string ──
+function parseYear(dateStr) {
+  if (!dateStr) return null;
+  const m = String(dateStr).match(/(\d{4})/);
+  return m ? parseInt(m[1]) : null;
+}
+
 // ── Load data ──
 async function loadData() {
   const resp = await fetch('/data/timeline.json');
-  people = await resp.json();
+  const raw = await resp.json();
+  
+  // Parse date strings into year integers
+  people = raw.map(p => ({
+    ...p,
+    name: `${p.given_name || ''} ${p.surname || ''}`.trim() || `Person #${p.id}`,
+    birth_year: parseYear(p.birth_date),
+    death_year: parseYear(p.death_date),
+  })).filter(p => p.birth_year);
   
   // Estimate death year for people with birth but no death
   // Assume ~75 year lifespan, but cap at current year
