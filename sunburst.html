@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lack Lineage — Sunburst</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f8f6f1;
+  --bg2: #fff;
+  --fg: #2a2520;
+  --fg2: #6b6360;
+  --accent: #8b6914;
+  --accent2: #a07d2a;
+  --border: #d8d2c8;
+  --radius: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --font: 'Georgia', 'Times New Roman', serif;
+  --mono: 'Consolas', 'Monaco', monospace;
+}
+html, body { height: 100%; overflow: hidden; }
+body { font-family: var(--font); color: var(--fg); background: var(--bg); }
+
+/* ── Header ── */
+header {
+  background: var(--fg);
+  color: var(--bg);
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  z-index: 10;
+}
+header h1 { font-size: 1.1rem; letter-spacing: 0.05em; white-space: nowrap; }
+header h1 span { font-weight: 300; opacity: 0.6; }
+header h1 a { color: inherit; text-decoration: none; }
+nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+nav a {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: var(--bg);
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+nav a:hover, nav a.active {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.4);
+}
+nav a.active { font-weight: bold; }
+
+/* ── Controls ── */
+.controls {
+  position: fixed;
+  top: 60px;
+  left: 1rem;
+  z-index: 5;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  box-shadow: var(--shadow);
+  font-size: 0.8rem;
+  max-width: 260px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+.controls h3 { font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--accent); }
+.controls label { display: block; margin: 0.4rem 0 0.15rem; color: var(--fg2); }
+.controls select, .controls input[type="text"] {
+  width: 100%;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg);
+}
+.controls input[type="text"] { margin-bottom: 0.2rem; }
+.controls button {
+  margin-top: 0.5rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  width: 100%;
+}
+.controls button:hover { background: var(--accent2); }
+.controls .stat { margin-top: 0.6rem; color: var(--fg2); line-height: 1.5; font-size: 0.78rem; }
+.controls .stat strong { color: var(--fg); }
+
+/* ── Search dropdown ── */
+.search-wrap { position: relative; }
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 3px 3px;
+  box-shadow: var(--shadow);
+  z-index: 6;
+  display: none;
+}
+.search-results .result {
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.78rem;
+  border-bottom: 1px solid var(--border);
+}
+.search-results .result:hover { background: var(--bg); }
+.search-results .result .dates { color: var(--fg2); font-size: 0.7rem; }
+
+/* ── Tooltip ── */
+.tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: var(--fg);
+  color: var(--bg);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  max-width: 280px;
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.tooltip .name { font-weight: bold; font-size: 0.9rem; }
+.tooltip .dates { opacity: 0.7; }
+.tooltip .place { opacity: 0.7; font-style: italic; }
+.tooltip .gen { margin-top: 0.3rem; opacity: 0.5; font-size: 0.75rem; }
+
+/* ── SVG ── */
+.chart-area {
+  width: 100%;
+  height: calc(100vh - 52px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+svg { overflow: visible; }
+svg text {
+  font-family: var(--font);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Legend ── */
+.legend {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 5;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.7rem 1rem;
+  font-size: 0.75rem;
+  display: flex;
+  gap: 1.2rem;
+  box-shadow: var(--shadow);
+}
+.legend-item { display: flex; align-items: center; gap: 0.4rem; }
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  box-shadow: var(--shadow);
+  display: none;
+  gap: 0.3rem;
+  align-items: center;
+}
+.breadcrumb a {
+  color: var(--accent);
+  text-decoration: none;
+  cursor: pointer;
+}
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { color: var(--fg2); margin: 0 0.2rem; }
+.breadcrumb .current { color: var(--fg); font-weight: bold; }
+
+/* Center label */
+.center-label {
+  font-size: 0.75rem;
+  fill: var(--fg2);
+  text-anchor: middle;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Lack <span>Lineage</span></a></h1>
+  <nav>
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/search.html">Search</a>
+    <a href="/research.html">Research</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/places.html">Places</a>
+    <a href="/tree.html">Tree</a>
+    <a href="/globe.html">Globe</a>
+    <a href="/atlas.html">Atlas</a>
+    <a href="/rivers.html">Rivers</a>
+    <a href="/sunburst.html" class="active">Sunburst</a>
+  </nav>
+</header>
+
+<div class="controls" id="controls">
+  <h3>Ancestor Sunburst</h3>
+
+  <label>Mode</label>
+  <select id="modeSelect">
+    <option value="ancestors">Ancestors (Pedigree Fan)</option>
+    <option value="descendants">Descendants</option>
+  </select>
+
+  <label>Person</label>
+  <div class="search-wrap">
+    <input type="text" id="personSearch" placeholder="Search by name..." autocomplete="off">
+    <div class="search-results" id="searchResults"></div>
+  </div>
+
+  <label>Color by</label>
+  <select id="colorMode">
+    <option value="sex">Sex</option>
+    <option value="generation">Generation depth</option>
+    <option value="surname">Surname</option>
+  </select>
+
+  <label>Generations</label>
+  <select id="maxGen">
+    <option value="0">All</option>
+    <option value="3">3</option>
+    <option value="5">5</option>
+    <option value="7">7</option>
+    <option value="10">10</option>
+    <option value="13">13</option>
+  </select>
+
+  <button id="resetBtn">Reset to Ryan Lack</button>
+
+  <div class="stat" id="stats">Loading...</div>
+</div>
+
+<div class="breadcrumb" id="breadcrumb"></div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background: #8b6914"></div> Male</div>
+  <div class="legend-item"><div class="legend-dot" style="background: #b85450"></div> Female</div>
+  <div class="legend-item"><div class="legend-dot" style="background: #999"></div> Unknown</div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<div class="chart-area" id="chartArea"></div>
+
+<script>
+/* ──────────────────────────────────────────────────
+   LACK LINEAGE — SUNBURST / PEDIGREE FAN CHART
+   
+   Two modes:
+     1. Ancestors (Pedigree Fan): person at center, 
+        parents in ring 1, grandparents ring 2, etc.
+     2. Descendants: person at center, children radiate out.
+   ────────────────────────────────────────────────── */
+
+// ── State ──
+let allNodes = [];
+let parentMap = {};    // childId -> [parentIds]
+let childMap = {};     // parentId -> [childIds]
+let nodeMap = {};      // id -> node
+let currentRoot = null;
+let mode = 'ancestors';
+let colorMode = 'sex';
+let maxGenLimit = 0;   // 0 = unlimited
+let breadcrumbStack = [];
+
+// ── Color palettes ──
+const sexColor = { M: '#8b6914', F: '#b85450' };
+const genColors = [
+  '#8b6914', '#a07d2a', '#b8963f', '#c9a84f',
+  '#d4b96a', '#b85450', '#a0665e', '#8a766e',
+  '#7a8680', '#6a9690', '#5aa6a0', '#4ab6b0', '#3ac6c0'
+];
+
+// Surname -> color (generated on demand)
+const surnameColorCache = {};
+let surnameHue = 30;
+function surnameColor(surname) {
+  if (!surname) return '#999';
+  if (surnameColorCache[surname]) return surnameColorCache[surname];
+  surnameHue = (surnameHue + 47) % 360;
+  surnameColorCache[surname] = d3.hsl(surnameHue, 0.55, 0.45).formatHex();
+  return surnameColorCache[surname];
+}
+
+function getColor(d) {
+  const node = d.data;
+  if (colorMode === 'sex') {
+    return sexColor[node.sex] || '#999';
+  } else if (colorMode === 'generation') {
+    return genColors[Math.min(d.depth, genColors.length - 1)];
+  } else {
+    return surnameColor(node.surname);
+  }
+}
+
+function getColorFaded(d) {
+  const c = d3.color(getColor(d));
+  if (!c) return '#ccc';
+  c.opacity = 0.15 + 0.85 * (1 - d.depth / 14);
+  return c.formatRgb();
+}
+
+// ── Data loading ──
+async function loadData() {
+  const res = await fetch('/data/graph-all.json');
+  const data = await res.json();
+
+  allNodes = data.nodes;
+  parentMap = {};
+  childMap = {};
+  nodeMap = {};
+
+  for (const n of allNodes) {
+    nodeMap[n.id] = n;
+    parentMap[n.id] = [];
+    childMap[n.id] = [];
+  }
+
+  for (const link of data.links) {
+    const src = typeof link.source === 'object' ? link.source.id : link.source;
+    const tgt = typeof link.target === 'object' ? link.target.id : link.target;
+    if (link.type === 'parent_child') {
+      // source = parent, target = child
+      if (!parentMap[tgt]) parentMap[tgt] = [];
+      parentMap[tgt].push(src);
+      if (!childMap[src]) childMap[src] = [];
+      childMap[src].push(tgt);
+    }
+  }
+
+  // Default: Ryan Lack (id 2106)
+  currentRoot = 2106;
+  if (!nodeMap[currentRoot]) {
+    // Fallback: first person with most children
+    let best = allNodes[0];
+    for (const n of allNodes) {
+      if ((childMap[n.id] || []).length > (childMap[best.id] || []).length) best = n;
+    }
+    currentRoot = best.id;
+  }
+
+  initSearch();
+  render();
+}
+
+// ── Build ancestor tree (pedigree fan) ──
+function buildAncestorTree(rootId, maxDepth) {
+  const visited = new Set();
+
+  function recurse(id, depth) {
+    if (visited.has(id)) return null;
+    visited.add(id);
+
+    const n = nodeMap[id];
+    if (!n) return null;
+
+    const node = {
+      id: n.id,
+      name: n.name,
+      sex: n.sex,
+      surname: n.surname,
+      birth_year: n.birth_year,
+      birth_place: n.birth_place,
+      death_date: n.death_date,
+    };
+
+    if (maxDepth > 0 && depth >= maxDepth) return node;
+
+    const parents = (parentMap[id] || []).filter(pid => !visited.has(pid) && nodeMap[pid]);
+    if (parents.length > 0) {
+      node.children = [];
+      // Sort: father first, then mother, then others
+      parents.sort((a, b) => {
+        const sa = nodeMap[a]?.sex || '';
+        const sb = nodeMap[b]?.sex || '';
+        if (sa === 'M' && sb !== 'M') return -1;
+        if (sa !== 'M' && sb === 'M') return 1;
+        return 0;
+      });
+      for (const pid of parents) {
+        const child = recurse(pid, depth + 1);
+        if (child) node.children.push(child);
+      }
+      // Pad to 2 for balanced pedigree fan (empty slot for unknown parent)
+      while (node.children.length < 2 && depth < (maxDepth || 20)) {
+        node.children.push({
+          id: -(id * 100 + node.children.length),
+          name: 'Unknown',
+          sex: node.children.length === 0 ? 'M' : 'F',
+          surname: null,
+          birth_year: null,
+          _empty: true,
+        });
+      }
+    }
+    return node;
+  }
+
+  return recurse(rootId, 0);
+}
+
+// ── Build descendant tree ──
+function buildDescendantTree(rootId, maxDepth) {
+  const visited = new Set();
+
+  function recurse(id, depth) {
+    if (visited.has(id)) return null;
+    visited.add(id);
+
+    const n = nodeMap[id];
+    if (!n) return null;
+
+    const node = {
+      id: n.id,
+      name: n.name,
+      sex: n.sex,
+      surname: n.surname,
+      birth_year: n.birth_year,
+      birth_place: n.birth_place,
+      death_date: n.death_date,
+    };
+
+    if (maxDepth > 0 && depth >= maxDepth) return node;
+
+    const kids = (childMap[id] || []).filter(cid => !visited.has(cid) && nodeMap[cid]);
+    if (kids.length > 0) {
+      node.children = [];
+      // Sort by birth year
+      kids.sort((a, b) => ((nodeMap[a]?.birth_year || 9999) - (nodeMap[b]?.birth_year || 9999)));
+      for (const cid of kids) {
+        const child = recurse(cid, depth + 1);
+        if (child) node.children.push(child);
+      }
+    }
+    return node;
+  }
+
+  return recurse(rootId, 0);
+}
+
+// ── Render sunburst ──
+let svg, g;
+const tooltip = document.getElementById('tooltip');
+
+function render() {
+  const chartArea = document.getElementById('chartArea');
+  chartArea.innerHTML = '';
+
+  const treeData = mode === 'ancestors'
+    ? buildAncestorTree(currentRoot, maxGenLimit)
+    : buildDescendantTree(currentRoot, maxGenLimit);
+
+  if (!treeData) {
+    chartArea.innerHTML = '<p style="color:var(--fg2);font-size:1rem;">No data for this person.</p>';
+    return;
+  }
+
+  const root = d3.hierarchy(treeData)
+    .sum(d => d.children ? 0 : 1)
+    .sort((a, b) => (b.value || 0) - (a.value || 0));
+
+  const totalNodes = root.descendants().length;
+  const maxDepth = root.height;
+
+  // Adaptive sizing
+  const containerW = chartArea.clientWidth;
+  const containerH = chartArea.clientHeight;
+  const dim = Math.min(containerW, containerH);
+  const outerRadius = dim * 0.46;
+  const innerRadius = outerRadius * 0.12;
+
+  const partition = d3.partition()
+    .size([2 * Math.PI, outerRadius]);
+
+  partition(root);
+
+  svg = d3.create('svg')
+    .attr('width', containerW)
+    .attr('height', containerH)
+    .attr('viewBox', `${-containerW / 2} ${-containerH / 2} ${containerW} ${containerH}`);
+
+  g = svg.append('g');
+
+  // ── Zoom ──
+  const zoom = d3.zoom()
+    .scaleExtent([0.3, 5])
+    .on('zoom', (e) => g.attr('transform', e.transform));
+  svg.call(zoom);
+
+  const arc = d3.arc()
+    .startAngle(d => d.x0)
+    .endAngle(d => d.x1)
+    .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.005))
+    .padRadius(innerRadius * 1.5)
+    .innerRadius(d => Math.max(d.y0, innerRadius))
+    .outerRadius(d => Math.max(d.y1 - 1, innerRadius));
+
+  // ── Arcs ──
+  const paths = g.selectAll('path')
+    .data(root.descendants().filter(d => d.depth > 0))
+    .join('path')
+    .attr('d', arc)
+    .attr('fill', d => {
+      if (d.data._empty) return 'rgba(200,195,185,0.2)';
+      return getColor(d);
+    })
+    .attr('fill-opacity', d => {
+      if (d.data._empty) return 0.3;
+      return 0.15 + 0.85 * (1 - d.depth / (maxDepth + 1));
+    })
+    .attr('stroke', d => d.data._empty ? 'rgba(200,195,185,0.3)' : 'rgba(255,255,255,0.6)')
+    .attr('stroke-width', 0.5)
+    .style('cursor', d => d.data._empty ? 'default' : 'pointer')
+    .on('mouseenter', (event, d) => {
+      if (d.data._empty) return;
+      d3.select(event.target).attr('fill-opacity', 1).attr('stroke-width', 2);
+      showTooltip(event, d);
+    })
+    .on('mousemove', (event) => {
+      tooltip.style.left = (event.clientX + 12) + 'px';
+      tooltip.style.top = (event.clientY - 10) + 'px';
+    })
+    .on('mouseleave', (event, d) => {
+      d3.select(event.target)
+        .attr('fill-opacity', d.data._empty ? 0.3 : 0.15 + 0.85 * (1 - d.depth / (maxDepth + 1)))
+        .attr('stroke-width', 0.5);
+      tooltip.style.opacity = 0;
+    })
+    .on('click', (event, d) => {
+      if (d.data._empty || !d.data.id) return;
+      breadcrumbStack.push(currentRoot);
+      currentRoot = d.data.id;
+      document.getElementById('personSearch').value = nodeMap[currentRoot]?.name || '';
+      render();
+    });
+
+  // ── Labels (only for arcs that are wide enough) ──
+  g.selectAll('text.arc-label')
+    .data(root.descendants().filter(d => {
+      if (d.depth === 0 || d.data._empty) return false;
+      const angle = d.x1 - d.x0;
+      const radius = (d.y0 + d.y1) / 2;
+      const arcLen = angle * radius;
+      return arcLen > 28;
+    }))
+    .join('text')
+    .attr('class', 'arc-label')
+    .attr('transform', d => {
+      const angle = (d.x0 + d.x1) / 2;
+      const radius = (d.y0 + d.y1) / 2;
+      const rotate = (angle * 180 / Math.PI - 90);
+      const flip = angle > Math.PI;
+      return `rotate(${rotate}) translate(${radius},0) rotate(${flip ? 180 : 0})`;
+    })
+    .attr('dy', '0.35em')
+    .attr('text-anchor', 'middle')
+    .attr('font-size', d => {
+      const angle = d.x1 - d.x0;
+      const radius = (d.y0 + d.y1) / 2;
+      const arcLen = angle * radius;
+      return Math.min(11, Math.max(7, arcLen / 6)) + 'px';
+    })
+    .attr('fill', d => {
+      const bgColor = d3.color(getColor(d));
+      if (!bgColor) return '#333';
+      const lum = 0.299 * bgColor.r + 0.587 * bgColor.g + 0.114 * bgColor.b;
+      return lum > 160 ? '#2a2520' : '#f8f6f1';
+    })
+    .text(d => {
+      const angle = d.x1 - d.x0;
+      const radius = (d.y0 + d.y1) / 2;
+      const arcLen = angle * radius;
+      const name = d.data.name || '';
+      if (arcLen < 50) {
+        // Show surname initial or first name
+        const parts = name.split(' ');
+        return parts[0].substring(0, Math.floor(arcLen / 7));
+      }
+      if (arcLen < 90) {
+        // Abbreviate
+        const parts = name.split(' ');
+        if (parts.length > 1) return parts[0][0] + '. ' + parts[parts.length - 1];
+        return name.substring(0, 12);
+      }
+      return name.length > 20 ? name.substring(0, 18) + '…' : name;
+    });
+
+  // ── Center label ──
+  const centerNode = nodeMap[currentRoot];
+  const centerName = centerNode ? centerNode.name : 'Unknown';
+  const centerDetails = centerNode
+    ? (centerNode.birth_year ? `b. ${centerNode.birth_year}` : '')
+    : '';
+
+  g.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', '-0.3em')
+    .attr('font-size', '13px')
+    .attr('font-weight', 'bold')
+    .attr('fill', 'var(--fg)')
+    .text(centerName);
+
+  g.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', '1em')
+    .attr('font-size', '10px')
+    .attr('fill', 'var(--fg2)')
+    .text(centerDetails);
+
+  g.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', '2.3em')
+    .attr('font-size', '9px')
+    .attr('fill', 'var(--fg2)')
+    .attr('opacity', 0.6)
+    .text(`${totalNodes - 1} ${mode === 'ancestors' ? 'ancestors' : 'descendants'} · ${maxDepth} gen`);
+
+  chartArea.appendChild(svg.node());
+
+  // Update stats
+  updateStats(totalNodes - 1, maxDepth);
+  updateBreadcrumb();
+}
+
+// ── Tooltip ──
+function showTooltip(event, d) {
+  const n = d.data;
+  const genLabel = mode === 'ancestors'
+    ? ['', 'Parent', 'Grandparent', 'Great-grandparent', '2× Great-grandparent',
+       '3× Great-grandparent', '4× Great-grandparent', '5× Great-grandparent'][Math.min(d.depth, 7)]
+      || `${d.depth - 2}× Great-grandparent`
+    : `Generation ${d.depth}`;
+
+  let html = `<div class="name">${n.name || 'Unknown'}</div>`;
+  if (n.birth_year || n.death_date) {
+    const death = n.death_date ? n.death_date.match(/\d{4}/)?.[0] || '?' : '';
+    html += `<div class="dates">${n.birth_year || '?'} – ${death || '…'}</div>`;
+  }
+  if (n.birth_place) html += `<div class="place">${n.birth_place}</div>`;
+  html += `<div class="gen">${genLabel}</div>`;
+
+  tooltip.innerHTML = html;
+  tooltip.style.opacity = 1;
+  tooltip.style.left = (event.clientX + 12) + 'px';
+  tooltip.style.top = (event.clientY - 10) + 'px';
+}
+
+// ── Stats ──
+function updateStats(count, depth) {
+  const centerNode = nodeMap[currentRoot];
+  const name = centerNode ? centerNode.name : 'Unknown';
+  document.getElementById('stats').innerHTML =
+    `<strong>${name}</strong><br>` +
+    `${count} ${mode === 'ancestors' ? 'ancestors' : 'descendants'}<br>` +
+    `${depth} generation${depth !== 1 ? 's' : ''} deep<br>` +
+    `<span style="font-size:0.7rem;opacity:0.6">Click any wedge to re-center.<br>Use scroll to zoom.</span>`;
+}
+
+// ── Breadcrumb ──
+function updateBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  if (breadcrumbStack.length === 0) {
+    bc.style.display = 'none';
+    return;
+  }
+  bc.style.display = 'flex';
+  let html = '';
+  const shown = breadcrumbStack.slice(-3); // show last 3
+  if (breadcrumbStack.length > 3) html += '<span class="sep">…</span>';
+  shown.forEach((pid, i) => {
+    const n = nodeMap[pid];
+    html += `<a onclick="goBack(${breadcrumbStack.length - shown.length + i})">${n ? n.name : pid}</a>`;
+    html += '<span class="sep">→</span>';
+  });
+  const cn = nodeMap[currentRoot];
+  html += `<span class="current">${cn ? cn.name : currentRoot}</span>`;
+  bc.innerHTML = html;
+}
+
+window.goBack = function(index) {
+  currentRoot = breadcrumbStack[index];
+  breadcrumbStack = breadcrumbStack.slice(0, index);
+  document.getElementById('personSearch').value = nodeMap[currentRoot]?.name || '';
+  render();
+};
+
+// ── Person search ──
+function initSearch() {
+  const input = document.getElementById('personSearch');
+  const results = document.getElementById('searchResults');
+  const centerNode = nodeMap[currentRoot];
+  if (centerNode) input.value = centerNode.name;
+
+  // Sort people: Lack surname first, then alphabetical
+  const sortedPeople = [...allNodes].sort((a, b) => {
+    const aLack = (a.surname || '').toLowerCase() === 'lack' ? 0 : 1;
+    const bLack = (b.surname || '').toLowerCase() === 'lack' ? 0 : 1;
+    if (aLack !== bLack) return aLack - bLack;
+    return (a.name || '').localeCompare(b.name || '');
+  });
+
+  input.addEventListener('focus', () => { input.select(); });
+
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase().trim();
+    if (q.length < 2) { results.style.display = 'none'; return; }
+
+    const matches = sortedPeople.filter(n =>
+      (n.name || '').toLowerCase().includes(q)
+    ).slice(0, 20);
+
+    if (matches.length === 0) { results.style.display = 'none'; return; }
+
+    results.innerHTML = matches.map(n => {
+      const yr = n.birth_year ? ` b. ${n.birth_year}` : '';
+      return `<div class="result" data-id="${n.id}">
+        ${n.name} <span class="dates">${yr}</span>
+      </div>`;
+    }).join('');
+    results.style.display = 'block';
+
+    results.querySelectorAll('.result').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = parseInt(el.dataset.id);
+        breadcrumbStack.push(currentRoot);
+        currentRoot = id;
+        input.value = nodeMap[id]?.name || '';
+        results.style.display = 'none';
+        render();
+      });
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-wrap')) results.style.display = 'none';
+  });
+}
+
+// ── Controls ──
+document.getElementById('modeSelect').addEventListener('change', (e) => {
+  mode = e.target.value;
+  document.querySelector('.controls h3').textContent =
+    mode === 'ancestors' ? 'Ancestor Sunburst' : 'Descendant Sunburst';
+  breadcrumbStack = [];
+  render();
+});
+
+document.getElementById('colorMode').addEventListener('change', (e) => {
+  colorMode = e.target.value;
+  render();
+});
+
+document.getElementById('maxGen').addEventListener('change', (e) => {
+  maxGenLimit = parseInt(e.target.value);
+  render();
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  currentRoot = nodeMap[2106] ? 2106 : allNodes[0]?.id;
+  breadcrumbStack = [];
+  document.getElementById('personSearch').value = nodeMap[currentRoot]?.name || '';
+  render();
+});
+
+// Handle window resize
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(render, 200);
+});
+
+// ── Init ──
+loadData();
+</script>
+</body>
+</html>
